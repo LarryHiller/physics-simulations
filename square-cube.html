@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Square Cube Law</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --obj-a:#1a8f7b; --obj-b:#6e4c9e;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --obj-a:#229b86; --obj-b:#9478c7;
+  }
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+.serif{font-family:"Fraunces", Georgia, "Iowan Old Style", serif;}
+.mono{font-family:"IBM Plex Mono", "SF Mono", Consolas, monospace;}
+
+header.top{border-bottom:1px solid var(--line-strong); padding-bottom:18px; margin-bottom:8px;}
+.eyebrow{font-family:"IBM Plex Mono", monospace; font-size:12.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted);}
+h1{font-family:"Fraunces", Georgia, serif; font-weight:600; font-size:34px; margin:6px 0 8px;}
+.desc{color:var(--ink-soft); font-size:15.5px; max-width:74ch; margin:0;}
+
+nav.catbar{
+  display:flex;gap:8px;margin:22px 0 0;padding:6px;flex-wrap:wrap;
+  background:var(--surface-alt);border:1px solid var(--line-strong);border-radius:14px;
+}
+nav.catbar button{
+  font-family:inherit; cursor:pointer;
+  font-weight:600;font-size:15.5px;padding:12px 22px;border-radius:10px;
+  flex:1 1 140px;border:1px solid transparent;background:transparent;color:var(--ink-soft);
+}
+nav.catbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.toolbar{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:12px; padding:10px 14px; margin:16px 0 22px;
+}
+.pillrow{display:flex; gap:4px; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; padding:3px;}
+.pillrow button{
+  font-family:inherit; cursor:pointer; border:none; background:transparent; color:var(--ink-soft);
+  font-size:13.5px; font-weight:600; padding:7px 14px; border-radius:8px;
+}
+.pillrow button.active{background:var(--accent); color:var(--accent-ink);}
+.seg{display:flex; gap:4px; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; padding:3px;}
+.seg button{font-family:inherit; cursor:pointer; border:none; background:transparent; color:var(--ink-soft); font-size:13.5px; font-weight:600; padding:7px 14px; border-radius:8px;}
+.seg button.active{background:var(--ink); color:var(--paper);}
+.tally{margin-left:auto; font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--ink-soft);}
+.tally b{color:var(--ink);}
+.helpbtn{margin-left:6px; font-family:inherit; cursor:pointer; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); font-size:13px; font-weight:600; padding:7px 12px; border-radius:8px;}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:20px; margin-bottom:20px;}
+.panel-head{font-family:"IBM Plex Mono", monospace; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 12px;}
+.prompt{font-family:"Fraunces", Georgia, serif; font-size:19px; margin:0 0 18px; line-height:1.5;}
+
+table.ratio{width:100%; border-collapse:collapse; margin-bottom:6px;}
+table.ratio caption{text-align:left; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.08em;}
+table.ratio th, table.ratio td{border:1px solid var(--line); padding:10px 12px; text-align:center;}
+table.ratio th{font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--ink-muted); font-weight:600; background:var(--surface-alt);}
+table.ratio td.rowlabel{text-align:left; font-weight:600; font-size:14.5px; white-space:nowrap;}
+table.ratio td.given{font-family:"IBM Plex Mono", monospace; font-size:17px; color:var(--ink-soft); background:var(--surface-alt);}
+table.ratio td.dash{font-family:"IBM Plex Mono", monospace; font-size:17px; color:var(--ink-muted);}
+table.ratio .unit{font-size:12px; color:var(--ink-muted); display:block; font-weight:400;}
+.pwbadge{font-family:"Fraunces", Georgia, serif; font-style:italic; font-size:19px;}
+.pwbadge sup{font-size:.65em;}
+.pwword{display:block; font-family:"IBM Plex Mono",monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-muted); font-weight:400; margin-top:2px;}
+select.k{
+  width:100%; min-width:150px; font-family:"IBM Plex Sans", sans-serif; font-size:13.5px;
+  padding:8px 9px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper); color:var(--ink);
+}
+select.k:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+select.k.ok{border-color:var(--good);} select.k.bad{border-color:var(--critical);}
+select.k option:disabled{color:var(--ink-muted);}
+.chip{display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-soft); margin-right:14px;}
+.dot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+.dot.a{background:var(--obj-a);} .dot.b{background:var(--obj-b);}
+
+input.k{
+  width:100%; max-width:120px; font-family:"IBM Plex Mono", monospace; font-size:16px;
+  padding:8px 9px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper); color:var(--ink);
+  text-align:center;
+}
+input.k:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+input.k.ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 12%, var(--paper));}
+input.k.bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 10%, var(--paper));}
+
+.table-actions{display:flex; gap:10px; margin-top:16px;}
+button.primary{font-family:inherit; cursor:pointer; background:var(--accent); color:var(--accent-ink); border:none; font-weight:600; font-size:14.5px; padding:11px 20px; border-radius:10px;}
+button.secondary{font-family:inherit; cursor:pointer; background:transparent; color:var(--ink-soft); border:1.5px solid var(--line-strong); font-weight:600; font-size:14.5px; padding:10.5px 18px; border-radius:10px;}
+
+.feedback{margin-top:16px; font-size:14.5px; line-height:1.6; min-height:1.2em;}
+.feedback.good{color:var(--good);} .feedback.bad{color:var(--critical);} .feedback.warn{color:var(--warning);}
+.feedback .power{font-family:"Fraunces", Georgia, serif; font-style:italic;}
+
+.explore-grid{display:grid; grid-template-columns:1.1fr 1fr; gap:24px;}
+@media (max-width:760px){ .explore-grid{grid-template-columns:1fr;} }
+.stage{position:relative; height:260px; background:var(--surface-alt); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+.cube-wrap{position:absolute; left:34px; bottom:26px;}
+.face{position:absolute; left:0; bottom:0; border:1.5px solid var(--line-strong); background:var(--accent); opacity:.85; border-radius:2px;}
+.face.layer{background:var(--accent); opacity:.22;}
+.face.front{opacity:.9;}
+.baseline{position:absolute; left:0; right:0; bottom:26px; border-top:1px dashed var(--line-strong);}
+.baseline .cap{position:absolute; top:6px; right:10px; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-muted);}
+
+.stat-cards{display:flex; flex-direction:column; gap:12px;}
+.stat-card{background:var(--surface-alt); border-radius:10px; padding:12px 14px;}
+.stat-card .label{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-muted);}
+.stat-card .value{font-family:"Fraunces", Georgia, serif; font-size:26px; margin-top:2px;}
+.stat-card .value sup{font-size:.7em;}
+.stat-card.length .value{color:var(--ink);}
+.stat-card.area .value{color:var(--accent);}
+.stat-card.volume .value{color:var(--accent-warm);}
+.slider-row{margin:14px 0;}
+.slider-row label{display:block; font-size:13px; color:var(--ink-soft); margin-bottom:6px;}
+input[type=range]{width:100%;}
+.reframe{font-size:14.5px; color:var(--ink-soft); line-height:1.55; margin-top:6px; padding-top:10px; border-top:1px solid var(--line);}
+.reframe b{color:var(--ink);}
+
+details.notebook{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:4px 20px;}
+details.notebook summary{cursor:pointer; padding:14px 0; font-family:"IBM Plex Mono", monospace; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); list-style:none;}
+details.notebook summary::-webkit-details-marker{display:none;}
+details.notebook[open] summary{border-bottom:1px solid var(--line); margin-bottom:12px;}
+details.notebook ol{padding-left:22px; margin:0 0 16px; color:var(--ink-soft); font-size:14.5px; line-height:1.7;}
+details.notebook ol li::marker{color:var(--ink-muted); font-family:"IBM Plex Mono",monospace;}
+
+dialog.ref{border:1px solid var(--line-strong); border-radius:16px; padding:0; max-width:560px; width:92vw; color:var(--ink); background:var(--surface);}
+dialog.ref::backdrop{background:rgba(10,16,15,.45);}
+dialog.ref .refhead{display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--line);}
+dialog.ref .refhead h2{font-family:"Fraunces",Georgia,serif; font-size:19px; margin:0;}
+dialog.ref .refwrap{position:relative;}
+dialog.ref .refbody{padding:16px 20px 22px; max-height:56vh; overflow:auto; font-size:14.5px; line-height:1.65; color:var(--ink-soft);}
+dialog.ref .fade{position:absolute; left:0; right:0; bottom:0; height:36px; pointer-events:none; background:linear-gradient(transparent, var(--surface)); border-radius:0 0 16px 16px; opacity:1; transition:opacity .15s;}
+dialog.ref .fade.hidden{opacity:0;}
+dialog.ref .refbody strong{color:var(--ink);}
+dialog.ref .closex{cursor:pointer; border:none; background:transparent; color:var(--ink-muted); font-size:20px; line-height:1;}
+dialog.ref .worked{background:var(--surface-alt); border-radius:10px; padding:12px 14px; margin:12px 0; font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--ink);}
+
+@media (max-width:430px){
+  h1{font-size:27px;}
+  .prompt{font-size:17px;}
+  table.ratio{table-layout:fixed;}
+  table.ratio th, table.ratio td{padding:6px 4px; font-size:12px; word-break:break-word;}
+  table.ratio td.given, table.ratio td.dash{font-size:13px;}
+  table.ratio th:first-child, table.ratio td.rowlabel{width:34px;}
+  table.ratio th:nth-child(2), table.ratio td.classify{width:30%;}
+  input.k{font-size:13px; max-width:100%; padding:6px 4px;}
+  select.k{min-width:0; font-size:11.5px; padding:6px 3px;}
+  .pwbadge{font-size:16px;}
+  .pwword{font-size:9.5px;}
+  .stat-card .value{font-size:22px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header class="top">
+    <div class="eyebrow">Unit 0 · Ratio Reasoning</div>
+    <h1>Square Cube Law</h1>
+    <p class="desc">Scale an object up or down and its length, area, and volume don't grow at the same rate. Length scales by a factor <em>F</em>. Area scales by <em>F</em><sup>2</sup>. Volume scales by <em>F</em><sup>3</sup>.</p>
+  </header>
+
+  <nav class="catbar" id="modeTabs">
+    <button data-mode="data" class="active">Start with data</button>
+    <button data-mode="factors">Start with factors</button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="pillrow" id="submodeTabs">
+      <button data-submode="table" class="active">Table</button>
+      <button data-submode="explore">Explore</button>
+    </div>
+    <div class="seg" id="difficultyTabs">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="helpbtn" id="refBtn">Worked examples</button>
+    <div class="tally" id="tally">Solved <b id="tallyCorrect">0</b> / <span id="tallyTotal">0</span></div>
+  </div>
+
+  <section id="tableView"></section>
+  <section id="exploreView" hidden></section>
+
+  <details class="notebook">
+    <summary>Lab notebook — discussion questions</summary>
+    <ol>
+      <li>A statue is cast twice as tall as the original, in the same proportions. Its footprint area goes up ×4, but its weight goes up ×8. Why might the bigger statue crack at its base when the original wouldn't?</li>
+      <li>A rope doesn't get stronger by getting longer — what dimension actually makes a rope stronger, and why does that mean thickness matters more than length?</li>
+      <li>Explain, using area-to-volume ratio, why a mouse loses body heat much faster than an elephant, and why the mouse has to eat far more relative to its own weight just to stay warm.</li>
+      <li>In the deer/moose problem, the linear factor is 1.8. Why is the area factor <var>not</var> also 1.8 — and why is it correct to get it by squaring, rather than by measuring a whole new footprint?</li>
+      <li>The balloon problem gives you a volume change and asks for the new diameter. Why do you have to take a cube root here instead of scaling the diameter directly by the volume factor?</li>
+    </ol>
+  </details>
+</div>
+
+<dialog class="ref" id="refDialog">
+  <div class="refhead"><h2>Worked examples</h2><button class="closex" id="refClose" aria-label="Close">×</button></div>
+  <div class="refwrap">
+    <div class="refbody" id="refBody"></div>
+    <div class="fade" id="refFade"></div>
+  </div>
+</dialog>
+
+<script>
+/* =========================================================================
+   MODEL — ported from build scripts/model.js (v2). Kept in plain functions
+   so every number on screen is generated from the same math, never
+   hand-placed. Every problem always has all three rows (linear/area/volume)
+   present, in that order; some are "real" (a named quantity with numbers),
+   some are "bonus" (pure exponent math, no story). Exactly one real row is
+   the "anchor" (both A and B genuinely known); other real rows are targets
+   (B unknown, to be predicted). See build scripts/model.js for the
+   authoritative copy and comments.
+   ========================================================================= */
+(function(){
+'use strict';
+
+function roundSig(x, sig){
+  if(x===0) return 0;
+  const d = Math.ceil(Math.log10(Math.abs(x)));
+  const power = sig - d;
+  const factor = Math.pow(10, power);
+  return Math.round(x*factor)/factor;
+}
+function niceRound(x){ return roundSig(x,2); }
+function relClose(a,b,tol){ if(b===0) return Math.abs(a)<=tol; return Math.abs(a-b)/Math.abs(b) <= tol; }
+
+const TOL = { factor:0.30, chain:0.30 };
+const POWER = { linear:1, area:2, volume:3 };
+const ROW_ORDER = ['linear','area','volume'];
+
+const SCENARIOS = [
+  { id:'deer-moose', subject:(a,b)=>`A ${a} and a ${b} are about the same shape.`,
+    pairs:[['deer','moose'],['house cat','mountain lion'],['coyote','gray wolf'],['fox','German shepherd']],
+    linear:{name:'shoulder height', unit:'m', range:[0.5,1.3]}, factorRange:[1.3,2.4],
+    area:{name:'footprint area', unit:'cm²', rangeA:[15,80]},
+    volume:{name:'body mass', unit:'kg', rangeA:[8,60]} },
+  { id:'mouse-elephant', subject:(a,b)=>`A ${a} and an ${b} are treated as the same basic body shape.`,
+    pairs:[['mouse','capybara'],['rabbit','elephant'],['shrew','elephant']],
+    linear:{name:'body length', unit:'cm', range:[8,40]}, factorRange:[2,6],
+    area:{name:'skin surface area', unit:'cm²', rangeA:[40,400]},
+    volume:{name:'body mass', unit:'kg', rangeA:[0.02,3]} },
+  { id:'balloon-volume', subject:()=>`A spherical balloon is inflated further, keeping its round shape.`,
+    pairs:[['smaller balloon','bigger balloon']],
+    linear:{name:'diameter', unit:'cm', range:[12,30]}, factorRange:[1.1,1.8],
+    area:{name:'rubber skin area', unit:'cm²', rangeA:[400,2800]},
+    volume:{name:'volume of air inside', unit:'L', rangeA:[1,6]} },
+  { id:'statue', subject:()=>`A sculptor casts a second statue in the same proportions, just bigger.`,
+    pairs:[['original statue','scaled-up statue']],
+    linear:{name:'height', unit:'m', range:[0.4,2]}, factorRange:[1.2,3],
+    area:{name:'primer needed to coat it', unit:'L', rangeA:[0.5,12]},
+    volume:{name:'stone needed to carve it', unit:'kg', rangeA:[5,150]} },
+  { id:'gift-box', subject:()=>`A gift shop sells the same box shape in two sizes.`,
+    pairs:[['small box','large box']],
+    linear:{name:'side length', unit:'cm', range:[8,25]}, factorRange:[1.2,2.5],
+    area:{name:'wrapping paper needed', unit:'cm²', rangeA:[150,2000]},
+    volume:{name:'storage volume', unit:'cm³', rangeA:[500,15000]} },
+  { id:'cake', subject:()=>`A baker scales up a round cake recipe, keeping the same proportions.`,
+    pairs:[['original cake','scaled-up cake']],
+    linear:{name:'pan diameter', unit:'cm', range:[12,25]}, factorRange:[1.1,1.8],
+    area:{name:'pan surface to grease', unit:'cm²', rangeA:[100,500]},
+    volume:{name:'batter needed', unit:'cups', rangeA:[2,8]} },
+  { id:'cloud', subject:()=>`A cloud grows bigger while keeping roughly the same puffy shape.`,
+    pairs:[['small cloud','big cloud'],['cumulus cloud','towering cloud']],
+    linear:{name:'width', unit:'km', range:[0.5,3]}, factorRange:[1.3,3],
+    area:{name:'shadow area on the ground', unit:'km²', rangeA:[0.2,5]},
+    volume:{name:'water droplets it holds', unit:'billion drops', rangeA:[1,40]} },
+  { id:'doll-person', subject:()=>`A toy designer scales a doll's proportions up to match a real person's, keeping the same shape.`,
+    pairs:[['action figure','life-size person'],['doll','life-size person']],
+    linear:{name:'height', unit:'cm', range:[10,40]}, factorRange:[3,7],
+    area:{name:'surface area of hair', unit:'cm²', rangeA:[8,45]},
+    volume:{name:'volume of the head', unit:'cm³', rangeA:[20,90]} },
+];
+
+function pick(rng, arr){ return arr[Math.floor(rng()*arr.length)]; }
+function uniform(rng, lo, hi){ return lo + rng()*(hi-lo); }
+function mulberry32(seed){
+  let a = seed>>>0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a>>>15), 1 | a);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateProblem(rng, mode, difficulty, twoQuestion){
+  const scenario = pick(rng, SCENARIOS);
+  const pair = pick(rng, scenario.pairs);
+  const linearFactor = difficulty==='easy' ? pick(rng,[2,2.5,3]) : uniform(rng, scenario.factorRange[0], scenario.factorRange[1]);
+  const LA = niceRound(uniform(rng, scenario.linear.range[0], scenario.linear.range[1]));
+  const LBraw = LA*linearFactor;
+  if(LBraw > scenario.linear.range[1]*3 || LBraw < scenario.linear.range[0]) return generateProblem(rng, mode, difficulty, twoQuestion);
+  const LB = niceRound(LBraw);
+  const trueFactor = LB/LA;
+
+  let anchorKey, activePropKeys;
+  if(mode==='data'){
+    anchorKey = 'linear';
+    activePropKeys = twoQuestion ? ['area','volume'] : [pick(rng,['area','volume'])];
+  } else {
+    anchorKey = pick(rng,['area','volume']);
+    activePropKeys = [anchorKey];
+  }
+
+  const rows = {
+    linear: { name:scenario.linear.name, unit:scenario.linear.unit, power:1, real:true, A:LA, B: anchorKey==='linear'?LB:null, isAnchor:anchorKey==='linear', isTarget:anchorKey!=='linear' },
+    area: null, volume: null,
+  };
+  for(const key of ['area','volume']){
+    const spec = scenario[key]; const power = POWER[key];
+    if(!activePropKeys.includes(key)){ rows[key] = { real:false, name:spec.name, unit:spec.unit, power }; continue; }
+    const propA = niceRound(uniform(rng, spec.rangeA[0], spec.rangeA[1]));
+    if(key===anchorKey){
+      const propFactorExact = Math.pow(linearFactor, power);
+      const propB = niceRound(propA*propFactorExact);
+      rows[key] = { name:spec.name, unit:spec.unit, power, real:true, A:propA, B:propB, isAnchor:true, isTarget:false };
+    } else {
+      rows[key] = { name:spec.name, unit:spec.unit, power, real:true, A:propA, B:null, isAnchor:false, isTarget:true };
+    }
+  }
+
+  if(mode==='factors'){
+    const anchor = rows[anchorKey];
+    const trueRowFactor = anchor.B/anchor.A;
+    const impliedLinearFactor = Math.pow(trueRowFactor, 1/anchor.power);
+    const impliedLB = LA*impliedLinearFactor;
+    if(impliedLB > scenario.linear.range[1]*3 || impliedLB < scenario.linear.range[0]*0.5) return generateProblem(rng, mode, difficulty, twoQuestion);
+  }
+
+  return { mode, difficulty, scenarioId:scenario.id, prompt:scenario.subject(pair[0],pair[1]),
+    nameA:pair[0], nameB:pair[1], anchorKey, rows, trueFactor };
+}
+
+function correctClassification(problem, rowKey){
+  const row = problem.rows[rowKey];
+  if(rowKey==='linear') return 'linear';
+  return (row && row.real) ? rowKey : 'none';
+}
+
+function gradeProblem(problem, studentInputs, tolerance){
+  tolerance = tolerance || TOL;
+  const anchorKey = problem.anchorKey;
+  const anchorRow = problem.rows[anchorKey];
+  const studentAnchorF = studentInputs.F[anchorKey];
+  const result = {};
+  let allCorrect = true;
+  for(const key of ROW_ORDER){
+    const row = problem.rows[key];
+    const correctClass = correctClassification(problem, key);
+    const studentClass = studentInputs.classify[key];
+    const classificationOk = studentClass === correctClass;
+    const r = { classificationOk, expected:{} };
+    if(key===anchorKey){
+      const trueRatio = anchorRow.B/anchorRow.A;
+      r.factorOk = relClose(studentAnchorF, trueRatio, tolerance.factor);
+      r.expected.factor = trueRatio;
+      r.correct = classificationOk && r.factorOk;
+    } else if(row && row.real){
+      const expectedF = Math.pow(studentAnchorF, row.power/anchorRow.power);
+      r.factorOk = relClose(studentInputs.F[key], expectedF, tolerance.factor);
+      const studentF = studentInputs.F[key];
+      const expectedAnswer = row.A * studentF;
+      r.chainOk = relClose(studentInputs.answer[key], expectedAnswer, tolerance.chain);
+      r.expected.factor = expectedF; r.expected.answer = expectedAnswer;
+      r.correct = classificationOk && r.factorOk && r.chainOk;
+    } else {
+      const expectedF = Math.pow(studentAnchorF, row.power/anchorRow.power);
+      r.factorOk = relClose(studentInputs.F[key], expectedF, tolerance.factor);
+      r.expected.factor = expectedF;
+      r.correct = classificationOk && r.factorOk;
+    }
+    result[key] = r;
+    allCorrect = allCorrect && r.correct;
+  }
+  result.correct = allCorrect;
+  return result;
+}
+
+/* =========================================================================
+   STATE + RENDER
+   ========================================================================= */
+const ROW_META = {
+  linear: { sym:'L', word:'Length' },
+  area:   { sym:'L<sup>2</sup>', word:'Area' },
+  volume: { sym:'L<sup>3</sup>', word:'Volume' },
+};
+
+let state = {
+  mode:'data', submode:'table', difficulty:'easy',
+  rng: mulberry32(Date.now() % 2147483647),
+  problem: null,
+  freshProblem: false, // true for exactly one renderTable() after newProblem()
+  tableSelections: { linear:'', area:'', volume:'' },
+  exploreF: 1.0,    // data-explore: linear factor
+  exploreFV: 1.0,   // factors-explore: target volume factor
+  tally:{correct:0, total:0},
+};
+
+function fmt(x, sig){ sig = sig||3; if(!isFinite(x)) return '—'; const r = roundSig(x, sig); return (Math.abs(r) < 1000 ? r : Math.round(r)).toString(); }
+
+function newProblem(){
+  const twoQuestion = state.mode==='data' && state.rng() < 0.4;
+  state.problem = generateProblem(state.rng, state.mode, state.difficulty, twoQuestion);
+  state.tableSelections = { linear:'', area:'', volume:'' };
+  // Tell the next renderTable() this is a brand-new problem, not a re-render
+  // of the current one — see the note by snapshotInputs() below. Without
+  // this, a value typed into the Factor column would survive into the new
+  // problem, because the row's data-k ("f-linear" etc.) is the same name
+  // every time now that all three rows always exist.
+  state.freshProblem = true;
+  render();
+}
+
+// Snapshot/restore every table input's value (and caret) across a re-render
+// triggered by something other than the student's own keystrokes — here,
+// picking a row's classification dropdown regenerates the table's HTML to
+// reveal/hide data cells, which would otherwise wipe whatever the student
+// had already typed into OTHER rows. See house guide Part 3/5 on
+// re-renders destroying focus and input state.
+// Only text <input> values need snapshotting — they live nowhere but the
+// DOM. The classify <select>s are driven entirely by state.tableSelections,
+// which is already correct by the time render happens, so re-applying an
+// old DOM snapshot over them would clobber a just-made (or programmatic,
+// e.g. fillCorrect()) selection. Restoring only inputs avoids that.
+//
+// This snapshot/restore must itself be skipped on a genuinely NEW problem
+// (state.freshProblem, set by newProblem() above). Every row's data-k name
+// ("f-linear", "f-area", "answer-volume", ...) is now the same across every
+// problem, because all three rows always render — so without this check, a
+// value typed for the OLD problem would get silently written back into the
+// NEW problem's identically-named input right after it renders blank.
+function snapshotInputs(){
+  const snap = {};
+  document.querySelectorAll('#tableView input.k').forEach(el=>{ snap[el.dataset.k] = el.value; });
+  const active = document.activeElement;
+  let focusKey=null, selStart=null, selEnd=null;
+  if(active && active.classList && active.classList.contains('k') && document.getElementById('tableView').contains(active)){
+    focusKey = active.dataset.k;
+    if(typeof active.selectionStart === 'number'){ selStart = active.selectionStart; selEnd = active.selectionEnd; }
+  }
+  return { snap, focusKey, selStart, selEnd };
+}
+function restoreInputs(saved){
+  if(!saved) return;
+  for(const k in saved.snap){
+    const el = document.querySelector(`#tableView input.k[data-k="${k}"]`);
+    if(el && el.value !== saved.snap[k]) el.value = saved.snap[k];
+  }
+  if(saved.focusKey){
+    const el = document.querySelector(`#tableView input.k[data-k="${saved.focusKey}"]`);
+    if(el){ el.focus(); if(saved.selStart!=null){ try{ el.setSelectionRange(saved.selStart, saved.selEnd); }catch(e){} } }
+  }
+}
+
+function render(){
+  document.querySelectorAll('#modeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===state.mode));
+  document.querySelectorAll('#submodeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.submode===state.submode));
+  document.querySelectorAll('#difficultyTabs button').forEach(b=>b.classList.toggle('active', b.dataset.diff===state.difficulty));
+  document.getElementById('tableView').hidden = state.submode!=='table';
+  document.getElementById('exploreView').hidden = state.submode!=='explore';
+  document.getElementById('tallyCorrect').textContent = state.tally.correct;
+  document.getElementById('tallyTotal').textContent = state.tally.total;
+  if(state.submode==='table') renderTable(); else renderExplore();
+}
+
+function quantityPool(p){
+  return ROW_ORDER.filter(k=>p.rows[k].real).map(k=>({ key:k, label:`${p.rows[k].name} (${p.rows[k].unit})` }));
+}
+
+function selectOptionsHtml(p, rowKey){
+  const sel = state.tableSelections[rowKey];
+  const usedElsewhere = new Set(ROW_ORDER.filter(k=>k!==rowKey).map(k=>state.tableSelections[k]).filter(v=>v && v!=='none'));
+  let html = `<option value="" ${sel===''?'selected':''} disabled hidden>Choose…</option>`;
+  for(const o of quantityPool(p)){
+    const disabled = usedElsewhere.has(o.key) && sel!==o.key;
+    html += `<option value="${o.key}" ${sel===o.key?'selected':''} ${disabled?'disabled':''}>${o.label}</option>`;
+  }
+  html += `<option value="none" ${sel==='none'?'selected':''}>— nothing for this row —</option>`;
+  return html;
+}
+
+function rowHtml(p, rowKey){
+  const meta = ROW_META[rowKey];
+  const sel = state.tableSelections[rowKey];
+  const selectedData = (sel && sel!=='none') ? p.rows[sel] : null;
+  let cellA = `<td class="dash">—</td>`;
+  let cellB = `<td class="dash">—</td>`;
+  if(selectedData){
+    cellA = `<td class="given">${fmt(selectedData.A)}</td>`;
+    cellB = selectedData.B!==null
+      ? `<td class="given">${fmt(selectedData.B)}</td>`
+      : `<td><input class="k" data-k="answer-${rowKey}" inputmode="decimal" placeholder="?"></td>`;
+  }
+  return `
+    <tr data-row="${rowKey}">
+      <td class="rowlabel"><span class="pwbadge">${meta.sym}</span>${state.difficulty==='easy' ? `<span class="pwword">${meta.word}</span>` : ''}</td>
+      <td class="classify"><select class="k" data-k="classify-${rowKey}">${selectOptionsHtml(p, rowKey)}</select></td>
+      ${cellA}
+      ${cellB}
+      <td><input class="k" data-k="f-${rowKey}" inputmode="decimal" placeholder="F"></td>
+    </tr>`;
+}
+
+function renderTable(){
+  if(!state.problem || state.problem.mode!==state.mode) { newProblem(); return; }
+  const p = state.problem;
+  const view = document.getElementById('tableView');
+  const isFresh = state.freshProblem;
+  state.freshProblem = false;
+  const saved = isFresh ? null : snapshotInputs();
+
+  view.innerHTML = `
+    <section class="panel">
+      <div class="panel-head">Problem</div>
+      <p class="prompt">${p.prompt} <br><span class="chip"><span class="dot a"></span>${p.nameA}</span><span class="chip"><span class="dot b"></span>${p.nameB}</span></p>
+      <table class="ratio">
+        <caption>Use each row's dropdown to say which quantity belongs there, then fill in F (and the missing value, if there is one).</caption>
+        <thead><tr><th></th><th>What belongs here?</th><th>${p.nameA}</th><th>${p.nameB}</th><th>F</th></tr></thead>
+        <tbody>${ROW_ORDER.map(k=>rowHtml(p,k)).join('')}</tbody>
+      </table>
+      <div class="table-actions">
+        <button class="primary" id="checkBtn">Check</button>
+        <button class="secondary" id="newBtn">New problem</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </section>`;
+
+  document.getElementById('checkBtn').addEventListener('click', checkTable);
+  document.getElementById('newBtn').addEventListener('click', ()=>{ newProblem(); });
+  view.querySelectorAll('select.k').forEach(sel=>{
+    sel.addEventListener('change', (e)=>{
+      const key = e.target.dataset.k.replace('classify-','');
+      state.tableSelections[key] = e.target.value;
+      renderTable();
+    });
+  });
+  if(!isFresh) restoreInputs(saved);
+}
+
+function num(key){
+  const el = document.querySelector(`#tableView .k[data-k="${key}"]`);
+  if(!el) return NaN;
+  const raw = String(el.value).trim().replace(/,/g,'');
+  if(raw === '') return NaN;
+  return Number(raw);
+}
+function markEl(key, ok){
+  const el = document.querySelector(`#tableView .k[data-k="${key}"]`);
+  if(!el) return;
+  el.classList.remove('ok','bad');
+  el.classList.add(ok ? 'ok' : 'bad');
+}
+
+function checkTable(){
+  const p = state.problem;
+  const fb = document.getElementById('feedback');
+
+  const missingClassify = ROW_ORDER.some(k=>!state.tableSelections[k]);
+  const fVals = {}; ROW_ORDER.forEach(k=>{ fVals[k] = num(`f-${k}`); });
+  const missingF = ROW_ORDER.some(k=>!isFinite(fVals[k]));
+  const answerVals = {};
+  const answerKeys = ROW_ORDER.filter(k=>{
+    const sel = state.tableSelections[k];
+    if(!sel || sel==='none') return false;
+    return p.rows[sel].B === null;
+  });
+  answerKeys.forEach(k=>{ answerVals[k] = num(`answer-${k}`); });
+  const missingAnswer = answerKeys.some(k=>!isFinite(answerVals[k]));
+
+  if(missingClassify || missingF || missingAnswer){
+    fb.className='feedback warn';
+    fb.textContent = missingClassify ? 'Choose what belongs in every row first.' : 'Fill in every F box (and any missing value) first.';
+    return;
+  }
+
+  const studentInputs = { classify: {...state.tableSelections}, F: fVals, answer: answerVals };
+  const grade = gradeProblem(p, studentInputs);
+
+  const lines = [];
+  for(const key of ROW_ORDER){
+    const r = grade[key];
+    const word = ROW_META[key].word;
+    markEl(`classify-${key}`, r.classificationOk);
+    markEl(`f-${key}`, r.factorOk);
+    if(answerKeys.includes(key)) markEl(`answer-${key}`, r.chainOk);
+    if(!r.classificationOk){
+      lines.push(`Something's off in the ${word} row — check whether what you placed there really scales with ${word.toLowerCase()}.`);
+      continue;
+    }
+    if(key===p.anchorKey){
+      if(!r.factorOk) lines.push(`Your ${word} row's F should be B ÷ A for that quantity.`);
+    } else if(p.rows[key].real){
+      if(!r.factorOk) lines.push(`Your ${word} row's F should come from your anchor factor raised to the right power — it doesn't match yet.`);
+      else if(!r.chainOk) lines.push(`Your ${word} F is right — multiply it by the given value to get the missing one.`);
+    } else {
+      if(!r.factorOk) lines.push(`Even with no real quantity here, the ${word} row's F should still follow from your anchor factor.`);
+    }
+  }
+  if(lines.length===0) lines.push('Correct — length, area, and volume all line up.');
+
+  fb.className = 'feedback ' + (grade.correct ? 'good' : 'bad');
+  fb.textContent = lines.join(' ');
+  state.tally.total++;
+  if(grade.correct) state.tally.correct++;
+  document.getElementById('tallyCorrect').textContent = state.tally.correct;
+  document.getElementById('tallyTotal').textContent = state.tally.total;
+}
+
+/* ---------- Explore ---------- */
+function areaFactor(f){ return Math.pow(f,2); }
+function volumeFactor(f){ return Math.pow(f,3); }
+
+function renderExplore(){
+  const view = document.getElementById('exploreView');
+  const forward = state.mode==='data';
+  const F = forward ? state.exploreF : Math.pow(state.exploreFV, 1/3);
+  const FA = areaFactor(F), FV = volumeFactor(F);
+  const sliderVal = forward ? state.exploreF : state.exploreFV;
+  const sliderMin = forward ? 1 : 1, sliderMax = forward ? 3 : 20, sliderStep = forward ? 0.05 : 0.25;
+  const sliderLabel = forward ? `Linear scale factor F = ${F.toFixed(2)}×` : `Target volume factor F³ = ${state.exploreFV.toFixed(2)}×`;
+
+  view.innerHTML = `
+  <section class="panel">
+    <div class="panel-head">${forward ? 'Drag the length, watch area and volume respond' : 'Set the volume change, watch what length that implies'}</div>
+    <div class="explore-grid">
+      <div>
+        <div class="stage">
+          <div class="baseline"><span class="cap">unit block, F = 1</span></div>
+          <div class="cube-wrap" id="cubeWrap"></div>
+        </div>
+        <div class="slider-row">
+          <label for="expSlider">${sliderLabel}</label>
+          <input type="range" id="expSlider" min="${sliderMin}" max="${sliderMax}" step="${sliderStep}" value="${sliderVal}">
+        </div>
+      </div>
+      <div class="stat-cards">
+        <div class="stat-card length"><div class="label">Length factor</div><div class="value">${F.toFixed(2)}×</div></div>
+        <div class="stat-card area"><div class="label">Area factor — F<sup>2</sup></div><div class="value">${fmt(FA,3)}×</div></div>
+        <div class="stat-card volume"><div class="label">Volume factor — F<sup>3</sup></div><div class="value">${fmt(FV,3)}×</div></div>
+        <div class="reframe">${forward
+          ? `At <b>${F.toFixed(2)}×</b> the length, area grows to <b>${fmt(FA,3)}×</b> but volume grows to <b>${fmt(FV,3)}×</b> — volume is outpacing area by <b>${(FV/FA).toFixed(2)}×</b>. This is why bigger versions of the same shape need proportionally thicker supports and lose heat more slowly.`
+          : `To reach <b>${fmt(FV,3)}×</b> the volume, each side only has to grow by <b>${F.toFixed(2)}×</b> — and the surface that has to hold or cool it grows by just <b>${fmt(FA,3)}×</b>.`}</div>
+      </div>
+    </div>
+  </section>`;
+
+  drawCube(F);
+  document.getElementById('expSlider').addEventListener('input', (e)=>{
+    const v = Number(e.target.value);
+    if(forward) state.exploreF = v; else state.exploreFV = v;
+    renderExplore();
+    document.getElementById('expSlider').focus();
+  });
+}
+
+function drawCube(F){
+  const wrap = document.getElementById('cubeWrap');
+  if(!wrap) return;
+  const base = 40;
+  const edge = Math.max(24, Math.min(170, base*F));
+  const layers = Math.max(1, Math.round((F-1)*7)+1);
+  let html = '';
+  for(let i=layers-1; i>=1; i--){
+    const off = i*3.4;
+    html += `<div class="face layer" style="width:${edge}px;height:${edge}px;transform:translate(${off}px,-${off}px);"></div>`;
+  }
+  html += `<div class="face front" style="width:${edge}px;height:${edge}px;"></div>`;
+  wrap.style.width = (edge + layers*3.4) + 'px';
+  wrap.style.height = (edge + layers*3.4) + 'px';
+  wrap.innerHTML = html;
+}
+
+/* ---------- Reference dialog ---------- */
+function buildRefBody(){
+  return `
+  <p><strong>Ratio reasoning</strong> (Galileo's "scaling"): relate the property you care about to the linear dimension, then use the same factor cubed or squared.</p>
+  <div class="worked">
+  <strong>Deer → moose</strong> (worked example)<br>
+  Height: 1.2 m → 2.1 m, so F = 2.1 ÷ 1.2 ≈ 1.8<br>
+  Mass scales as F³: 1.8³ ≈ 5.8<br>
+  Deer mass 130 kg × 5.8 ≈ 750 kg moose
+  </div>
+  <div class="worked">
+  <strong>Balloon</strong> (worked example)<br>
+  Volume: 2 L → 6 L, so volume factor = 3<br>
+  Diameter factor = ∛3 ≈ 1.4<br>
+  20 cm × 1.4 ≈ 30 cm new diameter
+  </div>
+  <p>Numbers are rounded the way you'd round them by hand — matching to roughly 2 significant figures is the goal here, not calculator precision.</p>`;
+}
+
+/* ---------- Wiring ---------- */
+document.getElementById('modeTabs').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-mode]'); if(!b) return;
+  state.mode = b.dataset.mode; state.problem = null; render();
+});
+document.getElementById('submodeTabs').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-submode]'); if(!b) return;
+  state.submode = b.dataset.submode; render();
+});
+document.getElementById('difficultyTabs').addEventListener('click', (e)=>{
+  const b = e.target.closest('button[data-diff]'); if(!b) return;
+  state.difficulty = b.dataset.diff; state.problem = null; render();
+});
+function updateRefFade(){
+  const body = document.getElementById('refBody');
+  const fade = document.getElementById('refFade');
+  const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 2;
+  fade.classList.toggle('hidden', atEnd);
+}
+document.getElementById('refBtn').addEventListener('click', ()=>{
+  const body = document.getElementById('refBody');
+  body.innerHTML = buildRefBody();
+  document.getElementById('refDialog').showModal();
+  body.scrollTop = 0;
+  requestAnimationFrame(updateRefFade);
+  body.addEventListener('scroll', updateRefFade);
+});
+document.getElementById('refClose').addEventListener('click', ()=> document.getElementById('refDialog').close());
+
+document.getElementById('exploreView').hidden = true;
+newProblem();
+render();
+
+/* ---------- Test hook (Playwright) ---------- */
+window.__sc = {
+  state: () => state,
+  setMode: (m) => { state.mode=m; state.problem=null; render(); },
+  setSubmode: (s) => { state.submode=s; render(); },
+  setDifficulty: (d) => { state.difficulty=d; state.problem=null; render(); },
+  newProblem, checkTable,
+  classify: (rowKey, value) => { state.tableSelections[rowKey] = value; renderTable(); },
+  correctClassification, ROW_ORDER,
+  fillCorrect: () => {
+    const p = state.problem;
+    for(const key of ROW_ORDER) state.tableSelections[key] = correctClassification(p, key);
+    render();
+    const anchor = p.rows[p.anchorKey];
+    const clean = (x) => Number(x.toPrecision(8)); // trims float noise like 2.9999999999996 for display
+    const anchorF = clean(anchor.B / anchor.A);
+    for(const key of ROW_ORDER){
+      const row = p.rows[key];
+      const fEl = document.querySelector(`#tableView .k[data-k="f-${key}"]`);
+      if(key===p.anchorKey){ if(fEl) fEl.value = anchorF; continue; }
+      const rowF = clean(Math.pow(anchorF, row.power/anchor.power));
+      if(fEl) fEl.value = rowF;
+      if(row.real){
+        const ansEl = document.querySelector(`#tableView .k[data-k="answer-${key}"]`);
+        if(ansEl) ansEl.value = clean(row.A * rowF);
+      }
+    }
+  },
+  fillWrongClassification: (rowKey) => {
+    // Deliberately mis-tag one row (for page-test's wrong-answer path).
+    const p = state.problem;
+    const pool = ['linear','area','volume','none'];
+    const correct = correctClassification(p, rowKey);
+    const wrong = pool.find(v => v !== correct && (v==='none' || p.rows[v].real));
+    window.__sc.classify(rowKey, wrong);
+  },
+  setExploreSlider: (v) => { document.getElementById('expSlider').value=v; document.getElementById('expSlider').dispatchEvent(new Event('input')); },
+};
+
+})();
+</script>
+</body>
+</html>
