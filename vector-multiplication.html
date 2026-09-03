@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector Multiplication</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --v-teal:#1a8f7b; --v-amber:#c4791e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --v-teal:#229b86; --v-amber:#c97f22;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  --v-teal:#229b86; --v-amber:#c97f22;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:10px 20px 14px;}
+
+header{border-bottom:1px solid var(--line-strong); padding-bottom:6px; margin-bottom:8px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted); flex:0 0 100%;}
+h1{font-family:"Fraunces","Georgia","Iowan Old Style",serif; font-weight:600; font-size:21px; margin:0;}
+.desc{color:var(--ink-soft); font-size:13px; max-width:60ch; margin:0;}
+
+.toolbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:11px; padding:6px 12px; margin:8px 0;
+}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{
+  font-family:inherit; font-size:13.5px; font-weight:600; padding:8px 16px; border:none; background:transparent;
+  color:var(--ink-soft); cursor:pointer;
+}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{
+  font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border-radius:9px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn:disabled{opacity:.45; cursor:default;}
+.tally{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft);}
+.tally b{color:var(--ink); font-size:16px;}
+
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 1px 2px var(--shadow); padding:9px 16px;
+}
+.panel + .panel{margin-top:8px;}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:15px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--ink-soft); margin:0 0 6px;
+}
+
+.graph-row{display:grid; grid-template-columns:1.3fr 1fr; gap:10px; align-items:stretch;}
+@media (max-width:820px){.graph-row{grid-template-columns:1fr;}}
+.graph-panel{display:flex; flex-direction:column; justify-content:center;}
+.notation-col{display:flex; flex-direction:column; gap:8px;}
+
+.graph-wrap{display:flex; justify-content:center; align-items:center; flex:1;}
+.graph-wrap svg{max-width:100%; max-height:66vh; width:auto; height:auto; touch-action:none;}
+.hint{text-align:center; color:var(--ink-muted); font-size:12px; margin-top:2px; min-height:2.4em;}
+.iso-caption{text-align:center; color:var(--ink-muted); font-size:12px; margin-top:2px;}
+
+.toggle-row{display:flex; gap:8px; margin:8px 0 0; flex-wrap:wrap;}
+.chip{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:18px;
+  border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer;
+}
+.chip.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+
+.given-list{display:flex; flex-direction:column; gap:6px;}
+.given-line{
+  display:flex; align-items:baseline; flex-wrap:wrap; gap:0;
+  font-size:clamp(18px, 2.2vw, 25px); line-height:1.3;
+}
+.num{font-family:"IBM Plex Mono",monospace; font-weight:600;}
+.unit{font-family:"Fraunces",serif; font-size:.72em; margin-left:.16em;}
+.unit.deg{margin-left:.02em;}
+.unit sup{font-size:.72em; vertical-align:.5em;}
+.sym{font-family:"Fraunces",serif; font-style:italic; margin-left:.14em;}
+.op{color:var(--ink-muted); font-size:.8em; margin:0 .3em;}
+.x-part, .y-part, .z-part{white-space:nowrap;}
+
+.product-row{display:flex; flex-direction:column; gap:2px; margin:10px 0;}
+.product-row:first-child{margin-top:0;}
+.product-label{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-muted);}
+.product-line{display:flex; align-items:baseline; flex-wrap:wrap; gap:0; font-size:clamp(22px, 2.8vw, 30px);}
+.product-note{font-size:11.5px; color:var(--ink-muted);}
+
+input.blank{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:.86em; width:4.6em;
+  padding:4px 6px; border-radius:7px; border:1.5px solid var(--line-strong); background:var(--surface);
+  color:var(--ink); text-align:center;
+}
+input.blank:focus{outline:2px solid var(--accent); outline-offset:1px;}
+input.blank.correct{border-color:var(--good); background:color-mix(in srgb, var(--good) 14%, var(--surface));}
+input.blank.wrong{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 12%, var(--surface));}
+select.sign-select{
+  font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:.86em; width:2.3em;
+  padding:4px 2px; border-radius:7px; border:1.5px solid var(--line-strong); background:var(--surface);
+  color:var(--ink); text-align:center; text-align-last:center; cursor:pointer; vertical-align:middle;
+  appearance:none; -webkit-appearance:none;
+}
+select.sign-select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+select.sign-select.correct{border-color:var(--good); background:color-mix(in srgb, var(--good) 14%, var(--surface));}
+select.sign-select.wrong{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 12%, var(--surface));}
+
+dialog#rulesDialog{
+  border:1px solid var(--line-strong); border-radius:16px; padding:0; max-width:560px; width:92vw;
+  background:var(--surface); color:var(--ink); box-shadow:0 8px 30px var(--shadow);
+}
+dialog#rulesDialog::backdrop{background:rgba(20,37,34,.45);}
+.rules-head{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--line);}
+.rules-head h3{font-family:"Fraunces",serif; font-size:18px; margin:0;}
+.rules-close{font-family:inherit; font-size:13px; font-weight:600; padding:5px 12px; border-radius:8px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.rules-scroll{position:relative;}
+.rules-body{padding:16px 18px; max-height:56vh; overflow-y:auto; font-size:14px; line-height:1.6;}
+.rules-body h4{font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); margin:14px 0 6px;}
+.rules-body h4:first-child{margin-top:0;}
+.rules-body table{border-collapse:collapse; font-family:"IBM Plex Mono",monospace; font-size:14px; margin:4px 0 10px;}
+.rules-body td{padding:4px 0;}
+.rules-body td:first-child{padding-right:40px;}
+.rules-fade{position:absolute; left:0; right:0; bottom:0; height:28px; background:linear-gradient(transparent, var(--surface)); pointer-events:none;}
+.rules-fade.hidden{display:none;}
+
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook{margin-top:22px;}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:14.5px; line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 0 · Vectors</div>
+    <h1>Vector Multiplication</h1>
+    <p class="desc">Drag both vectors to the origin, then find the dot product and the cross product — graphically and algebraically.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="dimsSeg">
+      <button data-dims="2" class="active">2D</button>
+      <button data-dims="3">3D</button>
+    </div>
+    <button class="btn" id="rulesBtn">Rules</button>
+    <button class="btn primary" id="newProblemBtn">New problem</button>
+    <button class="btn" id="checkBtn" disabled>Check</button>
+    <div class="tally" id="tally"><b>0/0</b> correct</div>
+  </div>
+
+  <div class="graph-row" id="dims2Row">
+    <div class="panel graph-panel">
+      <div class="graph-wrap"><svg id="graph" viewBox="0 0 440 540" width="740" height="908"></svg></div>
+      <div class="hint" id="graphHint"></div>
+      <div class="toggle-row">
+        <button class="chip" id="toggleParallel">Show ∥ component</button>
+        <button class="chip" id="togglePerp">Show ⊥ component</button>
+      </div>
+    </div>
+    <div class="notation-col">
+      <div class="panel">
+        <h2>Given vectors</h2>
+        <div class="given-list" id="givenList2D"></div>
+      </div>
+      <div class="panel">
+        <h2>Products</h2>
+        <div class="product-row">
+          <div class="product-label">Dot product (A · B)</div>
+          <div class="product-line" id="dotLine2D"></div>
+        </div>
+        <div class="product-row">
+          <div class="product-label">Cross product (A × B)</div>
+          <div class="product-line" id="crossLine2D"></div>
+          <div class="product-note">+ = out of the page (⊙) &nbsp;·&nbsp; − = into the page (⊗)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="graph-row" id="dims3Row" style="display:none">
+    <div class="panel graph-panel">
+      <div class="graph-wrap"><svg id="iso" viewBox="0 0 440 440" width="740" height="740"></svg></div>
+      <div class="iso-caption">Schematic only — not to scale. Read the vectors from the numbers, not the picture.</div>
+    </div>
+    <div class="notation-col">
+      <div class="panel">
+        <h2>Given vectors</h2>
+        <div class="given-list" id="givenList3D"></div>
+      </div>
+      <div class="panel">
+        <h2>Products</h2>
+        <div class="product-row">
+          <div class="product-label">Dot product (A · B)</div>
+          <div class="product-line" id="dotLine3D"></div>
+        </div>
+        <div class="product-row">
+          <div class="product-label">Cross product (A × B)</div>
+          <div class="product-line" id="crossLine3D"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="body">
+      <p>1. Toggle the parallel and perpendicular components on together. What do those two pieces have to do with the dot product and the cross product?</p>
+      <p>2. If you swapped the order and computed B × A instead of A × B, what would change? What would stay the same?</p>
+      <p>3. Could two nonzero vectors ever have both a zero dot product and a zero cross product? What would that mean about them?</p>
+      <p>4. In 3D, why does the cross product need three numbers to describe it, while the dot product only needs one?</p>
+    </div>
+  </details>
+</div>
+
+<dialog id="rulesDialog">
+  <div class="rules-head"><h3>Dot &amp; cross rules for î, ĵ, k̂</h3><button class="rules-close" id="rulesCloseBtn">Close</button></div>
+  <div class="rules-scroll">
+    <div class="rules-body" id="rulesBody">
+      <h4>Dot product</h4>
+      <table>
+        <tr><td>î · î = 1</td><td>î · ĵ = 0</td></tr>
+        <tr><td>ĵ · ĵ = 1</td><td>ĵ · k̂ = 0</td></tr>
+        <tr><td>k̂ · k̂ = 1</td><td>k̂ · î = 0</td></tr>
+      </table>
+      <p>A parallel unit vector dotted with itself gives 1; any two different (perpendicular) unit vectors dot to 0.</p>
+      <p><b>A · B</b> = A<sub>x</sub>B<sub>x</sub> + A<sub>y</sub>B<sub>y</sub> + A<sub>z</sub>B<sub>z</sub> = |A||B|cos θ</p>
+      <h4>Cross product</h4>
+      <table>
+        <tr><td>î × î = 0</td></tr>
+        <tr><td>ĵ × ĵ = 0</td></tr>
+        <tr><td>k̂ × k̂ = 0</td></tr>
+      </table>
+      <p>Any unit vector crossed with itself is 0. For two different ones, go in the cycle î → ĵ → k̂ → î:</p>
+      <table>
+        <tr><td>î × ĵ = +k̂</td><td>ĵ × î = −k̂</td></tr>
+        <tr><td>ĵ × k̂ = +î</td><td>k̂ × ĵ = −î</td></tr>
+        <tr><td>k̂ × î = +ĵ</td><td>î × k̂ = −ĵ</td></tr>
+      </table>
+      <p>Forward through the cycle ("ijki") is positive; backward ("ikji") is negative.</p>
+      <p><b>|A × B|</b> = |A||B|sin θ, with direction perpendicular to the plane of A and B by the right-hand rule — for two vectors in the xy-plane, that direction is always straight along z: out of the page for a positive result, into the page for a negative one.</p>
+    </div>
+    <div class="rules-fade hidden" id="rulesFade"></div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+// ---- math model (mirrors build-scripts/model.js) --------------------------
+function deg2rad(d){return d*Math.PI/180;}
+function exactCos(deg){const a=((deg%360)+360)%360; if(a===0)return 1; if(a===90)return 0; if(a===180)return -1; if(a===270)return 0; return Math.cos(deg2rad(a));}
+function exactSin(deg){const a=((deg%360)+360)%360; if(a===0)return 0; if(a===90)return 1; if(a===180)return 0; if(a===270)return -1; return Math.sin(deg2rad(a));}
+function wrapAngle(deg){return ((deg%360)+360)%360;}
+function snap(value,step){const n=Math.round(value/step); const s=n*step; const decimals=Math.max(0,(String(step).split(".")[1]||"").length); return Number(s.toFixed(decimals));}
+function round1(n){return Number(n.toFixed(1));}
+function isAxisAligned(thetaDeg, marginDeg){ marginDeg=marginDeg||0; const a=wrapAngle(thetaDeg); const nearest=Math.round(a/90)*90; return Math.abs(a-nearest)<=marginDeg; }
+function angleBetween(theta1,theta2){ let d=Math.abs(wrapAngle(theta1)-wrapAngle(theta2)); if(d>180) d=360-d; return d; }
+
+const VEC_LEN_MIN=2, VEC_LEN_MAX=6, LEN_STEP=0.1, ANGLE_STEP=1;
+const GIVEN_AXIS_MARGIN=4, ANGLE_BETWEEN_MARGIN=12;
+const MIN_DOT_2D=3, MIN_CROSS_2D=3, MAX_ATTEMPTS=8000;
+const VECTOR_COLOR_KEYS=["teal","amber"];
+const COLOR_VAR={teal:"var(--v-teal)", amber:"var(--v-amber)"};
+
+function makeGivenVector2D(r, thetaDeg, colorKey){
+  const rr=snap(Math.min(VEC_LEN_MAX,Math.max(VEC_LEN_MIN,r)), LEN_STEP);
+  const th=snap(wrapAngle(thetaDeg), ANGLE_STEP)%360;
+  const trueAx=rr*exactCos(th), trueAy=rr*exactSin(th);
+  return {r:rr, theta:th, trueAx, trueAy, dispAx:round1(trueAx), dispAy:round1(trueAy), colorKey};
+}
+function randomAngleExcludingAxis(rng, marginDeg){ let theta; do{theta=Math.floor(rng()*360);}while(isAxisAligned(theta,marginDeg)); return theta; }
+function randomLength2D(rng){ const steps=Math.round((VEC_LEN_MAX-VEC_LEN_MIN)/LEN_STEP); return VEC_LEN_MIN+Math.floor(rng()*(steps+1))*LEN_STEP; }
+function dot2D(ax,ay,bx,by){ return ax*bx+ay*by; }
+function cross2D(ax,ay,bx,by){ return ax*by-ay*bx; }
+function trueDotAndCross2D(vectors){ const [v1,v2]=vectors; return {dot:dot2D(v1.trueAx,v1.trueAy,v2.trueAx,v2.trueAy), cross:cross2D(v1.trueAx,v1.trueAy,v2.trueAx,v2.trueAy)}; }
+function displayedDotAndCross2D(vectors){ const [v1,v2]=vectors; return {dot:dot2D(v1.dispAx,v1.dispAy,v2.dispAx,v2.dispAy), cross:cross2D(v1.dispAx,v1.dispAy,v2.dispAx,v2.dispAy)}; }
+
+function randomProblem2D(rng){
+  rng = rng || Math.random;
+  for(let attempt=0; attempt<MAX_ATTEMPTS; attempt++){
+    const notation = rng()<0.5 ? "unitvec" : "magdir";
+    const theta1 = randomAngleExcludingAxis(rng, GIVEN_AXIS_MARGIN);
+    let theta2;
+    do{ theta2 = randomAngleExcludingAxis(rng, GIVEN_AXIS_MARGIN); }
+    while(isAxisAligned(angleBetween(theta1,theta2), ANGLE_BETWEEN_MARGIN) || angleBetween(theta1,theta2) < ANGLE_BETWEEN_MARGIN);
+    const v1=makeGivenVector2D(randomLength2D(rng), theta1, VECTOR_COLOR_KEYS[0]);
+    const v2=makeGivenVector2D(randomLength2D(rng), theta2, VECTOR_COLOR_KEYS[1]);
+    const vectors=[v1,v2];
+    const graded = notation==="unitvec" ? displayedDotAndCross2D(vectors) : trueDotAndCross2D(vectors);
+    if(Math.abs(graded.dot) < MIN_DOT_2D || Math.abs(graded.cross) < MIN_CROSS_2D) continue;
+    return {dims:2, notation, vectors, answer:graded};
+  }
+  throw new Error("randomProblem2D: could not generate a non-degenerate problem");
+}
+function decompose2D(v1, v2){
+  const lenSq = v1.trueAx*v1.trueAx + v1.trueAy*v1.trueAy;
+  const scalarProj = (v2.trueAx*v1.trueAx + v2.trueAy*v1.trueAy) / lenSq;
+  const parallel = {x:scalarProj*v1.trueAx, y:scalarProj*v1.trueAy};
+  const perpendicular = {x:v2.trueAx-parallel.x, y:v2.trueAy-parallel.y};
+  return {scalarProj, parallel, perpendicular};
+}
+
+const COMP_MIN=1, COMP_MAX=6, MIN_DOT_3D=4, MIN_CROSS_3D_MAG=4;
+function randomNonzeroComponent(rng){ const mag=COMP_MIN+Math.floor(rng()*(COMP_MAX-COMP_MIN+1)); return rng()<0.5 ? -mag : mag; }
+function randomVector3D(rng, colorKey){ return {x:randomNonzeroComponent(rng), y:randomNonzeroComponent(rng), z:randomNonzeroComponent(rng), colorKey}; }
+function dot3D(a,b){ return a.x*b.x+a.y*b.y+a.z*b.z; }
+function cross3D(a,b){ return {x:a.y*b.z-a.z*b.y, y:a.z*b.x-a.x*b.z, z:a.x*b.y-a.y*b.x}; }
+function mag3D(v){ return Math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); }
+function randomProblem3D(rng){
+  rng = rng || Math.random;
+  for(let attempt=0; attempt<MAX_ATTEMPTS; attempt++){
+    const v1=randomVector3D(rng, VECTOR_COLOR_KEYS[0]);
+    const v2=randomVector3D(rng, VECTOR_COLOR_KEYS[1]);
+    const dot=dot3D(v1,v2), cross=cross3D(v1,v2);
+    if(Math.abs(dot) < MIN_DOT_3D || mag3D(cross) < MIN_CROSS_3D_MAG) continue;
+    return {dims:3, notation:"unitvec", vectors:[v1,v2], answer:{dot, cross}};
+  }
+  throw new Error("randomProblem3D: could not generate a non-degenerate problem");
+}
+
+function fmt1(n){return n.toFixed(1);}
+function signAndNumber(component){ if(component===0) return {sign:"+",number:"0.0"}; return {sign:component>0?"+":"−", number:fmt1(Math.abs(component))}; }
+function signAndInt(component){ return {sign:component>=0?"+":"−", number:String(Math.abs(component))}; }
+function magDirNotation(r,theta){ return {r:fmt1(r), theta:String(Math.round(theta))}; }
+
+const UNITVEC_TOLERANCE=0.1;
+const DOT_MAGDIR_TOLERANCE=0.9, CROSS_MAGDIR_TOLERANCE=0.9;
+const UNITVEC_3D_TOLERANCE=0.05;
+function withinAbsTolerance(typedStr, trueVal, tol){
+  const typed=Number((typedStr||"").trim());
+  if((typedStr||"").trim()==="" || Number.isNaN(typed)) return false;
+  return Math.abs(typed-trueVal)<=tol;
+}
+
+// ---- state ------------------------------------------------------------
+const state={
+  dims:2,
+  problem:null,
+  placed:{0:false,1:false},
+  dragIdx:null, dragPx:null,
+  showParallel:false, showPerp:false,
+  tally:{correct:0,total:0},
+};
+
+// ---- 2D SVG geometry --------------------------------------------------------
+const SVG_NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("graph");
+const GRID_VB=440, TRAY_H=100, VB_W=440, VB_H=GRID_VB+TRAY_H;
+const Cx=GRID_VB/2, Cy=TRAY_H+GRID_VB/2, EXTENT=11, SCALE=(GRID_VB/2-24)/EXTENT;
+function toPx(x,y){ return {px:Cx+x*SCALE, py:Cy-y*SCALE}; }
+
+function trayAnchors(n){
+  const margin=90, usable=VB_W-2*margin;
+  const xs=[];
+  if(n===1) xs.push(Cx);
+  else for(let i=0;i<n;i++) xs.push(margin + i*(usable/(n-1)));
+  return xs.map(x=>({px:x, py:TRAY_H/2}));
+}
+
+function arrowHeadPoints(tail, head, size){
+  const dx=head.px-tail.px, dy=head.py-tail.py, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+  const bx=head.px-ux*size, by=head.py-uy*size;
+  const perp={x:-uy,y:ux};
+  return `${head.px},${head.py} ${bx+perp.x*size*0.5},${by+perp.y*size*0.5} ${bx-perp.x*size*0.5},${by-perp.y*size*0.5}`;
+}
+
+function buildGraphStatic(){
+  svg.innerHTML="";
+  const divider=document.createElementNS(SVG_NS,"line");
+  divider.setAttribute("x1",0); divider.setAttribute("x2",VB_W);
+  divider.setAttribute("y1",TRAY_H); divider.setAttribute("y2",TRAY_H);
+  divider.setAttribute("stroke","var(--line-strong)"); divider.setAttribute("stroke-width","1.5");
+  divider.setAttribute("stroke-dasharray","4,4");
+  svg.appendChild(divider);
+  const trayLabel=document.createElementNS(SVG_NS,"text");
+  trayLabel.setAttribute("x",10); trayLabel.setAttribute("y",16);
+  trayLabel.setAttribute("font-family","IBM Plex Mono, monospace"); trayLabel.setAttribute("font-size","11");
+  trayLabel.setAttribute("fill","var(--ink-muted)"); trayLabel.textContent="drag down to the origin";
+  svg.appendChild(trayLabel);
+
+  const grid=document.createElementNS(SVG_NS,"g");
+  for(let m=-10;m<=10;m++){
+    if(m===0) continue;
+    const isMajor=m%5===0;
+    const {px}=toPx(m,0);
+    const line=document.createElementNS(SVG_NS,"line");
+    line.setAttribute("x1",px); line.setAttribute("x2",px);
+    line.setAttribute("y1",toPx(0,-EXTENT).py); line.setAttribute("y2",toPx(0,EXTENT).py);
+    line.setAttribute("stroke","var(--line)"); line.setAttribute("stroke-width", isMajor?1.2:0.7);
+    grid.appendChild(line);
+    const {py}=toPx(0,m);
+    const line2=document.createElementNS(SVG_NS,"line");
+    line2.setAttribute("y1",py); line2.setAttribute("y2",py);
+    line2.setAttribute("x1",toPx(-EXTENT,0).px); line2.setAttribute("x2",toPx(EXTENT,0).px);
+    line2.setAttribute("stroke","var(--line)"); line2.setAttribute("stroke-width", isMajor?1.2:0.7);
+    grid.appendChild(line2);
+  }
+  svg.appendChild(grid);
+
+  const axisX=document.createElementNS(SVG_NS,"line");
+  axisX.setAttribute("x1",toPx(-EXTENT,0).px); axisX.setAttribute("x2",toPx(EXTENT,0).px);
+  axisX.setAttribute("y1",Cy); axisX.setAttribute("y2",Cy);
+  axisX.setAttribute("stroke","var(--ink)"); axisX.setAttribute("stroke-width","2");
+  svg.appendChild(axisX);
+  const axisY=document.createElementNS(SVG_NS,"line");
+  axisY.setAttribute("y1",toPx(0,-EXTENT).py); axisY.setAttribute("y2",toPx(0,EXTENT).py);
+  axisY.setAttribute("x1",Cx); axisY.setAttribute("x2",Cx);
+  axisY.setAttribute("stroke","var(--ink)"); axisY.setAttribute("stroke-width","2");
+  svg.appendChild(axisY);
+
+  [-10,-5,5,10].forEach(m=>{
+    const {px}=toPx(m,0);
+    const t=document.createElementNS(SVG_NS,"text");
+    t.setAttribute("x",px); t.setAttribute("y",Cy+16); t.setAttribute("text-anchor","middle");
+    t.setAttribute("font-family","IBM Plex Mono, monospace"); t.setAttribute("font-size","12");
+    t.setAttribute("fill","var(--ink-muted)"); t.textContent=m;
+    svg.appendChild(t);
+    const {py}=toPx(0,m);
+    const t2=document.createElementNS(SVG_NS,"text");
+    t2.setAttribute("x",Cx+8); t2.setAttribute("y",py+4); t2.setAttribute("text-anchor","start");
+    t2.setAttribute("font-family","IBM Plex Mono, monospace"); t2.setAttribute("font-size","12");
+    t2.setAttribute("fill","var(--ink-muted)"); t2.textContent=m;
+    svg.appendChild(t2);
+  });
+
+  const originDot=document.createElementNS(SVG_NS,"circle");
+  originDot.setAttribute("cx",Cx); originDot.setAttribute("cy",Cy); originDot.setAttribute("r",4);
+  originDot.setAttribute("fill","var(--ink)");
+  svg.appendChild(originDot);
+  const originLabel=document.createElementNS(SVG_NS,"text");
+  originLabel.setAttribute("x",8); originLabel.setAttribute("y",TRAY_H+14);
+  originLabel.setAttribute("font-family","IBM Plex Mono, monospace"); originLabel.setAttribute("font-size","12");
+  originLabel.setAttribute("fill","var(--ink-muted)"); originLabel.textContent="origin = (0,0) — both vectors' tails go here";
+  svg.appendChild(originLabel);
+
+  // decomposition overlay (parallel projection + perpendicular drop), hidden by default.
+  // The parallel projection is drawn offset to the side of V1's own line (with thin tie
+  // marks back to the true origin/foot points) rather than directly on top of it — sitting
+  // exactly on V1's arrow made it nearly invisible against the thicker, colored vector line.
+  const parTick1=document.createElementNS(SVG_NS,"line");
+  parTick1.setAttribute("id","parTick1"); parTick1.setAttribute("stroke","var(--ink-muted)"); parTick1.setAttribute("stroke-width","1.2");
+  parTick1.style.display="none";
+  svg.appendChild(parTick1);
+  const parTick2=document.createElementNS(SVG_NS,"line");
+  parTick2.setAttribute("id","parTick2"); parTick2.setAttribute("stroke","var(--ink-muted)"); parTick2.setAttribute("stroke-width","1.2");
+  parTick2.style.display="none";
+  svg.appendChild(parTick2);
+  const parLine=document.createElementNS(SVG_NS,"line");
+  parLine.setAttribute("id","parLine"); parLine.setAttribute("stroke","var(--ink)"); parLine.setAttribute("stroke-width","3.5");
+  parLine.setAttribute("stroke-linecap","round");
+  parLine.setAttribute("stroke-dasharray","7,6"); parLine.style.display="none";
+  svg.appendChild(parLine);
+  const perpLine=document.createElementNS(SVG_NS,"line");
+  perpLine.setAttribute("id","perpLine"); perpLine.setAttribute("stroke","var(--ink-soft)"); perpLine.setAttribute("stroke-width","2.5");
+  perpLine.setAttribute("stroke-dasharray","2,4"); perpLine.style.display="none";
+  svg.appendChild(perpLine);
+  const rightAngle=document.createElementNS(SVG_NS,"path");
+  rightAngle.setAttribute("id","rightAngle"); rightAngle.setAttribute("fill","none");
+  rightAngle.setAttribute("stroke","var(--ink-soft)"); rightAngle.setAttribute("stroke-width","1.5");
+  rightAngle.style.display="none";
+  svg.appendChild(rightAngle);
+
+  state.problem.vectors.forEach((v,idx)=>{
+    const g=document.createElementNS(SVG_NS,"g");
+    const hit=document.createElementNS(SVG_NS,"line");
+    hit.setAttribute("id","hit-"+idx); hit.setAttribute("stroke","transparent");
+    hit.setAttribute("stroke-width","28"); hit.style.pointerEvents="stroke"; hit.style.cursor="grab";
+    g.appendChild(hit);
+    const line=document.createElementNS(SVG_NS,"line");
+    line.setAttribute("id","line-"+idx); line.setAttribute("stroke", COLOR_VAR[v.colorKey]);
+    line.setAttribute("stroke-width","4.5"); line.setAttribute("stroke-linecap","round");
+    line.style.pointerEvents="none";
+    g.appendChild(line);
+    const arrow=document.createElementNS(SVG_NS,"polygon");
+    arrow.setAttribute("id","arrow-"+idx); arrow.setAttribute("fill", COLOR_VAR[v.colorKey]);
+    arrow.style.pointerEvents="none";
+    g.appendChild(arrow);
+    svg.appendChild(g);
+  });
+}
+
+function vectorTailPx(idx){
+  return state.placed[idx] ? {px:Cx, py:Cy} : trayAnchors(2)[idx];
+}
+function render2D(){
+  state.problem.vectors.forEach((v,idx)=>{
+    const tail = state.dragIdx===idx ? state.dragPx : vectorTailPx(idx);
+    const head = {px:tail.px + v.trueAx*SCALE, py:tail.py - v.trueAy*SCALE};
+    const hit=document.getElementById("hit-"+idx), line=document.getElementById("line-"+idx), arrow=document.getElementById("arrow-"+idx);
+    hit.setAttribute("x1",tail.px); hit.setAttribute("y1",tail.py); hit.setAttribute("x2",head.px); hit.setAttribute("y2",head.py);
+    line.setAttribute("x1",tail.px); line.setAttribute("y1",tail.py); line.setAttribute("x2",head.px); line.setAttribute("y2",head.py);
+    arrow.setAttribute("points", arrowHeadPoints(tail, head, 12));
+    hit.style.cursor="grab";
+    hit.style.pointerEvents = state.dragIdx===null ? "stroke" : "none";
+  });
+  renderDecomposition();
+}
+const PAR_OFFSET_M = 0.9; // world-units offset that lifts the parallel-projection line clear of V1's own arrow
+function renderDecomposition(){
+  const parLine=document.getElementById("parLine"), perpLine=document.getElementById("perpLine"), rightAngle=document.getElementById("rightAngle");
+  const parTick1=document.getElementById("parTick1"), parTick2=document.getElementById("parTick2");
+  const bothPlaced = state.placed[0] && state.placed[1];
+  if(!bothPlaced || (!state.showParallel && !state.showPerp)){
+    parLine.style.display="none"; perpLine.style.display="none"; rightAngle.style.display="none";
+    parTick1.style.display="none"; parTick2.style.display="none";
+    return;
+  }
+  const [v1,v2]=state.problem.vectors;
+  const {parallel, perpendicular} = decompose2D(v1,v2);
+  const origin=toPx(0,0), footPx=toPx(parallel.x, parallel.y), tipPx=toPx(v2.trueAx, v2.trueAy);
+  if(state.showParallel){
+    // Offset the whole projection segment to one side of V1's line (perpendicular to V1),
+    // choosing the side away from where V2's perpendicular leftover sits, so the two
+    // overlay pieces never cross. Thin tie lines connect the offset segment back to the
+    // true origin and true foot point so it still reads as "this is V1's own axis."
+    const magV1 = Math.hypot(v1.trueAx, v1.trueAy) || 1;
+    const u1 = {x:v1.trueAx/magV1, y:v1.trueAy/magV1};
+    const perp1 = {x:-u1.y, y:u1.x};
+    const perpMag = Math.hypot(perpendicular.x, perpendicular.y);
+    const perpUnit = perpMag ? {x:perpendicular.x/perpMag, y:perpendicular.y/perpMag} : {x:perp1.x, y:perp1.y};
+    const side = (perp1.x*perpUnit.x + perp1.y*perpUnit.y) >= 0 ? -1 : 1;
+    const offX = side*perp1.x*PAR_OFFSET_M, offY = side*perp1.y*PAR_OFFSET_M;
+    const originOff = toPx(offX, offY), footOff = toPx(parallel.x+offX, parallel.y+offY);
+    parLine.setAttribute("x1",originOff.px); parLine.setAttribute("y1",originOff.py);
+    parLine.setAttribute("x2",footOff.px); parLine.setAttribute("y2",footOff.py);
+    parLine.style.display="";
+    parTick1.setAttribute("x1",origin.px); parTick1.setAttribute("y1",origin.py);
+    parTick1.setAttribute("x2",originOff.px); parTick1.setAttribute("y2",originOff.py);
+    parTick1.style.display="";
+    parTick2.setAttribute("x1",footPx.px); parTick2.setAttribute("y1",footPx.py);
+    parTick2.setAttribute("x2",footOff.px); parTick2.setAttribute("y2",footOff.py);
+    parTick2.style.display="";
+  } else { parLine.style.display="none"; parTick1.style.display="none"; parTick2.style.display="none"; }
+  if(state.showPerp){
+    perpLine.setAttribute("x1",footPx.px); perpLine.setAttribute("y1",footPx.py);
+    perpLine.setAttribute("x2",tipPx.px); perpLine.setAttribute("y2",tipPx.py);
+    perpLine.style.display="";
+    // small right-angle marker at the foot, oriented along V1's direction and the perpendicular
+    const along = Math.hypot(v1.trueAx,v1.trueAy) ? {x:v1.trueAx/Math.hypot(v1.trueAx,v1.trueAy), y:v1.trueAy/Math.hypot(v1.trueAx,v1.trueAy)} : {x:1,y:0};
+    const s = 10/SCALE; // ~10px in metres
+    const sign = parallel.x*v1.trueAx+parallel.y*v1.trueAy >= 0 ? -1 : 1; // marker points back toward origin side
+    const p1 = toPx(parallel.x - sign*along.x*s, parallel.y - sign*along.y*s);
+    const perpUnit = Math.hypot(perpendicular.x,perpendicular.y) ? {x:perpendicular.x/Math.hypot(perpendicular.x,perpendicular.y), y:perpendicular.y/Math.hypot(perpendicular.x,perpendicular.y)} : {x:0,y:1};
+    const p2 = toPx(parallel.x - sign*along.x*s + perpUnit.x*s, parallel.y - sign*along.y*s + perpUnit.y*s);
+    const p3 = toPx(parallel.x + perpUnit.x*s, parallel.y + perpUnit.y*s);
+    rightAngle.setAttribute("d", `M ${p1.px} ${p1.py} L ${p2.px} ${p2.py} L ${p3.px} ${p3.py}`);
+    rightAngle.style.display="";
+  } else { perpLine.style.display="none"; rightAngle.style.display="none"; }
+}
+
+function svgPxFromEvent(evt){
+  const rect=svg.getBoundingClientRect();
+  const scaleX=VB_W/rect.width, scaleY=VB_H/rect.height;
+  let px=(evt.clientX-rect.left)*scaleX, py=(evt.clientY-rect.top)*scaleY;
+  px=Math.max(-60, Math.min(VB_W+60, px));
+  py=Math.max(-60, Math.min(VB_H+60, py));
+  return {px,py};
+}
+svg.addEventListener("pointerdown",(e)=>{
+  const el=e.target;
+  if(!el.id || !el.id.startsWith("hit-")) return;
+  const idx=Number(el.id.slice(4));
+  state.dragIdx=idx;
+  state.dragPx=svgPxFromEvent(e);
+  el.setPointerCapture(e.pointerId);
+  el.style.cursor="grabbing";
+  render2D();
+});
+svg.addEventListener("pointermove",(e)=>{
+  if(state.dragIdx===null) return;
+  state.dragPx=svgPxFromEvent(e);
+  render2D();
+});
+window.addEventListener("pointerup",()=>{
+  if(state.dragIdx===null || state.dims!==2) return;
+  const idx=state.dragIdx;
+  const overGrid = state.dragPx.py >= TRAY_H;
+  state.placed[idx]=overGrid;
+  state.dragIdx=null; state.dragPx=null;
+  render2D();
+  updateHint2D();
+  updateCheckEnabled();
+});
+
+// ---- 3D isometric sketch (static) ------------------------------------------
+const isoSvg=document.getElementById("iso");
+const ISO_C={px:220, py:250}, ISO_SCALE=26;
+const ISO_X={x:-Math.cos(Math.PI/6), y:Math.sin(Math.PI/6)};
+const ISO_Y={x:Math.cos(Math.PI/6), y:Math.sin(Math.PI/6)};
+const ISO_Z={x:0, y:-1};
+function isoProject(x,y,z){
+  return { px: ISO_C.px + (x*ISO_X.x + y*ISO_Y.x + z*ISO_Z.x)*ISO_SCALE,
+           py: ISO_C.py + (x*ISO_X.y + y*ISO_Y.y + z*ISO_Z.y)*ISO_SCALE };
+}
+function renderIso3D(){
+  isoSvg.innerHTML="";
+  const origin=isoProject(0,0,0);
+  const axisLen=7.5;
+  [[ISO_X,"x"],[ISO_Y,"y"],[ISO_Z,"z"]].forEach(([dir,label])=>{
+    const tip={px:origin.px+dir.x*axisLen*ISO_SCALE, py:origin.py+dir.y*axisLen*ISO_SCALE};
+    const line=document.createElementNS(SVG_NS,"line");
+    line.setAttribute("x1",origin.px); line.setAttribute("y1",origin.py); line.setAttribute("x2",tip.px); line.setAttribute("y2",tip.py);
+    line.setAttribute("stroke","var(--line-strong)"); line.setAttribute("stroke-width","1.5");
+    isoSvg.appendChild(line);
+    const t=document.createElementNS(SVG_NS,"text");
+    t.setAttribute("x",tip.px + dir.x*14); t.setAttribute("y",tip.py + dir.y*14 + 4);
+    t.setAttribute("font-family","Fraunces, serif"); t.setAttribute("font-style","italic"); t.setAttribute("font-size","15");
+    t.setAttribute("fill","var(--ink-muted)"); t.setAttribute("text-anchor","middle"); t.textContent=label;
+    isoSvg.appendChild(t);
+  });
+  const originDot=document.createElementNS(SVG_NS,"circle");
+  originDot.setAttribute("cx",origin.px); originDot.setAttribute("cy",origin.py); originDot.setAttribute("r",4);
+  originDot.setAttribute("fill","var(--ink)");
+  isoSvg.appendChild(originDot);
+
+  state.problem.vectors.forEach((v)=>{
+    const tip=isoProject(v.x,v.y,v.z);
+    const line=document.createElementNS(SVG_NS,"line");
+    line.setAttribute("x1",origin.px); line.setAttribute("y1",origin.py); line.setAttribute("x2",tip.px); line.setAttribute("y2",tip.py);
+    line.setAttribute("stroke", COLOR_VAR[v.colorKey]); line.setAttribute("stroke-width","4.5"); line.setAttribute("stroke-linecap","round");
+    isoSvg.appendChild(line);
+    const arrow=document.createElementNS(SVG_NS,"polygon");
+    arrow.setAttribute("points", arrowHeadPoints(origin, tip, 11));
+    arrow.setAttribute("fill", COLOR_VAR[v.colorKey]);
+    isoSvg.appendChild(arrow);
+  });
+}
+
+// ---- notation rendering -----------------------------------------------------
+function magDirHTML(r,theta){
+  const mm=magDirNotation(r,theta);
+  return `<span class="num">${mm.r}</span><span class="unit">m</span><span class="op">@</span><span class="num">${mm.theta}</span><span class="unit deg">°</span>`;
+}
+function unitVecHTML2(ax,ay){
+  const x=signAndNumber(ax), y=signAndNumber(ay);
+  return `<span class="x-part"><span class="sign num">${x.sign}</span><span class="num">${x.number}</span><span class="unit">m</span><span class="sym">î</span></span>`+
+         `<span class="op">+</span>`+
+         `<span class="y-part"><span class="sign num">${y.sign}</span><span class="num">${y.number}</span><span class="unit">m</span><span class="sym">ĵ</span></span>`;
+}
+function unitVecHTML3(v){
+  const x=signAndInt(v.x), y=signAndInt(v.y), z=signAndInt(v.z);
+  return `<span class="x-part"><span class="sign num">${x.sign}</span><span class="num">${x.number}</span><span class="unit">m</span><span class="sym">î</span></span>`+
+         `<span class="op">+</span>`+
+         `<span class="y-part"><span class="sign num">${y.sign}</span><span class="num">${y.number}</span><span class="unit">m</span><span class="sym">ĵ</span></span>`+
+         `<span class="op">+</span>`+
+         `<span class="z-part"><span class="sign num">${z.sign}</span><span class="num">${z.number}</span><span class="unit">m</span><span class="sym">k̂</span></span>`;
+}
+
+const givenList2D=document.getElementById("givenList2D"), givenList3D=document.getElementById("givenList3D");
+function renderGivenList(){
+  const target = state.dims===2 ? givenList2D : givenList3D;
+  target.innerHTML="";
+  state.problem.vectors.forEach((v)=>{
+    const row=document.createElement("div");
+    row.className="given-line";
+    row.style.color=COLOR_VAR[v.colorKey];
+    row.innerHTML = state.dims===3 ? unitVecHTML3(v) : (state.problem.notation==="unitvec" ? unitVecHTML2(v.dispAx, v.dispAy) : magDirHTML(v.r, v.theta));
+    target.appendChild(row);
+  });
+}
+
+const SIGN_OPTIONS = `<option value="" disabled selected>?</option><option value="+">+</option><option value="−">−</option>`;
+const dotLine2D=document.getElementById("dotLine2D"), crossLine2D=document.getElementById("crossLine2D");
+const dotLine3D=document.getElementById("dotLine3D"), crossLine3D=document.getElementById("crossLine3D");
+function m2Unit(){ return `<span class="unit">m<sup>2</sup></span>`; }
+function renderAnswerBlanks(){
+  if(state.dims===2){
+    dotLine2D.innerHTML = `<input class="blank" id="in-dot" inputmode="decimal" placeholder="0.0">${m2Unit()}`;
+    crossLine2D.innerHTML =
+      `<select class="sign-select" id="csc" data-k="csc">${SIGN_OPTIONS}</select>`+
+      `<input class="blank" id="in-cross" inputmode="decimal" placeholder="0.0">${m2Unit()}<span class="sym">k̂</span>`;
+  } else {
+    dotLine3D.innerHTML = `<input class="blank" id="in-dot3" inputmode="decimal" placeholder="0.0">${m2Unit()}`;
+    crossLine3D.innerHTML =
+      `<span class="x-part"><select class="sign-select" id="csx" data-k="csx">${SIGN_OPTIONS}</select>`+
+      `<input class="blank" id="in-cx" inputmode="decimal" placeholder="0.0">${m2Unit()}<span class="sym">î</span></span>`+
+      `<span class="op">+</span>`+
+      `<span class="y-part"><select class="sign-select" id="csy" data-k="csy">${SIGN_OPTIONS}</select>`+
+      `<input class="blank" id="in-cy" inputmode="decimal" placeholder="0.0">${m2Unit()}<span class="sym">ĵ</span></span>`+
+      `<span class="op">+</span>`+
+      `<span class="z-part"><select class="sign-select" id="csz" data-k="csz">${SIGN_OPTIONS}</select>`+
+      `<input class="blank" id="in-cz" inputmode="decimal" placeholder="0.0">${m2Unit()}<span class="sym">k̂</span></span>`;
+  }
+}
+
+// ---- toggles, hint, layout switching ----------------------------------------
+const toggleParallel=document.getElementById("toggleParallel"), togglePerp=document.getElementById("togglePerp");
+toggleParallel.addEventListener("click",()=>{ state.showParallel=!state.showParallel; toggleParallel.classList.toggle("on", state.showParallel); renderDecomposition(); });
+togglePerp.addEventListener("click",()=>{ state.showPerp=!state.showPerp; togglePerp.classList.toggle("on", state.showPerp); renderDecomposition(); });
+
+const graphHint=document.getElementById("graphHint");
+function updateHint2D(){
+  const n = (state.placed[0]?1:0) + (state.placed[1]?1:0);
+  if(n===0) graphHint.textContent="Drag either vector down — its tail snaps to the origin.";
+  else if(n===1) graphHint.textContent="Drag the other vector down too — both tails share the origin.";
+  else graphHint.textContent="Both vectors placed. Toggle ∥/⊥ below to see how they relate, then answer on the right.";
+}
+const checkBtn=document.getElementById("checkBtn");
+function updateCheckEnabled(){
+  checkBtn.disabled = state.dims===2 ? !(state.placed[0] && state.placed[1]) : false;
+}
+
+const dims2Row=document.getElementById("dims2Row"), dims3Row=document.getElementById("dims3Row");
+function applyDimsLayout(){
+  dims2Row.style.display = state.dims===2 ? "" : "none";
+  dims3Row.style.display = state.dims===3 ? "" : "none";
+}
+
+// ---- grading ------------------------------------------------------------
+function clearGradingClasses(){
+  ["in-dot","csc","in-cross","in-dot3","csx","in-cx","csy","in-cy","csz","in-cz"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove("correct","wrong");
+  });
+}
+function checkAnswer(){
+  let allCorrect=true;
+  function gradeNumber(id, trueVal, tol){
+    const el=document.getElementById(id);
+    const ok=withinAbsTolerance(el.value, trueVal, tol);
+    el.classList.remove("correct","wrong"); el.classList.add(ok?"correct":"wrong");
+    if(!ok) allCorrect=false;
+    return ok;
+  }
+  function gradeSign(id, expected){
+    const el=document.getElementById(id);
+    const ok=el.value===expected;
+    el.classList.remove("correct","wrong"); el.classList.add(ok?"correct":"wrong");
+    if(!ok) allCorrect=false;
+    return ok;
+  }
+  if(state.dims===2){
+    if(!(state.placed[0] && state.placed[1])) return;
+    const tol = state.problem.notation==="unitvec" ? UNITVEC_TOLERANCE : DOT_MAGDIR_TOLERANCE;
+    const ctol = state.problem.notation==="unitvec" ? UNITVEC_TOLERANCE : CROSS_MAGDIR_TOLERANCE;
+    gradeNumber("in-dot", state.problem.answer.dot, tol);
+    const cz = state.problem.answer.cross;
+    gradeSign("csc", cz>=0?"+":"−"); gradeNumber("in-cross", Math.abs(cz), ctol);
+  } else {
+    gradeNumber("in-dot3", state.problem.answer.dot, UNITVEC_3D_TOLERANCE);
+    const c=state.problem.answer.cross;
+    gradeSign("csx", c.x>=0?"+":"−"); gradeNumber("in-cx", Math.abs(c.x), UNITVEC_3D_TOLERANCE);
+    gradeSign("csy", c.y>=0?"+":"−"); gradeNumber("in-cy", Math.abs(c.y), UNITVEC_3D_TOLERANCE);
+    gradeSign("csz", c.z>=0?"+":"−"); gradeNumber("in-cz", Math.abs(c.z), UNITVEC_3D_TOLERANCE);
+  }
+  state.tally.total++;
+  if(allCorrect) state.tally.correct++;
+  updateTally();
+}
+const tallyEl=document.getElementById("tally");
+function updateTally(){ tallyEl.innerHTML = `<b>${state.tally.correct}/${state.tally.total}</b> correct`; }
+
+// ---- problem lifecycle --------------------------------------------------
+function newProblem(){
+  state.problem = state.dims===2 ? randomProblem2D(Math.random) : randomProblem3D(Math.random);
+  state.placed={0:false,1:false};
+  state.dragIdx=null; state.dragPx=null;
+  state.showParallel=false; state.showPerp=false;
+  toggleParallel.classList.remove("on"); togglePerp.classList.remove("on");
+  if(state.dims===2){ buildGraphStatic(); render2D(); updateHint2D(); }
+  else { renderIso3D(); }
+  renderGivenList();
+  renderAnswerBlanks();
+  clearGradingClasses();
+  updateCheckEnabled();
+}
+
+const dimsSeg=document.getElementById("dimsSeg");
+dimsSeg.addEventListener("click",(e)=>{
+  const btn=e.target.closest("button[data-dims]");
+  if(!btn) return;
+  state.dims=Number(btn.dataset.dims);
+  [...dimsSeg.children].forEach(b=>b.classList.toggle("active", b===btn));
+  applyDimsLayout();
+  newProblem();
+});
+document.getElementById("newProblemBtn").addEventListener("click", newProblem);
+checkBtn.addEventListener("click", checkAnswer);
+
+// ---- rules dialog ------------------------------------------------------
+const rulesDialog=document.getElementById("rulesDialog");
+const rulesBody=document.getElementById("rulesBody");
+const rulesFade=document.getElementById("rulesFade");
+function updateRulesFade(){
+  const atEnd = rulesBody.scrollTop + rulesBody.clientHeight >= rulesBody.scrollHeight - 2;
+  rulesFade.classList.toggle("hidden", atEnd);
+}
+document.getElementById("rulesBtn").addEventListener("click", ()=>{ rulesDialog.showModal(); updateRulesFade(); });
+document.getElementById("rulesCloseBtn").addEventListener("click", ()=> rulesDialog.close());
+rulesBody.addEventListener("scroll", updateRulesFade);
+
+// ---- init ----------------------------------------------------------------
+applyDimsLayout();
+newProblem();
+
+// ---- test hook -------------------------------------------------------------
+window.__vm = {
+  getState: () => ({
+    dims: state.dims, placed: {...state.placed}, tally: {...state.tally},
+    showParallel: state.showParallel, showPerp: state.showPerp,
+    problem: JSON.parse(JSON.stringify(state.problem)),
+  }),
+  setDims: (d) => { state.dims=d; [...dimsSeg.children].forEach(b=>b.classList.toggle("active", Number(b.dataset.dims)===d)); applyDimsLayout(); newProblem(); },
+  newProblem,
+  place: (idx) => { state.placed[idx]=true; render2D(); updateHint2D(); updateCheckEnabled(); },
+  unplace: (idx) => { state.placed[idx]=false; render2D(); updateHint2D(); updateCheckEnabled(); },
+  placeAll: () => { state.placed[0]=true; state.placed[1]=true; render2D(); updateHint2D(); updateCheckEnabled(); },
+  setToggle: (which, on) => {
+    if(which==="parallel"){ state.showParallel=on; toggleParallel.classList.toggle("on", on); }
+    else { state.showPerp=on; togglePerp.classList.toggle("on", on); }
+    renderDecomposition();
+  },
+  setAnswer: (vals) => {
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el && v!==undefined) el.value=v; };
+    set("in-dot",vals.dot); set("in-cross",vals.cross); set("in-dot3",vals.dot3);
+    set("in-cx",vals.cx); set("in-cy",vals.cy); set("in-cz",vals.cz);
+    if(vals.csx) set("csx",vals.csx); if(vals.csy) set("csy",vals.csy); if(vals.csz) set("csz",vals.csz);
+    if(vals.csc) set("csc",vals.csc);
+  },
+  checkAnswer,
+  openRules: () => rulesDialog.showModal(),
+  model: { randomProblem2D, randomProblem3D, decompose2D, dot2D, cross2D, dot3D, cross3D, withinAbsTolerance },
+};
+</script>
+
+</body>
+</html>
