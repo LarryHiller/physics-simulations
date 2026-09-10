@@ -1,0 +1,760 @@
+<title>Optimization Problems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --obj1:#1a8f7b; --obj2:#c4791e; --obj3:#3163b0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,Georgia,"Iowan Old Style",serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+header.top{border-bottom:1px solid var(--line-strong);padding-bottom:18px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--ink-muted)}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif;font-weight:600;font-size:32px;margin:6px 0 8px;text-wrap:balance}
+.desc{color:var(--ink-soft);font-size:15px;max-width:70ch}
+
+.toolbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin:22px 0 22px;
+}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden}
+.seg button{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 16px;border:none;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+.seg button.active{background:var(--accent);color:var(--accent-ink)}
+.btn{
+  font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:14px;padding:10px 16px;
+  border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tally{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink-soft)}
+.tally b{color:var(--ink);font-size:15px}
+
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow);padding:20px;margin-bottom:18px;
+}
+.panel h2.ph{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--ink-muted);margin:0 0 12px;
+}
+.prompt{font-family:"Fraunces",serif;font-size:17.5px;line-height:1.55;margin:0 0 16px;color:var(--ink)}
+.prompt b{font-weight:600}
+
+.diagwrap{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-bottom:18px}
+svg.diagram{
+  width:auto;height:auto;max-width:100%;max-height:260px;display:block;flex:0 0 auto;
+  background:var(--surface-alt);border:1px solid var(--line);border-radius:10px;
+}
+.diagram .outline{fill:none;stroke:var(--ink-soft);stroke-width:2.5}
+.diagram .dim{stroke:var(--ink-muted);stroke-width:1.4}
+.diagram .dimlabel{font-family:"Fraunces",serif;font-style:italic;font-size:17px;fill:var(--ink)}
+.diagram .hidden-edge{fill:none;stroke:var(--ink-muted);stroke-width:1.6;stroke-dasharray:4 3}
+.givencaption{
+  font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink-soft);
+  background:var(--surface-alt);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+  align-self:center; min-width:180px;
+}
+.givencaption b{color:var(--ink);font-size:15px}
+
+.stagegrid{display:flex;flex-direction:column;gap:20px}
+.stage{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-alt)}
+.stage .stagelabel{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--ink-muted);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.stagenum{
+  display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line-strong);font-size:11.5px;color:var(--ink-soft);
+}
+.stagetext{font-size:14.5px;color:var(--ink-soft);margin-bottom:12px;line-height:1.5}
+.answerrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+select.eqbox{
+  font-family:"Fraunces",serif;font-size:16px;padding:9px 12px;border-radius:8px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);min-width:220px;
+}
+select.eqbox.good{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--surface))}
+select.eqbox.bad{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, var(--surface))}
+.eqlabel{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-muted);min-width:110px}
+
+input.slopebox{
+  font-family:"IBM Plex Mono",monospace;font-size:16px;width:110px;padding:9px 10px;
+  border-radius:8px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+input.slopebox.good{border-color:var(--good);box-shadow:0 0 0 2px color-mix(in srgb, var(--good) 22%, transparent)}
+input.slopebox.bad{border-color:var(--critical);box-shadow:0 0 0 2px color-mix(in srgb, var(--critical) 18%, transparent)}
+.unitlabel{font-family:"IBM Plex Mono",monospace;font-size:14.5px;color:var(--ink-soft)}
+
+select.choicebox{
+  font-family:"IBM Plex Sans",sans-serif;font-size:15px;padding:9px 12px;border-radius:8px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);min-width:160px;
+}
+select.choicebox.good{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--surface))}
+select.choicebox.bad{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, var(--surface))}
+
+.mathgrid{display:grid;gap:14px 18px;align-items:baseline;overflow-x:auto;padding:6px 2px}
+.mathgrid .rowlabel{
+  font-family:"Fraunces",serif;font-style:italic;font-size:19px;color:var(--ink-soft);
+  padding-right:10px;white-space:nowrap;
+}
+.term{display:flex;align-items:baseline;font-family:"Fraunces",serif;font-size:19px;white-space:nowrap}
+.term .op{color:var(--ink-muted);margin:0 4px}
+.term input.coef,.term input.exp{
+  font-family:"IBM Plex Mono",monospace;text-align:center;border-radius:6px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);
+}
+.term input.coef{width:56px;font-size:16.5px;padding:6px 2px;font-variant-numeric:tabular-nums}
+.term sup{font-size:.75em;top:-.7em;position:relative}
+.term input.exp{width:32px;font-size:13.5px;padding:2px 1px}
+.term input:disabled,.term select:disabled{opacity:.7;cursor:default}
+.term select.signbox{
+  font-family:"IBM Plex Mono",monospace;font-size:15px;border-radius:6px;border:1.5px solid var(--line-strong);
+  background:var(--surface);color:var(--ink-soft);padding:5px 1px;width:34px;text-align:center;margin-right:3px;
+}
+.term input.good,.term select.good{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--surface))}
+.term input.bad,.term select.bad{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, var(--surface))}
+
+.feedback{font-family:"IBM Plex Mono",monospace;font-size:13.5px;margin-top:4px}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--critical)}
+.donebar{margin-top:6px;display:flex;align-items:center;gap:10px}
+
+details.notebook{margin-top:8px}
+details.notebook summary{
+  cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-muted);padding:14px 0;
+}
+details.notebook .nbbody{padding:6px 2px 14px;color:var(--ink-soft);font-size:14.5px;line-height:1.7}
+details.notebook .nbbody ol{padding-left:22px}
+
+@media (max-width:430px){
+  .answerrow{gap:8px}
+  .eqlabel,.unitlabel{min-width:0}
+  .mathgrid{gap:8px 4px}
+  .diagwrap{flex-direction:column}
+  h1{font-size:26px}
+}
+</style>
+
+<div class="frame">
+  <header class="top">
+    <div class="eyebrow">AP Physics · Calculus Toolkit</div>
+    <h1>Optimization Problems</h1>
+    <p class="desc">Two equations, too many variables. Reduce to one, differentiate, and set it to zero to find the true maximum or minimum — the technique behind every optimization problem.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffseg">
+      <button id="diff-easy" class="active" onclick="setDifficulty('easy')">Easy</button>
+      <button id="diff-hard" onclick="setDifficulty('hard')">Hard</button>
+    </div>
+    <button class="btn" onclick="newProblem()">New problem</button>
+    <div class="tally">Solved this session: <b id="tallyval">0</b></div>
+  </div>
+
+  <section class="panel">
+    <h2 class="ph">Optimization</h2>
+    <p class="prompt" id="wordProblem"></p>
+    <div class="diagwrap" id="diagWrap"></div>
+    <div class="stagegrid" id="stages"></div>
+    <div class="donebar" id="allDone" style="display:none">
+      <span class="feedback good">All correct — nice work.</span>
+      <button class="btn primary" onclick="newProblem()">Next problem</button>
+    </div>
+  </section>
+
+  <details class="notebook">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="nbbody">
+      <ol>
+        <li>A student wants to find the turning point of A = 12x² + 8 by setting 0 = 12x² + 8 and solving. What's wrong with that idea?</li>
+        <li>Suppose a point on a graph has a slope of zero. How could you tell whether it's a local minimum or a local maximum? Why does the word "local" matter?</li>
+        <li>Optimization problems often turn up more than one place where the derivative is zero, or more than one algebraic root. Does that mean there's more than one correct answer? What are some reasons to reject a root?</li>
+        <li>For the cylinder problem, why do we solve the constraint for h and substitute, instead of just differentiating both equations separately and combining the derivatives?</li>
+        <li>The fencing problem always comes out with x = y, no matter what the total amount of fencing is. Why does that make sense — what shape is that describing?</li>
+        <li>Why does the box problem have a maximum volume, but the cylinder problem has a minimum surface area, for the same style of setup (one constraint, one quantity to optimize)?</li>
+      </ol>
+    </div>
+  </details>
+</div>
+
+<script>
+"use strict";
+/* ================= math model (mirrors build scripts/model.js) ================= */
+function randInt(min,max){ return min+Math.floor(Math.random()*(max-min+1)); }
+function choice(arr){ return arr[randInt(0,arr.length-1)]; }
+function toggleGood(el,good){
+  el.classList.remove("good","bad");
+  if(good===true) el.classList.add("good");
+  else if(good===false) el.classList.add("bad");
+}
+// Derived in build scripts/derive-tolerance.js: the brute-forced + analytically
+// swept worst case for a correctly-rounded 2-significant-figure value is
+// 4.762%; REL_TOL is that worst case plus real margin. ABS_FLOOR guards values
+// near zero (none of this sim's graded values come out anywhere near it, but
+// it's cheap insurance).
+const REL_TOL=0.06, ABS_FLOOR=0.02;
+function withinTol(actual,expected){
+  const tol=Math.max(ABS_FLOOR, REL_TOL*Math.abs(expected));
+  return Math.abs(actual-expected)<=tol;
+}
+
+function evalTerms(terms,x){ return terms.reduce((s,t)=>s+t.coef*Math.pow(x,t.exp),0); }
+function diffTerms(terms){ return terms.filter(t=>t.exp!==0).map(t=>({coef:t.coef*t.exp, exp:t.exp-1})); }
+
+const Fencing={
+  key:"fencing", label:"Fencing",
+  generate(){ const P=2*randInt(20,150); return {family:"fencing", P, unitLen:"m", unitArea:"m²"}; },
+  wordProblem(p){ return `A farmer has <b>${p.P} m</b> of fencing and wants to enclose the largest possible rectangular grazing yard. Let <i>x</i> and <i>y</i> be the side lengths, and <i>A</i> be the enclosed area.`; },
+  constraintChoices(p){ return [
+    {text:`2x + 2y = ${p.P}`, correct:true},
+    {text:`x + y = ${p.P}`, correct:false},
+    {text:`2x + y = ${p.P}`, correct:false},
+    {text:`xy = ${p.P}`, correct:false},
+  ]; },
+  objectiveChoices(){ return [
+    {text:`A = xy`, correct:true},
+    {text:`A = 2xy`, correct:false},
+    {text:`A = x + y`, correct:false},
+    {text:`A = x²y`, correct:false},
+  ]; },
+  independentVar:"x", dependentVar:"y", objectiveSymbol:"A",
+  reduceTerms(p){ return [{coef:p.P/2, exp:0}, {coef:-1, exp:1}]; },
+  objectiveTerms(p){ return [{coef:p.P/2, exp:1}, {coef:-1, exp:2}]; },
+  classify:"max",
+  solveCritical(p){ return p.P/4; },
+  backSubstitute(p){
+    const x=this.solveCritical(p);
+    const y=evalTerms(this.reduceTerms(p), x);
+    return {independent:x, dependent:y, objective:x*y};
+  },
+  finalUnits(p){ return {dependent:p.unitLen, objective:p.unitArea}; },
+  finalLabels(){ return {dependent:"y", objective:"Maximum area A"}; },
+};
+
+const Box={
+  key:"box", label:"Box",
+  generate(){ const S=randInt(6,60); return {family:"box", S, unitLen:"m", unitArea:"m²", unitVol:"m³"}; },
+  wordProblem(p){ return `A box with an open top and a square base of side <i>x</i> is made from <b>${p.S} m²</b> of material. Let <i>h</i> be the height and <i>V</i> be the volume. Find the dimensions that maximize the volume.`; },
+  constraintChoices(p){ return [
+    {text:`S = x² + 4xh`, correct:true},
+    {text:`S = 2x² + 4xh`, correct:false},
+    {text:`S = 4x² + xh`, correct:false},
+    {text:`S = x² + xh`, correct:false},
+  ]; },
+  objectiveChoices(){ return [
+    {text:`V = x²h`, correct:true},
+    {text:`V = xh²`, correct:false},
+    {text:`V = 4x²h`, correct:false},
+    {text:`V = x³h`, correct:false},
+  ]; },
+  independentVar:"x", dependentVar:"h", objectiveSymbol:"V",
+  reduceTerms(p){ return [{coef:p.S/4, exp:-1}, {coef:-1/4, exp:1}]; },
+  objectiveTerms(p){ return [{coef:p.S/4, exp:1}, {coef:-1/4, exp:3}]; },
+  classify:"max",
+  solveCritical(p){ return Math.sqrt(p.S/3); },
+  backSubstitute(p){
+    const x=this.solveCritical(p);
+    const h=evalTerms(this.reduceTerms(p), x);
+    return {independent:x, dependent:h, objective:x*x*h};
+  },
+  finalUnits(p){ return {dependent:p.unitLen, objective:p.unitVol}; },
+  finalLabels(){ return {dependent:"h", objective:"Maximum volume V"}; },
+};
+
+const Cylinder={
+  key:"cylinder", label:"Cylinder",
+  generate(){ const V=randInt(2,30)*100; return {family:"cylinder", V, unitLen:"cm", unitArea:"cm²", unitVol:"cm³"}; },
+  wordProblem(p){ return `A closed cylindrical container needs to hold <b>${p.V} cm³</b> of liquid. Let <i>r</i> be the radius, <i>h</i> the height, and <i>S</i> the total surface area of aluminum used. Find the dimensions that use the least aluminum.`; },
+  constraintChoices(p){ return [
+    {text:`V = πr²h`, correct:true},
+    {text:`V = 2πr²h`, correct:false},
+    {text:`V = πrh²`, correct:false},
+    {text:`V = πr² + h`, correct:false},
+  ]; },
+  objectiveChoices(){ return [
+    {text:`S = 2πr² + 2πrh`, correct:true},
+    {text:`S = 2πr² + πrh`, correct:false},
+    {text:`S = πr² + 2πrh`, correct:false},
+    {text:`S = 4πr² + 2πrh`, correct:false},
+  ]; },
+  independentVar:"r", dependentVar:"h", objectiveSymbol:"S",
+  reduceTerms(p){ return [{coef:p.V/Math.PI, exp:-2}]; },
+  objectiveTerms(p){ return [{coef:2*Math.PI, exp:2}, {coef:2*p.V, exp:-1}]; },
+  classify:"min",
+  solveCritical(p){ return Math.cbrt(p.V/(2*Math.PI)); },
+  backSubstitute(p){
+    const r=this.solveCritical(p);
+    const h=evalTerms(this.reduceTerms(p), r);
+    return {independent:r, dependent:h, objective:2*Math.PI*r*r+2*Math.PI*r*h};
+  },
+  finalUnits(p){ return {dependent:p.unitLen, objective:p.unitArea}; },
+  finalLabels(){ return {dependent:"h", objective:"Minimum surface area S"}; },
+};
+
+const FAMILIES={fencing:Fencing, box:Box, cylinder:Cylinder};
+const EASY_FAMILIES=["fencing"];
+const HARD_FAMILIES=["fencing","box","cylinder"];
+
+/* ================= diagrams ================= */
+const SVGNS="http://www.w3.org/2000/svg";
+function svgEl(tag,attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+function dimLine(x1,y1,x2,y2){ return svgEl("line",{class:"dim",x1,y1,x2,y2,"marker-start":"url(#arrow)","marker-end":"url(#arrow)"}); }
+function arrowDefs(svg){
+  const defs=svgEl("defs",{});
+  const marker=svgEl("marker",{id:"arrow",markerWidth:8,markerHeight:8,refX:4,refY:4,orient:"auto"});
+  const path=svgEl("path",{d:"M0,1 L7,4 L0,7 Z",fill:"var(--ink-muted)"});
+  marker.appendChild(path); defs.appendChild(marker); svg.appendChild(defs);
+}
+function labelText(x,y,text,anchor){ const t=svgEl("text",{class:"dimlabel",x,y,"text-anchor":anchor||"middle"}); t.textContent=text; return t; }
+function diagramFor(family){
+  const svg=svgEl("svg",{class:"diagram",viewBox:"0 0 300 220",width:300,height:220});
+  arrowDefs(svg);
+  if(family==="fencing"){
+    svg.appendChild(svgEl("rect",{class:"outline",x:60,y:40,width:170,height:110}));
+    svg.appendChild(dimLine(60,168,230,168));
+    svg.appendChild(labelText(145,188,"x"));
+    svg.appendChild(dimLine(250,40,250,150));
+    svg.appendChild(labelText(268,98,"y"));
+  } else if(family==="box"){
+    // open-top box: front face + a parallelogram "lid" edge to suggest depth
+    const fx=70,fy=70,fw=120,fh=90,dx=40,dy=-26;
+    svg.appendChild(svgEl("polygon",{class:"outline", points:`${fx},${fy} ${fx+fw},${fy} ${fx+fw},${fy+fh} ${fx},${fy+fh}`}));
+    svg.appendChild(svgEl("line",{class:"hidden-edge",x1:fx,y1:fy,x2:fx+dx,y2:fy+dy}));
+    svg.appendChild(svgEl("line",{class:"hidden-edge",x1:fx+fw,y1:fy,x2:fx+fw+dx,y2:fy+dy}));
+    svg.appendChild(svgEl("line",{class:"hidden-edge",x1:fx+dx,y1:fy+dy,x2:fx+fw+dx,y2:fy+dy}));
+    svg.appendChild(dimLine(fx,fy+fh+20,fx+fw,fy+fh+20));
+    svg.appendChild(labelText(fx+fw/2,fy+fh+40,"x (square base)"));
+    svg.appendChild(dimLine(fx-18,fy,fx-18,fy+fh));
+    svg.appendChild(labelText(fx-30,fy+fh/2+5,"h","end"));
+  } else if(family==="cylinder"){
+    const cx=150,topY=55,botY=170,rx=70,ry=16;
+    svg.appendChild(svgEl("ellipse",{class:"outline",cx,cy:topY,rx,ry}));
+    svg.appendChild(svgEl("line",{class:"outline",x1:cx-rx,y1:topY,x2:cx-rx,y2:botY}));
+    svg.appendChild(svgEl("line",{class:"outline",x1:cx+rx,y1:topY,x2:cx+rx,y2:botY}));
+    svg.appendChild(svgEl("path",{class:"outline",d:`M ${cx-rx} ${botY} A ${rx} ${ry} 0 0 0 ${cx+rx} ${botY}`}));
+    svg.appendChild(svgEl("path",{class:"hidden-edge",d:`M ${cx-rx} ${topY} A ${rx} ${ry} 0 0 0 ${cx+rx} ${topY}`}));
+    svg.appendChild(dimLine(cx,topY,cx+rx,topY));
+    svg.appendChild(labelText(cx+rx/2,topY-8,"r"));
+    svg.appendChild(dimLine(cx-rx-20,topY,cx-rx-20,botY));
+    svg.appendChild(labelText(cx-rx-32,(topY+botY)/2+5,"h","end"));
+  }
+  return svg;
+}
+
+/* ================= term-box rendering ================= */
+function buildTermInputs(term,stageKey,idx,isFirst,varName){
+  const wrap=document.createElement("span");
+  wrap.className="term";
+  if(!isFirst){ const plus=document.createElement("span"); plus.className="op"; plus.textContent="+"; wrap.appendChild(plus); }
+  const signSel=document.createElement("select");
+  signSel.className="signbox"; signSel.dataset.k=`${stageKey}-${idx}-sign`;
+  signSel.innerHTML=`<option value="1" selected>+</option><option value="-1">−</option>`;
+  wrap.appendChild(signSel);
+  const coefInput=document.createElement("input");
+  coefInput.type="text"; coefInput.className="coef"; coefInput.dataset.k=`${stageKey}-${idx}-coef`; coefInput.autocomplete="off"; coefInput.placeholder="0.0";
+  wrap.appendChild(coefInput);
+  wrap.appendChild(document.createTextNode(varName));
+  const sup=document.createElement("sup");
+  const expInput=document.createElement("input");
+  expInput.type="text"; expInput.className="exp"; expInput.dataset.k=`${stageKey}-${idx}-exp`; expInput.autocomplete="off"; expInput.placeholder="n";
+  sup.appendChild(expInput);
+  wrap.appendChild(sup);
+  return wrap;
+}
+function termSpec(t){ return {coefSign:t.coef<0?-1:1, coefMag:Math.abs(t.coef), exp:t.exp}; }
+function checkTermBoxes(target,stageKey,i){
+  const spec=termSpec(target);
+  const signEl=document.querySelector(`[data-k="${stageKey}-${i}-sign"]`);
+  const coefEl=document.querySelector(`[data-k="${stageKey}-${i}-coef"]`);
+  const expEl=document.querySelector(`[data-k="${stageKey}-${i}-exp"]`);
+  if(!signEl||!coefEl||!expEl) return false;
+  const touched=coefEl.value.trim()!=="";
+  const typedMag=Number(coefEl.value);
+  const magOk=touched && Number.isFinite(typedMag) && withinTol(typedMag, spec.coefMag);
+  const signOk=Number(signEl.value)===spec.coefSign;
+  toggleGood(coefEl, touched?(magOk&&signOk):null); toggleGood(signEl, touched?(magOk&&signOk):null);
+  const expTouched=expEl.value.trim()!=="";
+  const expOk=expTouched && Number(expEl.value)===spec.exp;
+  toggleGood(expEl, expTouched?expOk:null);
+  return magOk && signOk && expOk;
+}
+function lockBoxes(stageKey){
+  document.querySelectorAll(`[data-k^="${stageKey}-"]`).forEach(el=>{ el.disabled=true; });
+}
+function buildTermGrid(rowLabel,terms,stageKey,varName){
+  const grid=document.createElement("div");
+  grid.className="mathgrid";
+  grid.style.gridTemplateColumns=`max-content repeat(${terms.length}, max-content)`;
+  const rl=document.createElement("div"); rl.className="rowlabel"; rl.textContent=rowLabel;
+  grid.appendChild(rl);
+  terms.forEach((t,i)=>{
+    const cell=document.createElement("div"); cell.className="term";
+    cell.appendChild(buildTermInputs(t,stageKey,i,i===0,varName));
+    grid.appendChild(cell);
+  });
+  return grid;
+}
+
+/* ================= equation-choice dropdowns ================= */
+function shuffled(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function fillEquationSelect(sel,choices){
+  const opts=shuffled(choices);
+  sel.innerHTML=`<option value="" disabled selected>choose…</option>`+
+    opts.map((c,i)=>`<option value="${i}" data-correct="${c.correct}">${c.text}</option>`).join("");
+}
+
+/* ================= app state ================= */
+const state={ difficulty:"easy", tally:0, problem:null, focus:null };
+
+function setDifficulty(d){
+  state.difficulty=d;
+  document.getElementById("diff-easy").classList.toggle("active", d==="easy");
+  document.getElementById("diff-hard").classList.toggle("active", d==="hard");
+  newProblem();
+}
+function newProblem(){
+  state.focus=null;
+  const pool = state.difficulty==="hard" ? HARD_FAMILIES : EASY_FAMILIES;
+  const fam = FAMILIES[choice(pool)];
+  const p = fam.generate();
+  state.problem = {
+    fam, p,
+    eqDone:false, reduceDone:false, subDone:false, derivDone:false,
+    criticalDone:false, classifyDone:false, backDone:false,
+  };
+  renderProblem();
+}
+function renderProblem(){
+  const {fam,p}=state.problem;
+  document.getElementById("wordProblem").innerHTML = fam.wordProblem(p);
+  const diagWrap=document.getElementById("diagWrap");
+  diagWrap.innerHTML="";
+  diagWrap.appendChild(diagramFor(fam.key));
+  const captionText = fam.key==="fencing" ? `Total fencing: <b>${p.P} ${p.unitLen}</b>`
+    : fam.key==="box" ? `Material available: <b>${p.S} ${p.unitArea}</b>`
+    : `Volume required: <b>${p.V} ${p.unitVol}</b>`;
+  const cap=document.createElement("div"); cap.className="givencaption"; cap.innerHTML=captionText;
+  diagWrap.appendChild(cap);
+
+  const stages=document.getElementById("stages");
+  stages.innerHTML="";
+  document.getElementById("allDone").style.display="none";
+  stages.appendChild(buildStage1());
+  restoreFocus();
+  wireAllInputs();
+  checkProblem();
+}
+
+/* ---- stage 1: pick the constraint and objective equations ---- */
+function buildStage1(){
+  const {fam,p}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-1";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">1</span>Set up the equations</div>
+    <div class="stagetext">Pick the equation that <b>relates</b> the variables (the constraint), and the equation for the <b>quantity to optimize</b> (the objective).</div>`;
+  const row1=document.createElement("div"); row1.className="answerrow"; row1.style.marginBottom="10px";
+  row1.innerHTML=`<span class="eqlabel">Constraint</span>`;
+  const constraintSel=document.createElement("select");
+  constraintSel.className="eqbox"; constraintSel.dataset.k="eq-constraint";
+  fillEquationSelect(constraintSel, fam.constraintChoices(p));
+  row1.appendChild(constraintSel);
+  stage.appendChild(row1);
+  const row2=document.createElement("div"); row2.className="answerrow";
+  row2.innerHTML=`<span class="eqlabel">Objective</span>`;
+  const objectiveSel=document.createElement("select");
+  objectiveSel.className="eqbox"; objectiveSel.dataset.k="eq-objective";
+  fillEquationSelect(objectiveSel, fam.objectiveChoices(p));
+  row2.appendChild(objectiveSel);
+  stage.appendChild(row2);
+  return stage;
+}
+function checkEqSelect(key){
+  const sel=document.querySelector(`[data-k="${key}"]`);
+  if(!sel) return false;
+  const touched=sel.value!=="";
+  const ok = touched && sel.options[sel.selectedIndex].dataset.correct==="true";
+  toggleGood(sel, touched?ok:null);
+  return ok;
+}
+
+/* ---- stage 2: reduce to one variable ---- */
+function buildStage2(){
+  const {fam,p}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-2";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">2</span>Reduce to one variable</div>
+    <div class="stagetext">Solve the constraint for <i>${fam.dependentVar}</i> in terms of <i>${fam.independentVar}</i>. Fill in each term's sign, size, and exponent on ${fam.independentVar} (use 0 for a constant term, 1 for plain ${fam.independentVar}).</div>`;
+  stage.appendChild(buildTermGrid(`${fam.dependentVar} =`, fam.reduceTerms(p), "red", fam.independentVar));
+  return stage;
+}
+
+/* ---- stage 3: substitute into the objective ---- */
+function buildStage3(){
+  const {fam,p}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-3";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">3</span>Substitute into the objective</div>
+    <div class="stagetext">Substitute that expression into the objective equation to write ${fam.objectiveSymbol} as a function of ${fam.independentVar} alone.</div>`;
+  stage.appendChild(buildTermGrid(`${fam.objectiveSymbol}(${fam.independentVar}) =`, fam.objectiveTerms(p), "sub", fam.independentVar));
+  return stage;
+}
+
+/* ---- stage 4: differentiate ---- */
+function buildStage4(){
+  const {fam,p}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-4";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">4</span>Differentiate</div>
+    <div class="stagetext">Take the derivative of ${fam.objectiveSymbol}(${fam.independentVar}) term by term.</div>`;
+  const derivTerms=diffTerms(fam.objectiveTerms(p));
+  stage.appendChild(buildTermGrid(`${fam.objectiveSymbol}'(${fam.independentVar}) =`, derivTerms, "der", fam.independentVar));
+  return stage;
+}
+
+/* ---- stage 5: solve the critical point ---- */
+function buildStage5(){
+  const {fam}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-5";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">5</span>Solve for the critical point</div>
+    <div class="stagetext">Set ${fam.objectiveSymbol}'(${fam.independentVar}) = 0 and solve for ${fam.independentVar}.</div>`;
+  const row=document.createElement("div"); row.className="answerrow";
+  row.innerHTML=`<span class="eqlabel">${fam.independentVar} =</span>`;
+  const input=document.createElement("input");
+  input.type="text"; input.className="slopebox"; input.dataset.k="critical-val"; input.placeholder="0.0"; input.autocomplete="off";
+  row.appendChild(input);
+  const unit=document.createElement("span"); unit.className="unitlabel"; unit.textContent=state.problem.p.unitLen;
+  row.appendChild(unit);
+  stage.appendChild(row);
+  return stage;
+}
+function checkStage5(){
+  const {fam,p}=state.problem;
+  const el=document.querySelector('[data-k="critical-val"]');
+  if(!el) return false;
+  const touched=el.value.trim()!=="";
+  const val=Number(el.value);
+  const ok=touched && Number.isFinite(val) && withinTol(val, fam.solveCritical(p));
+  toggleGood(el, touched?ok:null);
+  return ok;
+}
+
+/* ---- stage 6: classify max or min ---- */
+function buildStage6(){
+  const {fam}=state.problem;
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-6";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">6</span>Maximum or minimum?</div>
+    <div class="stagetext">Is this critical point a maximum or a minimum of ${fam.objectiveSymbol}?</div>`;
+  const row=document.createElement("div"); row.className="answerrow";
+  const sel=document.createElement("select");
+  sel.className="choicebox"; sel.dataset.k="classify-val";
+  sel.innerHTML=`<option value="" disabled selected>choose…</option><option value="max">Maximum</option><option value="min">Minimum</option>`;
+  row.appendChild(sel);
+  stage.appendChild(row);
+  return stage;
+}
+function checkStage6(){
+  const {fam}=state.problem;
+  const sel=document.querySelector('[data-k="classify-val"]');
+  if(!sel) return false;
+  const touched=sel.value!=="";
+  const ok=touched && sel.value===fam.classify;
+  toggleGood(sel, touched?ok:null);
+  return ok;
+}
+
+/* ---- stage 7: back-substitute for the final answer ---- */
+function buildStage7(){
+  const {fam,p}=state.problem;
+  const units=fam.finalUnits(p), labels=fam.finalLabels();
+  const stage=document.createElement("div");
+  stage.className="stage"; stage.id="stage-7";
+  stage.innerHTML=`<div class="stagelabel"><span class="stagenum">7</span>Back-substitute for the final answer</div>
+    <div class="stagetext">Plug the critical value back in to find the remaining dimension and the optimized quantity.</div>`;
+  const row1=document.createElement("div"); row1.className="answerrow"; row1.style.marginBottom="10px";
+  row1.innerHTML=`<span class="eqlabel">${labels.dependent} =</span>`;
+  const dep=document.createElement("input");
+  dep.type="text"; dep.className="slopebox"; dep.dataset.k="back-dependent"; dep.placeholder="0.0"; dep.autocomplete="off";
+  row1.appendChild(dep);
+  const depUnit=document.createElement("span"); depUnit.className="unitlabel"; depUnit.textContent=units.dependent;
+  row1.appendChild(depUnit);
+  stage.appendChild(row1);
+  const row2=document.createElement("div"); row2.className="answerrow";
+  row2.innerHTML=`<span class="eqlabel">${labels.objective} =</span>`;
+  const obj=document.createElement("input");
+  obj.type="text"; obj.className="slopebox"; obj.dataset.k="back-objective"; obj.placeholder="0.0"; obj.autocomplete="off";
+  row2.appendChild(obj);
+  const objUnit=document.createElement("span"); objUnit.className="unitlabel"; objUnit.textContent=units.objective;
+  row2.appendChild(objUnit);
+  stage.appendChild(row2);
+  return stage;
+}
+function checkStage7(){
+  const {fam,p}=state.problem;
+  const back=fam.backSubstitute(p);
+  const depEl=document.querySelector('[data-k="back-dependent"]');
+  const objEl=document.querySelector('[data-k="back-objective"]');
+  if(!depEl||!objEl) return false;
+  const depTouched=depEl.value.trim()!=="";
+  const depVal=Number(depEl.value);
+  const depOk=depTouched && Number.isFinite(depVal) && withinTol(depVal, back.dependent);
+  toggleGood(depEl, depTouched?depOk:null);
+  const objTouched=objEl.value.trim()!=="";
+  const objVal=Number(objEl.value);
+  const objOk=objTouched && Number.isFinite(objVal) && withinTol(objVal, back.objective);
+  toggleGood(objEl, objTouched?objOk:null);
+  return depOk && objOk;
+}
+
+/* ================= gated progression ================= */
+function checkProblem(){
+  const st=state.problem;
+  if(!st) return;
+  let needsWire=false;
+
+  if(!st.eqDone){
+    const cOk=checkEqSelect("eq-constraint");
+    const oOk=checkEqSelect("eq-objective");
+    if(cOk && oOk){
+      st.eqDone=true;
+      document.querySelector('[data-k="eq-constraint"]').disabled=true;
+      document.querySelector('[data-k="eq-objective"]').disabled=true;
+      document.getElementById("stages").appendChild(buildStage2());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(!st.reduceDone){
+    const terms=st.fam.reduceTerms(st.p);
+    let ok=true;
+    terms.forEach((t,i)=>{ if(!checkTermBoxes(t,"red",i)) ok=false; });
+    if(ok){
+      st.reduceDone=true;
+      lockBoxes("red");
+      document.getElementById("stages").appendChild(buildStage3());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(!st.subDone){
+    const terms=st.fam.objectiveTerms(st.p);
+    let ok=true;
+    terms.forEach((t,i)=>{ if(!checkTermBoxes(t,"sub",i)) ok=false; });
+    if(ok){
+      st.subDone=true;
+      lockBoxes("sub");
+      document.getElementById("stages").appendChild(buildStage4());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(!st.derivDone){
+    const terms=diffTerms(st.fam.objectiveTerms(st.p));
+    let ok=true;
+    terms.forEach((t,i)=>{ if(!checkTermBoxes(t,"der",i)) ok=false; });
+    if(ok){
+      st.derivDone=true;
+      lockBoxes("der");
+      document.getElementById("stages").appendChild(buildStage5());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(!st.criticalDone){
+    if(checkStage5()){
+      st.criticalDone=true;
+      document.querySelector('[data-k="critical-val"]').disabled=true;
+      document.getElementById("stages").appendChild(buildStage6());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(!st.classifyDone){
+    if(checkStage6()){
+      st.classifyDone=true;
+      document.querySelector('[data-k="classify-val"]').disabled=true;
+      document.getElementById("stages").appendChild(buildStage7());
+      needsWire=true;
+    } else { if(needsWire) wireAllInputs(); return; }
+  }
+
+  if(needsWire) wireAllInputs();
+
+  if(!st.backDone){
+    if(checkStage7()){
+      st.backDone=true;
+      document.querySelector('[data-k="back-dependent"]').disabled=true;
+      document.querySelector('[data-k="back-objective"]').disabled=true;
+      document.getElementById("allDone").style.display="flex";
+      state.tally++; document.getElementById("tallyval").textContent=state.tally;
+    }
+  }
+}
+
+/* ================= shared input wiring / focus restore ================= */
+function wireAllInputs(){
+  document.querySelectorAll("#stages input, #stages select").forEach(el=>{
+    el.oninput=onAnyInput; el.onchange=onAnyInput;
+    el.onfocus=()=>{ state.focus={key:el.dataset.k, start:el.selectionStart, end:el.selectionEnd}; };
+  });
+}
+function onAnyInput(e){
+  state.focus={key:e.target.dataset.k, start:e.target.selectionStart, end:e.target.selectionEnd};
+  checkProblem();
+}
+function restoreFocus(){
+  const f=state.focus;
+  if(!f) return;
+  const el=document.querySelector(`[data-k="${f.key}"]`);
+  if(el && !el.disabled){ el.focus(); try{ el.setSelectionRange(f.start,f.end); }catch(e){} }
+}
+
+/* ================= test hook ================= */
+window.__op = {
+  getState: ()=>state,
+  setDifficulty, newProblem,
+  setBox: (key,val)=>{ const el=document.querySelector(`[data-k="${key}"]`); if(el){ el.value=val; el.dispatchEvent(new Event("input")); el.dispatchEvent(new Event("change")); } },
+};
+
+/* boot */
+newProblem();
+</script>
