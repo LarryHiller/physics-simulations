@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Center of Mass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --obj1:#1a8f7b; --obj2:#c4791e; --obj3:#3163b0;
+  --obj4:#b23d6b; --obj5:#7f9930; --obj6:#6e4c9e;
+  --good-bg: rgba(12,163,12,.10); --critical-bg: rgba(208,59,59,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+    --obj4:#d45f8c; --obj5:#7a9530; --obj6:#9478c7;
+    --good-bg: rgba(47,191,79,.14); --critical-bg: rgba(230,103,103,.12);
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+  color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.page{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+.serif{font-family:"Fraunces", Georgia, "Iowan Old Style", serif;}
+.mono{font-family:"IBM Plex Mono", "SF Mono", monospace;}
+
+header{border-bottom:1px solid var(--line-strong);padding-bottom:18px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--ink-muted);font-weight:600;}
+h1{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:36px;margin:.18em 0 .32em;color:var(--ink);}
+.desc{color:var(--ink-soft);font-size:15.5px;max-width:74ch;line-height:1.5;margin:0;}
+
+nav.catbar{
+  display:flex;gap:8px;margin:22px 0 0;padding:6px;flex-wrap:wrap;
+  background:var(--surface-alt);border:1px solid var(--line-strong);border-radius:14px;
+}
+nav.catbar button{
+  font-family:"IBM Plex Sans";font-weight:600;font-size:15.5px;padding:12px 22px;border-radius:10px;
+  flex:1 1 200px;border:1px solid transparent;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+nav.catbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.toolbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface-alt);border-radius:12px;padding:12px 16px;margin:18px 0 22px;
+}
+.toolbar .label{font-family:"IBM Plex Mono";font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;}
+.seg button{font-family:"IBM Plex Sans";padding:9px 18px;border:none;background:transparent;color:var(--ink-soft);font-weight:600;font-size:14.5px;cursor:pointer;}
+.seg button.active{background:var(--accent);color:var(--accent-ink);}
+.btn{
+  font-family:"IBM Plex Sans";font-weight:600;font-size:14.5px;padding:10px 18px;border-radius:10px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.btn:disabled{opacity:.45;cursor:default;}
+.spacer{margin-left:auto;}
+.tally{font-family:"IBM Plex Mono";font-size:13.5px;color:var(--ink-muted);white-space:nowrap;}
+.numstep{display:flex;align-items:center;gap:8px;}
+.numstep input{
+  width:56px;text-align:center;font-family:"IBM Plex Mono";font-size:16px;padding:8px 4px;
+  border:1.5px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink);
+}
+
+.workarea{display:flex;gap:22px;flex-wrap:wrap;margin-top:4px;align-items:flex-start;}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow);padding:20px;
+}
+.panel h2{
+  font-family:"IBM Plex Mono";font-size:13px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--ink-muted);margin:0 0 14px;font-weight:600;
+}
+.diagram-panel{flex:2 1 460px;min-width:320px;}
+.table-panel{flex:1 1 380px;min-width:300px;}
+
+.diagram-wrap{display:flex;justify-content:center;}
+svg.diagram{width:auto;height:auto;max-width:100%;max-height:56vh;display:block;}
+.diagram .gridline{stroke:var(--line);stroke-width:1;}
+.diagram .axisline{stroke:var(--line-strong);stroke-width:1.3;}
+.diagram .origin-dot{fill:var(--ink);}
+.diagram .origin-label{font-family:"IBM Plex Mono";font-size:13.5px;fill:var(--ink);font-weight:600;}
+.diagram .ticklabel{font-family:"IBM Plex Mono";font-size:12px;fill:var(--ink-muted);}
+.diagram .dim{stroke:var(--ink-muted);stroke-width:1.4;fill:none;}
+.diagram .dimlabel{font-family:"Fraunces",serif;font-style:italic;font-size:16px;fill:var(--ink);}
+.diagram .piece-label{font-family:"IBM Plex Mono";font-weight:700;font-size:14px;fill:#ffffff;}
+.diagram .ball-label{font-family:"IBM Plex Mono";font-weight:700;font-size:13.5px;fill:#ffffff;}
+.diagram .vertex-dot{fill:var(--ink-soft);}
+
+.caption{font-size:13.5px;color:var(--ink-soft);margin-top:12px;line-height:1.5;}
+.caption b{color:var(--ink);}
+.legend{
+  margin-top:10px;padding:10px 14px;background:var(--surface-alt);border-radius:10px;
+  font-size:13px;color:var(--ink-soft);
+}
+
+.tablewrap{overflow-x:auto;}
+table.mgrid{width:100%;border-collapse:collapse;}
+.mgrid th{
+  text-align:left;font-family:"IBM Plex Mono";font-size:12px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--ink-muted);padding:6px 8px;border-bottom:1.5px solid var(--line-strong);
+  white-space:nowrap;
+}
+.mgrid td{padding:7px 8px;border-bottom:1px solid var(--line);}
+.piece-name{display:flex;align-items:center;gap:8px;font-family:"IBM Plex Mono";font-weight:600;font-size:14.5px;}
+.piece-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+.mgrid input{
+  width:100%;min-width:64px;max-width:88px;padding:7px 8px;border:1.6px solid var(--line-strong);
+  border-radius:8px;background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";
+  font-size:15px;text-align:right;
+}
+.mgrid input.correct{border-color:var(--good);background:var(--good-bg);}
+.mgrid input.wrong{border-color:var(--critical);background:var(--critical-bg);}
+.mgrid input:disabled{opacity:.85;}
+
+.finalbox{
+  margin-top:18px;padding:16px;border-radius:12px;background:var(--surface-alt);
+  border:1px solid var(--line-strong);
+}
+.finalbox .flabel{font-family:"IBM Plex Mono";font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);margin-bottom:10px;}
+.finalrow{display:flex;gap:18px;flex-wrap:wrap;}
+.fgroup{display:flex;align-items:center;gap:8px;}
+.fgroup .sym{font-family:"Fraunces",serif;font-style:italic;font-size:19px;}
+.fgroup input{
+  width:88px;padding:8px 10px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:15.5px;text-align:right;
+}
+.fgroup input.correct{border-color:var(--good);background:var(--good-bg);}
+.fgroup input.wrong{border-color:var(--critical);background:var(--critical-bg);}
+.fgroup .unit{font-family:"IBM Plex Mono";font-size:13.5px;color:var(--ink-muted);}
+
+.solved-banner{
+  margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--good-bg);
+  border:1px solid var(--good);color:var(--good);font-weight:600;font-size:14px;display:none;
+}
+.solved-banner.show{display:block;}
+
+.explore-wrap{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-top:4px;}
+.explore-side{flex:1 1 260px;min-width:240px;}
+.explore-side .readout{
+  margin-top:14px;padding:14px;border-radius:12px;background:var(--surface-alt);
+  border:1px solid var(--line-strong);font-family:"IBM Plex Mono";font-size:14.5px;color:var(--ink);
+}
+.explore-side .readout .k{color:var(--ink-muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;}
+.balllist{list-style:none;margin:12px 0 0;padding:0;max-height:220px;overflow-y:auto;}
+.balllist li{display:flex;align-items:center;gap:8px;padding:5px 0;font-family:"IBM Plex Mono";font-size:13.5px;border-bottom:1px solid var(--line);}
+
+.stage{
+  padding:16px 0;border-bottom:1px solid var(--line);transition:opacity .15s;
+}
+.stage:last-child{border-bottom:none;}
+.stage.locked{opacity:.45;}
+.stage h3{
+  font-family:"IBM Plex Mono";font-size:12.5px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--ink-muted);margin:0 0 10px;font-weight:600;
+}
+.stage .stagenote{font-size:13.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.5;}
+.stage .stagenote b{color:var(--ink);}
+.mc-select{
+  width:100%;max-width:520px;padding:10px 12px;border:1.6px solid var(--line-strong);border-radius:9px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:14.5px;
+}
+.mc-select.correct{border-color:var(--good);background:var(--good-bg);}
+.mc-select.wrong{border-color:var(--critical);background:var(--critical-bg);}
+.termrow{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-family:"IBM Plex Mono";font-size:15px;flex-wrap:wrap;}
+.termrow select.signsel{
+  width:52px;text-align:center;padding:7px 4px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:15px;
+}
+.termrow input.magbox{
+  width:84px;padding:7px 8px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:15px;text-align:right;
+}
+.termrow .xpart{font-family:"Fraunces",serif;font-style:italic;font-size:17px;color:var(--ink);}
+.termrow input.expbox{
+  width:48px;padding:6px 6px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:14px;text-align:center;
+}
+.termrow select.signsel.correct, .termrow input.correct{border-color:var(--good);background:var(--good-bg);}
+.termrow select.signsel.wrong, .termrow input.wrong{border-color:var(--critical);background:var(--critical-bg);}
+.evalrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-family:"IBM Plex Mono";font-size:15px;}
+.evalrow .flabel2{min-width:110px;color:var(--ink-soft);}
+.evalrow input{
+  width:96px;padding:7px 8px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:15px;text-align:right;
+}
+.resultrow{display:flex;align-items:center;gap:10px;margin-top:6px;font-family:"IBM Plex Mono";font-size:16px;}
+.resultrow .sym{font-family:"Fraunces",serif;font-style:italic;font-size:18px;}
+.resultrow input{
+  width:100px;padding:8px 10px;border:1.6px solid var(--line-strong);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-family:"IBM Plex Mono";font-size:15.5px;text-align:right;
+}
+.dxslider-wrap{display:flex;align-items:center;gap:12px;flex:1 1 320px;min-width:240px;}
+.dxslider-wrap input[type="range"]{
+  flex:1 1 auto; accent-color:var(--accent); height:22px;
+}
+.dxslider-wrap .dxreadout{
+  font-family:"IBM Plex Mono";font-size:15px;font-weight:600;color:var(--ink);
+  min-width:96px;text-align:right;
+}
+.riemann-readouts{display:flex;flex-direction:column;gap:12px;}
+.readout-card{
+  padding:12px 14px;border-radius:10px;background:var(--surface-alt);border:1px solid var(--line-strong);
+}
+.readout-card .rk{font-family:"IBM Plex Mono";font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);display:block;margin-bottom:4px;}
+.readout-card .rv{font-family:"IBM Plex Mono";font-size:16px;color:var(--ink);}
+.readout-card.truth .rv{color:var(--ink);}
+.readout-card.approx .rv{color:var(--accent-warm);font-weight:600;}
+.legend-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle;}
+.given-value{
+  font-family:"IBM Plex Mono";font-size:15px;padding:8px 12px;border-radius:8px;
+  background:var(--surface-alt);border:1px solid var(--line-strong);color:var(--ink-soft);display:inline-block;
+}
+
+details.notebook{margin-top:30px;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);overflow:hidden;}
+details.notebook summary{
+  cursor:pointer;padding:14px 18px;font-family:"IBM Plex Mono";font-size:13px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-muted);font-weight:600;list-style:none;
+}
+details.notebook summary::-webkit-details-marker{display:none;}
+details.notebook .nbbody{padding:0 20px 20px;color:var(--ink-soft);font-size:14.5px;line-height:1.6;}
+details.notebook ol{padding-left:22px;}
+details.notebook li{margin-bottom:10px;}
+
+@media (max-width:430px){
+  h1{font-size:28px;}
+  .toolbar{padding:10px;}
+  .panel{padding:14px;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="eyebrow">AP Physics &middot; Unit 0</div>
+    <h1>Center of Mass</h1>
+    <p class="desc">Find the center of mass of a system of pieces &mdash; bent wires, cookie-sheet cutouts, and tinker-toy structures &mdash; by filling in the same mass/x/y table you'd use on paper. Build your own structure in Explore mode and watch the center of mass move as you add pieces.</p>
+  </header>
+
+  <nav class="catbar" id="modeTabs">
+    <button data-mode="algebra" class="active">Algebra Practice</button>
+    <button data-mode="explore">Tinker-Toy Explore</button>
+    <button data-mode="calc">Calculus</button>
+    <button data-mode="riemann">Calculus Explore</button>
+  </nav>
+
+  <!-- ================= ALGEBRA MODE ================= -->
+  <section id="algebraMode">
+    <div class="toolbar">
+      <span class="label">Difficulty</span>
+      <div class="seg" id="diffSeg">
+        <button data-diff="easy" class="active">Easy</button>
+        <button data-diff="hard">Hard</button>
+      </div>
+      <button class="btn primary" id="newProblemBtn">New problem</button>
+      <span class="spacer"></span>
+      <span class="tally mono" id="tally">Solved: 0</span>
+    </div>
+
+    <div class="workarea">
+      <div class="panel diagram-panel">
+        <h2 id="diagTitle">Bent Wire</h2>
+        <div class="diagram-wrap" id="diagramWrap"></div>
+        <p class="caption" id="diagCaption"></p>
+      </div>
+
+      <div class="panel table-panel">
+        <h2>Fill in the table</h2>
+        <div class="tablewrap">
+          <table class="mgrid">
+            <thead>
+              <tr><th>Piece</th><th id="massHead">Mass</th><th id="xHead">X</th><th id="yHead">Y</th></tr>
+            </thead>
+            <tbody id="pieceRows"></tbody>
+          </table>
+        </div>
+
+        <div class="finalbox">
+          <div class="flabel">Center of mass (round to 2 sig figs)</div>
+          <div class="finalrow">
+            <div class="fgroup">
+              <span class="sym">x&#772; =</span>
+              <input type="text" inputmode="decimal" data-k="final-x" autocomplete="off">
+              <span class="unit" id="finalUnitX">cm</span>
+            </div>
+            <div class="fgroup">
+              <span class="sym">y&#772; =</span>
+              <input type="text" inputmode="decimal" data-k="final-y" autocomplete="off">
+              <span class="unit" id="finalUnitY">cm</span>
+            </div>
+          </div>
+        </div>
+        <div class="solved-banner" id="solvedBanner">Correct &mdash; every value checks out.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPLORE MODE ================= -->
+  <section id="exploreMode" style="display:none;">
+    <div class="toolbar">
+      <span class="label">Next ball</span>
+      <div class="numstep">
+        <input type="number" id="nextMass" min="1" max="9" value="4">
+        <span class="mono" style="color:var(--ink-muted);font-size:13.5px;">kg</span>
+      </div>
+      <span class="caption" style="margin:0;">Click an empty grid point to place a ball.</span>
+      <span class="spacer"></span>
+      <button class="btn" id="undoBtn">Undo last</button>
+      <button class="btn" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="explore-wrap">
+      <div class="panel diagram-panel">
+        <h2>Build your structure</h2>
+        <div class="diagram-wrap" id="exploreDiagramWrap"></div>
+        <p class="caption">Rods are massless &mdash; they only show how the balls connect. The dot marks the current center of mass.</p>
+      </div>
+      <div class="panel explore-side">
+        <h2>Balls placed</h2>
+        <ul class="balllist" id="ballList"></ul>
+        <div class="readout">
+          <span class="k">Center of mass, relative to the marked origin</span>
+          <div id="exploreCom">&mdash;</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CALCULUS MODE ================= -->
+  <section id="calcMode" style="display:none;">
+    <div class="toolbar">
+      <span class="label">Difficulty</span>
+      <div class="seg" id="calcDiffSeg">
+        <button data-diff="easy" class="active">Easy</button>
+        <button data-diff="hard">Hard</button>
+      </div>
+      <button class="btn primary" id="calcNewBtn">New problem</button>
+      <span class="spacer"></span>
+      <span class="tally mono" id="calcTally">Solved: 0</span>
+    </div>
+
+    <div class="workarea">
+      <div class="panel diagram-panel">
+        <h2 id="calcDiagTitle">Region under the curve</h2>
+        <div class="diagram-wrap" id="calcDiagramWrap"></div>
+        <p class="caption" id="calcCaption"></p>
+      </div>
+
+      <div class="panel table-panel" id="calcStagesPanel" style="flex:1 1 440px;">
+        <h2>Work through the setup</h2>
+        <div id="calcStages"></div>
+        <div class="solved-banner" id="calcSolvedBanner">Correct &mdash; every value checks out.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CALCULUS EXPLORE (RIEMANN TRIANGLE) ================= -->
+  <section id="riemannMode" style="display:none;">
+    <div class="toolbar">
+      <span class="label">dx</span>
+      <div class="dxslider-wrap">
+        <input type="range" id="dxSlider" min="0.5" max="5" step="0.5" value="2">
+        <span class="dxreadout" id="dxReadout">2 m</span>
+      </div>
+      <span class="caption" id="rectCountReadout" style="margin:0;">10 rectangles</span>
+    </div>
+
+    <div class="workarea">
+      <div class="panel diagram-panel" style="flex:2 1 560px;">
+        <h2>Approximating a triangle's center of mass</h2>
+        <div class="diagram-wrap" id="riemannDiagramWrap"></div>
+        <p class="legend">
+          <span class="legend-swatch" style="background:var(--obj3);"></span>Rectangle approximation (left-endpoint height, so every rectangle stays inside the triangle)
+          &nbsp;&middot;&nbsp;
+          <span class="legend-swatch" style="background:var(--warning);"></span>Gap between the rectangles and the true triangle
+          &nbsp;&middot;&nbsp;
+          <span class="legend-swatch" style="background:var(--ink);border-radius:50%;"></span>True center of mass
+          &nbsp;&middot;&nbsp;
+          <span class="legend-swatch" style="background:var(--accent-warm);border-radius:50%;"></span>Approximation's center of mass
+        </p>
+      </div>
+
+      <div class="panel table-panel" style="flex:1 1 300px;">
+        <h2>Readouts</h2>
+        <div class="riemann-readouts">
+          <div class="readout-card truth">
+            <span class="rk">True center of mass (whole triangle)</span>
+            <span class="rv" id="riemannTrueCom">&mdash;</span>
+          </div>
+          <div class="readout-card approx">
+            <span class="rk">Approximation at this dx</span>
+            <span class="rv" id="riemannApproxCom">&mdash;</span>
+          </div>
+          <div class="readout-card">
+            <span class="rk">Difference</span>
+            <span class="rv" id="riemannDiff">&mdash;</span>
+          </div>
+          <div class="readout-card">
+            <span class="rk">Total gap area (the part the rectangles miss)</span>
+            <span class="rv" id="riemannGapArea">&mdash;</span>
+          </div>
+        </div>
+        <p class="caption">The triangle's legs are 20 m (x) and 10 m (y). Drag the slider to make dx smaller and watch the amber gaps shrink &mdash; and the amber dot slide toward the true center of mass.</p>
+      </div>
+    </div>
+  </section>
+
+  <details class="notebook">
+    <summary>Lab notebook &mdash; discussion questions</summary>
+    <div class="nbbody">
+      <ol>
+        <li>How does the location of the center of mass of an Erlenmeyer flask help it do its job?</li>
+        <li>How does the location of the center of mass of a bowling pin help it do its job?</li>
+        <li>Two students each measure the center of mass of the same object. They get different numeric answers, but they are both correct. Explain how this could happen.</li>
+        <li>Does an object's center of mass have to be within the object? Explain.</li>
+      </ol>
+    </div>
+  </details>
+
+</div>
+<script>
+'use strict';
+/* =========================================================================
+   MODEL -- ported from build_scripts/model.js. Every problem type reduces
+   to a list of {mass, x, y} pieces in world coordinates; the table a
+   student fills in is always relative to a chosen origin (relTo()).
+   ========================================================================= */
+function randInt(lo, hi){ return lo + Math.floor(Math.random()*(hi-lo+1)); }
+function choice(arr){ return arr[randInt(0, arr.length-1)]; }
+function key2(x,y){ return x+','+y; }
+
+function centerOfMass(pieces){
+  const M = pieces.reduce((s,p)=>s+p.mass,0);
+  const xbar = pieces.reduce((s,p)=>s+p.mass*p.x,0)/M;
+  const ybar = pieces.reduce((s,p)=>s+p.mass*p.y,0)/M;
+  return { M, xbar, ybar };
+}
+function relTo(pieces, origin){
+  return pieces.map(p=>Object.assign({}, p, { x:p.x-origin.x, y:p.y-origin.y }));
+}
+function bbox(points){
+  const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+  return { minX:Math.min(...xs), maxX:Math.max(...xs), minY:Math.min(...ys), maxY:Math.max(...ys) };
+}
+function pickOrigin(anchorPoints){
+  const bb = bbox(anchorPoints);
+  const roll = Math.random();
+  if (roll < 0.4){
+    const corners=[{x:bb.minX,y:bb.minY},{x:bb.maxX,y:bb.minY},{x:bb.minX,y:bb.maxY},{x:bb.maxX,y:bb.maxY}];
+    return choice(corners);
+  } else if (roll < 0.7){
+    return choice(anchorPoints);
+  } else {
+    return { x: randInt(bb.minX-2, bb.maxX+2), y: randInt(bb.minY-2, bb.maxY+2) };
+  }
+}
+
+const WireGen = {
+  key:'wire', label:'Bent Wire',
+  generate(n){
+    const lambda = choice([1,2,3,4,5]);
+    let x=0, y=randInt(0,3);
+    const vertices=[{x,y}];
+    const pieces=[];
+    for (let i=0;i<n;i++){
+      const horizontal = i%2===0;
+      let nx=x, ny=y;
+      if (horizontal){ const len=randInt(2,6); nx=x+len; }
+      else { const len=randInt(2,6); const sign=Math.random()<0.5?1:-1; ny=y+sign*len; }
+      const len = horizontal ? (nx-x) : Math.abs(ny-y);
+      const mass = lambda*len;
+      const mx=(x+nx)/2, my=(y+ny)/2;
+      pieces.push({ mass, x:mx, y:my, length:len, orientation: horizontal?'H':'V', x1:x,y1:y,x2:nx,y2:ny });
+      x=nx; y=ny; vertices.push({x,y});
+    }
+    return { type:'wire', lambda, pieces, vertices };
+  }
+};
+
+const SheetGen = {
+  key:'sheet', label:'Cookie Sheet',
+  generate(n){
+    const sigma = choice([1,2,3]);
+    let x=0;
+    const pieces=[];
+    for (let i=0;i<n;i++){
+      const w=randInt(2,4), h=randInt(2,5);
+      const area=w*h, mass=sigma*area;
+      const cx=x+w/2, cy=h/2;
+      pieces.push({ mass, x:cx, y:cy, w, h, area, x1:x,y1:0,x2:x+w,y2:h });
+      x+=w;
+    }
+    return { type:'sheet', sigma, pieces, width:x };
+  }
+};
+
+const ToyGen = {
+  key:'toy', label:'Tinker Toy',
+  generate(n){
+    const pieces=[];
+    let x=0,y=0;
+    const used=new Set([key2(x,y)]);
+    pieces.push({ mass:randInt(1,9), x, y });
+    for (let i=1;i<n;i++){
+      let nx,ny,tries=0;
+      do {
+        const dx=randInt(-3,3), dy=randInt(-3,3);
+        nx = x + (dx===0 ? (Math.random()<0.5?2:-2) : dx);
+        ny = y + dy;
+        tries++;
+      } while (used.has(key2(nx,ny)) && tries<30);
+      used.add(key2(nx,ny));
+      pieces.push({ mass:randInt(1,9), x:nx, y:ny });
+      x=nx; y=ny;
+    }
+    return { type:'toy', pieces };
+  }
+};
+
+const GENERATORS = { wire:WireGen, sheet:SheetGen, toy:ToyGen };
+const REL_TOL=0.06, ABS_FLOOR=0.02, MIN_FINAL=0.5, PIECE_TOL=0.03;
+function withinTolerance(value, trueValue){
+  const tol = Math.max(ABS_FLOOR, REL_TOL*Math.abs(trueValue));
+  return Math.abs(value-trueValue) <= tol;
+}
+
+function generateProblem(difficulty, forceType){
+  const n = difficulty==='hard' ? randInt(4,6) : randInt(2,3);
+  const type = forceType || choice(Object.keys(GENERATORS));
+  let raw, origin, world, comRel, tries=0;
+  do {
+    raw = GENERATORS[type].generate(n);
+    const anchorPoints = raw.pieces.map(p=>({x:p.x,y:p.y}))
+      .concat(raw.type==='wire' ? raw.vertices : [])
+      .concat(raw.type==='sheet' ? [{x:0,y:0},{x:raw.width,y:0}] : []);
+    origin = pickOrigin(anchorPoints);
+    world = raw.pieces.map(p=>({mass:p.mass,x:p.x,y:p.y}));
+    const com = centerOfMass(world);
+    comRel = { xbar: com.xbar-origin.x, ybar: com.ybar-origin.y };
+    tries++;
+  } while ((Math.abs(comRel.xbar)<MIN_FINAL || Math.abs(comRel.ybar)<MIN_FINAL) && tries<40);
+  const table = relTo(world, origin).map((p,i)=>Object.assign({}, p, { mass: raw.pieces[i].mass }));
+  const com = centerOfMass(world);
+  return Object.assign({}, raw, { origin, table, com, comRel });
+}
+
+/* =========================================================================
+   NUMBER PARSING -- tolerant of stray whitespace and a typed leading minus.
+   ========================================================================= */
+function parseStudentNumber(str){
+  if (str==null) return NaN;
+  const s = String(str).trim().replace(/−/g,'-');
+  if (s==='' || s==='-' ) return NaN;
+  const v = Number(s);
+  return Number.isFinite(v) ? v : NaN;
+}
+
+/* =========================================================================
+   SVG DRAWING HELPERS
+   ========================================================================= */
+const SVGNS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+const OBJCOLORS = ['--obj1','--obj2','--obj3','--obj4','--obj5','--obj6'];
+function pieceColor(i){ return 'var(' + OBJCOLORS[i % OBJCOLORS.length] + ')'; }
+const LETTERS = 'ABCDEF';
+
+// Builds a grid+origin base for a bounding box (world units), returns
+// {svg, toPx, PX} -- toPx(x,y) maps world coords to pixel coords.
+function makeGridSVG(minX, maxX, minY, maxY, origin, PX){
+  PX = PX || 34;
+  const margin = 36;
+  const w = (maxX-minX)*PX + margin*2;
+  const h = (maxY-minY)*PX + margin*2;
+  const svg = svgEl('svg', { class:'diagram', viewBox:`0 0 ${w} ${h}`, width:w, height:h });
+  function toPx(x,y){ return { px: margin+(x-minX)*PX, py: margin+(maxY-y)*PX }; }
+  // grid lines
+  for (let gx=Math.ceil(minX); gx<=Math.floor(maxX); gx++){
+    const a=toPx(gx,minY), b=toPx(gx,maxY);
+    svg.appendChild(svgEl('line',{class:'gridline',x1:a.px,y1:a.py,x2:b.px,y2:b.py}));
+  }
+  for (let gy=Math.ceil(minY); gy<=Math.floor(maxY); gy++){
+    const a=toPx(minX,gy), b=toPx(maxX,gy);
+    svg.appendChild(svgEl('line',{class:'gridline',x1:a.px,y1:a.py,x2:b.px,y2:b.py}));
+  }
+  // tick labels (relative to origin) along bottom + left edges
+  for (let gx=Math.ceil(minX); gx<=Math.floor(maxX); gx++){
+    if (gx===Math.ceil(minX) || gx%1!==0) continue;
+    const p = toPx(gx, minY);
+    const t = svgEl('text',{class:'ticklabel',x:p.px,y:p.py+16,'text-anchor':'middle'});
+    t.textContent = (gx-origin.x).toString();
+    svg.appendChild(t);
+  }
+  for (let gy=Math.ceil(minY); gy<=Math.floor(maxY); gy++){
+    if (gy===Math.ceil(minY)) continue;
+    const p = toPx(minX, gy);
+    const t = svgEl('text',{class:'ticklabel',x:p.px-8,y:p.py+4,'text-anchor':'end'});
+    t.textContent = (gy-origin.y).toString();
+    svg.appendChild(t);
+  }
+  // origin marker
+  const op = toPx(origin.x, origin.y);
+  svg.appendChild(svgEl('circle',{class:'origin-dot',cx:op.px,cy:op.py,r:5}));
+  const ol = svgEl('text',{class:'origin-label',x:op.px+9,y:op.py-9});
+  ol.textContent = 'O';
+  svg.appendChild(ol);
+  return { svg, toPx, PX, margin };
+}
+
+function badge(svg, toPx, x, y, color, letter){
+  const p = toPx(x,y);
+  svg.appendChild(svgEl('circle',{cx:p.px,cy:p.py,r:12,fill:color,stroke:'var(--surface)','stroke-width':2}));
+  const t = svgEl('text',{class:'piece-label',x:p.px,y:p.py+4.5,'text-anchor':'middle'});
+  t.textContent = letter;
+  svg.appendChild(t);
+}
+function textLabel(svg, toPx, x, y, str, cls){
+  const p = toPx(x,y);
+  const t = svgEl('text',{class:cls||'dimlabel',x:p.px,y:p.py,'text-anchor':'middle'});
+  t.textContent = str;
+  svg.appendChild(t);
+  return t;
+}
+
+/* ---- per-type diagram builders ---- */
+function buildWireDiagram(problem){
+  const anchor = problem.vertices.concat([problem.origin]);
+  const bb = bbox(anchor);
+  const { svg, toPx } = makeGridSVG(bb.minX-1.5, bb.maxX+1.5, bb.minY-1.5, bb.maxY+1.5, problem.origin);
+  problem.pieces.forEach((seg,i)=>{
+    const a=toPx(seg.x1,seg.y1), b=toPx(seg.x2,seg.y2);
+    svg.appendChild(svgEl('line',{x1:a.px,y1:a.py,x2:b.px,y2:b.py,stroke:pieceColor(i),'stroke-width':6,'stroke-linecap':'round'}));
+  });
+  problem.vertices.forEach(v=>{
+    const p=toPx(v.x,v.y);
+    svg.appendChild(svgEl('circle',{class:'vertex-dot',cx:p.px,cy:p.py,r:3}));
+  });
+  problem.pieces.forEach((seg,i)=>{
+    const mx=(seg.x1+seg.x2)/2, my=(seg.y1+seg.y2)/2;
+    if (seg.orientation==='H'){
+      textLabel(svg,toPx,mx,my-0.55, seg.length+' cm');
+      badge(svg,toPx,mx,my+0.55,pieceColor(i),LETTERS[i]);
+    } else {
+      textLabel(svg,toPx,mx+0.9,my, seg.length+' cm');
+      badge(svg,toPx,mx-0.7,my,pieceColor(i),LETTERS[i]);
+    }
+  });
+  return svg;
+}
+
+function buildSheetDiagram(problem){
+  const anchor = [{x:0,y:0},{x:problem.width,y:0}].concat(problem.origin);
+  const maxH = Math.max(...problem.pieces.map(p=>p.h));
+  const bb = { minX:0, maxX:problem.width, minY:0, maxY:maxH };
+  const bbAll = bbox([{x:bb.minX,y:bb.minY},{x:bb.maxX,y:bb.maxY},problem.origin]);
+  const { svg, toPx } = makeGridSVG(bbAll.minX-1.5, bbAll.maxX+1.5, bbAll.minY-1.5, bbAll.maxY+1.5, problem.origin);
+  problem.pieces.forEach((r,i)=>{
+    const a=toPx(r.x1,r.y1), b=toPx(r.x2,r.y2);
+    svg.appendChild(svgEl('rect',{x:Math.min(a.px,b.px),y:Math.min(a.py,b.py),
+      width:Math.abs(b.px-a.px), height:Math.abs(b.py-a.py),
+      fill:pieceColor(i), 'fill-opacity':0.28, stroke:pieceColor(i),'stroke-width':2.5}));
+  });
+  problem.pieces.forEach((r,i)=>{
+    textLabel(svg,toPx,(r.x1+r.x2)/2, r.h-0.32, r.w+'×'+r.h+' cm', 'dimlabel');
+    badge(svg,toPx,(r.x1+r.x2)/2, r.h/2, pieceColor(i), LETTERS[i]);
+  });
+  return svg;
+}
+
+function buildToyDiagram(problem){
+  const bb = bbox(problem.pieces.concat([problem.origin]));
+  const { svg, toPx } = makeGridSVG(bb.minX-1.5, bb.maxX+1.5, bb.minY-1.5, bb.maxY+1.5, problem.origin, 40);
+  for (let i=1;i<problem.pieces.length;i++){
+    const a=toPx(problem.pieces[i-1].x, problem.pieces[i-1].y), b=toPx(problem.pieces[i].x, problem.pieces[i].y);
+    svg.appendChild(svgEl('line',{x1:a.px,y1:a.py,x2:b.px,y2:b.py,stroke:'var(--line-strong)','stroke-width':5}));
+  }
+  problem.pieces.forEach((ball,i)=>{
+    const p = toPx(ball.x, ball.y);
+    svg.appendChild(svgEl('circle',{cx:p.px,cy:p.py,r:21,fill:pieceColor(i),stroke:'var(--surface)','stroke-width':2.5}));
+    const t = svgEl('text',{class:'ball-label',x:p.px,y:p.py+4.5,'text-anchor':'middle'});
+    t.textContent = ball.mass+' kg';
+    svg.appendChild(t);
+    const lt = svgEl('text',{class:'origin-label',x:p.px,y:p.py-28,'text-anchor':'middle'});
+    lt.textContent = LETTERS[i];
+    svg.appendChild(lt);
+  });
+  return svg;
+}
+
+const DIAGRAM_BUILDERS = { wire:buildWireDiagram, sheet:buildSheetDiagram, toy:buildToyDiagram };
+const CAPTIONS = {
+  wire: p => `Linear density &lambda; = <b>${p.lambda} g/cm</b>. Each segment's mass = &lambda; &times; its length. A segment's location is its own midpoint.`,
+  sheet: p => `Areal density &sigma; = <b>${p.sigma} g/cm&sup2;</b>. Each rectangle's mass = &sigma; &times; its area (width &times; height). A rectangle's location is its own center.`,
+  toy: () => `Each ball's mass is given. Rods are massless &mdash; they only show how the balls connect. A ball's location is its own grid position.`,
+};
+
+/* =========================================================================
+   ALGEBRA MODE
+   ========================================================================= */
+const UNIT = { wire:{mass:'g',len:'cm'}, sheet:{mass:'g',len:'cm'}, toy:{mass:'kg',len:'m'} };
+let state = { difficulty:'easy', problem:null, solved:false, tally:0 };
+
+function newAlgebraProblem(){
+  state.problem = generateProblem(state.difficulty);
+  state.solved = false;
+  renderAlgebra();
+}
+
+function renderAlgebra(){
+  const p = state.problem;
+  const u = UNIT[p.type];
+  document.getElementById('diagTitle').textContent = GENERATORS[p.type].label;
+  const wrap = document.getElementById('diagramWrap');
+  wrap.innerHTML = '';
+  wrap.appendChild(DIAGRAM_BUILDERS[p.type](p));
+  document.getElementById('diagCaption').innerHTML = CAPTIONS[p.type](p) +
+    ` All coordinates are measured relative to the marked origin O &mdash; it can sit anywhere; that choice never changes the physical center of mass, only the numbers you read off relative to it.`;
+
+  document.getElementById('massHead').textContent = 'Mass ('+u.mass+')';
+  document.getElementById('xHead').textContent = 'X ('+u.len+')';
+  document.getElementById('yHead').textContent = 'Y ('+u.len+')';
+  document.getElementById('finalUnitX').textContent = u.len;
+  document.getElementById('finalUnitY').textContent = u.len;
+
+  const tbody = document.getElementById('pieceRows');
+  tbody.innerHTML = '';
+  p.table.forEach((piece,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="piece-name"><span class="piece-dot" style="background:${pieceColor(i)}"></span>${LETTERS[i]}</span></td>
+      <td><input type="text" inputmode="decimal" data-k="mass${i}" autocomplete="off"></td>
+      <td><input type="text" inputmode="decimal" data-k="x${i}" autocomplete="off"></td>
+      <td><input type="text" inputmode="decimal" data-k="y${i}" autocomplete="off"></td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('final-x-input') && 0;
+  const fx = document.querySelector('[data-k="final-x"]');
+  const fy = document.querySelector('[data-k="final-y"]');
+  fx.value=''; fy.value='';
+  fx.classList.remove('correct','wrong'); fy.classList.remove('correct','wrong');
+  fx.disabled=false; fy.disabled=false;
+
+  document.getElementById('solvedBanner').classList.remove('show');
+  document.getElementById('tally').textContent = 'Solved: '+state.tally;
+
+  attachGrading();
+  checkAllSolved();
+}
+
+function attachGrading(){
+  const p = state.problem;
+  p.table.forEach((piece,i)=>{
+    [['mass','mass'],['x','x'],['y','y']].forEach(([field,truthKey])=>{
+      const input = document.querySelector(`[data-k="${field}${i}"]`);
+      input.oninput = ()=>{
+        const v = parseStudentNumber(input.value);
+        const truth = piece[truthKey];
+        const ok = Number.isFinite(v) && Math.abs(v-truth) <= PIECE_TOL;
+        input.classList.toggle('correct', input.value.trim()!=='' && ok);
+        input.classList.toggle('wrong', input.value.trim()!=='' && !ok);
+        checkAllSolved();
+      };
+    });
+  });
+  const fx = document.querySelector('[data-k="final-x"]');
+  const fy = document.querySelector('[data-k="final-y"]');
+  fx.oninput = ()=>{
+    const v = parseStudentNumber(fx.value);
+    const ok = Number.isFinite(v) && withinTolerance(v, p.comRel.xbar);
+    fx.classList.toggle('correct', fx.value.trim()!=='' && ok);
+    fx.classList.toggle('wrong', fx.value.trim()!=='' && !ok);
+    checkAllSolved();
+  };
+  fy.oninput = ()=>{
+    const v = parseStudentNumber(fy.value);
+    const ok = Number.isFinite(v) && withinTolerance(v, p.comRel.ybar);
+    fy.classList.toggle('correct', fy.value.trim()!=='' && ok);
+    fy.classList.toggle('wrong', fy.value.trim()!=='' && !ok);
+    checkAllSolved();
+  };
+}
+
+function checkAllSolved(){
+  if (state.solved) return;
+  const p = state.problem;
+  let all = true;
+  p.table.forEach((piece,i)=>{
+    ['mass','x','y'].forEach(field=>{
+      const input = document.querySelector(`[data-k="${field}${i}"]`);
+      if (!input.classList.contains('correct')) all = false;
+    });
+  });
+  const fx = document.querySelector('[data-k="final-x"]');
+  const fy = document.querySelector('[data-k="final-y"]');
+  if (!fx.classList.contains('correct') || !fy.classList.contains('correct')) all = false;
+  if (all){
+    state.solved = true;
+    state.tally++;
+    document.getElementById('tally').textContent = 'Solved: '+state.tally;
+    document.getElementById('solvedBanner').classList.add('show');
+    document.querySelectorAll('.mgrid input, .fgroup input').forEach(inp=>inp.disabled=true);
+  }
+}
+
+/* =========================================================================
+   EXPLORE MODE (Tinker Toy)
+   ========================================================================= */
+const explore = { balls:[], nextMass:4 };
+const EXPLORE_BOUNDS = { minX:-1, maxX:14, minY:-1, maxY:10 };
+const EXPLORE_ORIGIN = { x:0, y:0 };
+
+function renderExplore(){
+  const wrap = document.getElementById('exploreDiagramWrap');
+  wrap.innerHTML = '';
+  const { svg, toPx } = makeGridSVG(EXPLORE_BOUNDS.minX, EXPLORE_BOUNDS.maxX, EXPLORE_BOUNDS.minY, EXPLORE_BOUNDS.maxY, EXPLORE_ORIGIN, 36);
+  svg.style.cursor='crosshair';
+  for (let i=1;i<explore.balls.length;i++){
+    const a=toPx(explore.balls[i-1].x, explore.balls[i-1].y), b=toPx(explore.balls[i].x, explore.balls[i].y);
+    svg.appendChild(svgEl('line',{x1:a.px,y1:a.py,x2:b.px,y2:b.py,stroke:'var(--line-strong)','stroke-width':5}));
+  }
+  explore.balls.forEach((ball,i)=>{
+    const p = toPx(ball.x, ball.y);
+    svg.appendChild(svgEl('circle',{cx:p.px,cy:p.py,r:19,fill:pieceColor(i),stroke:'var(--surface)','stroke-width':2.5}));
+    const t = svgEl('text',{class:'ball-label',x:p.px,y:p.py+4.2,'text-anchor':'middle'});
+    t.textContent = ball.mass;
+    svg.appendChild(t);
+  });
+  if (explore.balls.length){
+    const com = centerOfMass(explore.balls);
+    const p = toPx(com.xbar, com.ybar);
+    svg.appendChild(svgEl('circle',{cx:p.px,cy:p.py,r:8,fill:'var(--accent-warm)',stroke:'var(--surface)','stroke-width':2}));
+  }
+  svg.addEventListener('click', onExploreClick);
+  wrap.appendChild(svg);
+  renderExploreSide();
+}
+
+function onExploreClick(e){
+  const svg = e.currentTarget;
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const loc = pt.matrixTransform(svg.getScreenCTM().inverse());
+  const margin = 36, PX = 36;
+  const gx = Math.round((loc.x - margin)/PX + EXPLORE_BOUNDS.minX);
+  const gy = Math.round(EXPLORE_BOUNDS.maxY - (loc.y - margin)/PX);
+  if (gx < EXPLORE_BOUNDS.minX || gx > EXPLORE_BOUNDS.maxX || gy < EXPLORE_BOUNDS.minY || gy > EXPLORE_BOUNDS.maxY) return;
+  if (explore.balls.some(b=>b.x===gx && b.y===gy)) return;
+  const mass = Math.max(1, Math.min(9, Math.round(Number(document.getElementById('nextMass').value)) || 4));
+  explore.balls.push({ x:gx, y:gy, mass });
+  renderExplore();
+}
+
+function renderExploreSide(){
+  const list = document.getElementById('ballList');
+  list.innerHTML = '';
+  explore.balls.forEach((b,i)=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="piece-dot" style="background:${pieceColor(i)}"></span>${LETTERS[i]||'#'+(i+1)}: ${b.mass} kg at (${b.x-EXPLORE_ORIGIN.x}, ${b.y-EXPLORE_ORIGIN.y}) m`;
+    list.appendChild(li);
+  });
+  const out = document.getElementById('exploreCom');
+  if (!explore.balls.length){
+    out.textContent = '— place a ball to begin';
+  } else {
+    const com = centerOfMass(explore.balls);
+    out.textContent = `(${(com.xbar-EXPLORE_ORIGIN.x).toFixed(2)}, ${(com.ybar-EXPLORE_ORIGIN.y).toFixed(2)}) m`;
+  }
+}
+
+document.getElementById('undoBtn').onclick = ()=>{ explore.balls.pop(); renderExplore(); };
+document.getElementById('clearBtn').onclick = ()=>{ explore.balls=[]; renderExplore(); };
+
+/* =========================================================================
+   CALCULUS MODE
+   ========================================================================= */
+function evalTerms(terms, x){ return terms.reduce((s,t)=>s+t.coef*Math.pow(x,t.exp),0); }
+function round4(x){ return Math.round(x*10000)/10000; }
+function integrateTerms(terms){ return terms.map(t=>({ coef:t.coef/(t.exp+1), exp:t.exp+1 })); }
+function multiplyByX(terms){ return terms.map(t=>({ coef:t.coef, exp:t.exp+1 })); }
+function scaleTerms(terms,k){ return terms.map(t=>({ coef:t.coef*k, exp:t.exp })); }
+function definiteFromAntiderivative(antiTerms, lo, hi){ return evalTerms(antiTerms,hi)-evalTerms(antiTerms,lo); }
+const CALC_MIN_FINAL = 0.3;
+
+function genTriangle(){
+  const a = randInt(4,10), b = randInt(3,9);
+  const sigma = choice([1,2,3,4]);
+  const heightTerms = [{ coef: b/a, exp: 1 }];
+  const dmTerms = scaleTerms(heightTerms, sigma);
+  const area = 0.5*a*b;
+  const Mval = sigma*area;
+  const numTerms = multiplyByX(dmTerms);
+  const numAnti = integrateTerms(numTerms);
+  const N = definiteFromAntiderivative(numAnti, 0, a);
+  const xbar = N/Mval;
+  const heightTermsR = [{ coef:a, exp:0 }, { coef: -a/b, exp:1 }];
+  const dmTermsR = scaleTerms(heightTermsR, sigma);
+  const numTermsR = multiplyByX(dmTermsR);
+  const numAntiR = integrateTerms(numTermsR);
+  const Nr = definiteFromAntiderivative(numAntiR, 0, b);
+  const ybar = Nr/Mval;
+  return { family:'triangle', a, b, sigma,
+    heightExpr:`(${b}/${a})x`, densityExpr:`${sigma}`, dmTerms, area, M:Mval,
+    numTerms, numAnti, N, xbar,
+    heightExprR:`${a} − (${a}/${b})x`, dmTermsR, numTermsR, numAntiR, Nr, ybar,
+    boundLo:0, boundHi:a, boundLoR:0, boundHiR:b,
+    units:{ len:'m', dens:'kg/m²', mass:'kg' } };
+}
+function genNonunifLine(){
+  const a=randInt(3,8), m=choice([1,2,3]), c=choice([0,1,2,3]), k=choice([1,2,3]);
+  const heightTerms = [{coef:m,exp:1}].concat(c?[{coef:c,exp:0}]:[]);
+  const dmTerms = heightTerms.map(t=>({coef:t.coef*k,exp:t.exp+1}));
+  const dmAnti = integrateTerms(dmTerms);
+  const Mval = definiteFromAntiderivative(dmAnti,0,a);
+  const numTerms = multiplyByX(dmTerms);
+  const numAnti = integrateTerms(numTerms);
+  const N = definiteFromAntiderivative(numAnti,0,a);
+  const xbar = N/Mval;
+  return { family:'nonunif-line', a, m, c, k,
+    heightExpr: c?`${m}x + ${c}`:`${m}x`, densityExpr:`${k}x`,
+    dmTerms, dmAnti, M:Mval, numTerms, numAnti, N, xbar,
+    boundLo:0, boundHi:a, units:{ len:'m', dens:'kg/m³', mass:'kg' } };
+}
+function genNonunifParabola(){
+  const a=randInt(3,6), p=choice([1,2]), q=choice([0,2,4,6]), k=choice([1,2,3]);
+  const heightTerms = [{coef:p,exp:2}].concat(q?[{coef:q,exp:0}]:[]);
+  const dmTerms = heightTerms.map(t=>({coef:t.coef*k,exp:t.exp+1}));
+  const dmAnti = integrateTerms(dmTerms);
+  const Mval = definiteFromAntiderivative(dmAnti,0,a);
+  const numTerms = multiplyByX(dmTerms);
+  const numAnti = integrateTerms(numTerms);
+  const N = definiteFromAntiderivative(numAnti,0,a);
+  const xbar = N/Mval;
+  return { family:'nonunif-parabola', a, p, q, k,
+    heightExpr: q?`${p}x² + ${q}`:`${p}x²`, densityExpr:`${k}x`,
+    dmTerms, dmAnti, M:Mval, numTerms, numAnti, N, xbar,
+    boundLo:0, boundHi:a, units:{ len:'m', dens:'kg/m⁴', mass:'kg' } };
+}
+const CALC_GENERATORS = { triangle:genTriangle, 'nonunif-line':genNonunifLine, 'nonunif-parabola':genNonunifParabola };
+function generateCalcProblem(difficulty, forceFamily){
+  const family = forceFamily || (difficulty==='easy' ? 'triangle' : choice(Object.keys(CALC_GENERATORS)));
+  let p, tries=0;
+  do { p = CALC_GENERATORS[family](); tries++; } while (
+    (Math.abs(p.xbar)<CALC_MIN_FINAL || Math.abs(p.M)<CALC_MIN_FINAL ||
+     (p.family==='triangle' && Math.abs(p.ybar)<CALC_MIN_FINAL)) && tries<40
+  );
+  return p;
+}
+function dmChoices(heightExpr, densityExpr, diffLabel){
+  const correct = `dm = ${densityExpr}·(${heightExpr})·${diffLabel}`;
+  const wrong1 = `dm = ${densityExpr}·${diffLabel}`;
+  const wrong2 = `dm = (${heightExpr})·${diffLabel}`;
+  const wrong3 = `dm = ${densityExpr}·(${heightExpr})·${diffLabel==='dx'?'dy':'dx'}`;
+  const opts = [ {text:correct,correct:true}, {text:wrong1,correct:false}, {text:wrong2,correct:false}, {text:wrong3,correct:false} ];
+  for (let i=opts.length-1;i>0;i--){ const j=randInt(0,i); [opts[i],opts[j]]=[opts[j],opts[i]]; }
+  return opts;
+}
+
+const FAMILY_LABEL = { triangle:'Triangular Sheet', 'nonunif-line':'Sloped Sheet, Variable Density', 'nonunif-parabola':'Curved Sheet, Variable Density' };
+let calcState = { difficulty:'easy', problem:null, solved:false, tally:0 };
+
+function buildCalcDiagram(problem, rotated){
+  const margin=40, plotW=520, plotH=300;
+  const hi = rotated ? problem.boundHiR : problem.boundHi;
+  const heightAt = x => rotated
+    ? evalTerms([{coef:problem.a,exp:0},{coef:-problem.a/problem.b,exp:1}], x)
+    : evalTerms(problem.family==='triangle' ? [{coef:problem.b/problem.a,exp:1}]
+        : problem.family==='nonunif-line' ? [{coef:problem.m,exp:1}].concat(problem.c?[{coef:problem.c,exp:0}]:[])
+        : [{coef:problem.p,exp:2}].concat(problem.q?[{coef:problem.q,exp:0}]:[]), x);
+  // find the true max height across the whole domain (a parabola's max on
+  // [0,hi] isn't always at an endpoint... here it always is, since these
+  // families are monotonic on [0,hi], but sample a few points to be safe)
+  let maxH = 0;
+  for (let i=0;i<=20;i++) maxH = Math.max(maxH, heightAt(hi*i/20));
+  maxH = Math.max(maxH, 0.5);
+  // x and y use INDEPENDENT pixel scales (this is a function graph, not
+  // graph paper the student measures squares on) -- a parabola's height
+  // can vastly exceed its width, and forcing one shared scale turns the
+  // picture into an illegible sliver.
+  const pxX = plotW/hi, pxY = plotH/maxH;
+  const w = plotW + margin*2, h = plotH + margin*2 + 20;
+  const svg = svgEl('svg',{class:'diagram', viewBox:`0 0 ${w} ${h}`, width:w, height:h});
+  function toPx(x,y){ return { px: margin+x*pxX, py: h-margin-y*pxY }; }
+  // axes
+  const o = toPx(0,0), xEnd = toPx(hi,0), yEnd = toPx(0,maxH*1.12);
+  svg.appendChild(svgEl('line',{class:'axisline',x1:o.px,y1:o.py,x2:xEnd.px+18,y2:xEnd.py}));
+  svg.appendChild(svgEl('line',{class:'axisline',x1:o.px,y1:o.py,x2:yEnd.px,y2:yEnd.py-14}));
+  // curve + shaded region
+  const steps=40; let d='';
+  for (let i=0;i<=steps;i++){ const x=hi*i/steps; const p=toPx(x,heightAt(x)); d += (i===0?'M':'L')+p.px+' '+p.py+' '; }
+  const baseR = toPx(hi,0), baseL = toPx(0,0);
+  const fillPath = 'M'+baseL.px+' '+baseL.py+' '+d+' L'+baseR.px+' '+baseR.py+' Z';
+  svg.appendChild(svgEl('path',{d:fillPath, fill:'var(--obj3)', 'fill-opacity':0.16}));
+  svg.appendChild(svgEl('path',{d, stroke:'var(--obj3)', 'stroke-width':3, fill:'none'}));
+  // sample dm strip
+  const xs = hi*0.42, dxw = Math.max(hi*0.045, 0.12);
+  const stripBot = toPx(xs,0), stripTop = toPx(xs,heightAt(xs)), stripTop2 = toPx(xs+dxw, heightAt(xs));
+  svg.appendChild(svgEl('rect',{x:stripBot.px, y:stripTop.py, width:Math.max(2,stripTop2.px-stripBot.px), height:stripBot.py-stripTop.py,
+    fill:'var(--accent-warm)', 'fill-opacity':0.55}));
+  const dmLabel = svgEl('text',{class:'dimlabel', x:stripBot.px+14, y:stripTop.py-8, 'text-anchor':'start'});
+  dmLabel.textContent = 'dm';
+  svg.appendChild(dmLabel);
+  // axis ticks
+  [0, hi].forEach(x=>{ const p=toPx(x,0); const t=svgEl('text',{class:'ticklabel',x:p.px,y:p.py+18,'text-anchor':'middle'}); t.textContent=x; svg.appendChild(t); });
+  const originLabel = svgEl('text',{class:'origin-label', x:o.px-6, y:o.py+18}); originLabel.textContent='0'; svg.appendChild(originLabel);
+  const topLabel = svgEl('text',{class:'ticklabel', x:toPx(0,heightAt(0)).px-8, y:toPx(0,heightAt(0)).py+4,'text-anchor':'end'});
+  topLabel.textContent = heightAt(0).toFixed(1).replace(/\.0$/,'');
+  svg.appendChild(topLabel);
+  const endLabel = svgEl('text',{class:'ticklabel', x:toPx(hi,heightAt(hi)).px-8, y:toPx(hi,heightAt(hi)).py-6,'text-anchor':'end'});
+  endLabel.textContent = heightAt(hi).toFixed(1).replace(/\.0$/,'');
+  svg.appendChild(endLabel);
+  return svg;
+}
+
+function termRowHTML(prefix, i){
+  return `<div class="termrow" data-term="${i}">
+    <select class="signsel" data-k="${prefix}-sign${i}"><option value="1">+</option><option value="-1">−</option></select>
+    <input type="text" inputmode="decimal" class="magbox" data-k="${prefix}-mag${i}" placeholder="coef" autocomplete="off">
+    <span class="xpart">· x<sup></sup></span>
+    <span style="font-family:'IBM Plex Mono';font-size:13px;color:var(--ink-muted);">^</span>
+    <input type="text" inputmode="numeric" class="expbox" data-k="${prefix}-exp${i}" placeholder="n" autocomplete="off">
+  </div>`;
+}
+function integralStageHTML(prefix, antiTerms, lo, hi, resultLabel, resultUnit){
+  let html = '<div class="stagenote">Write the antiderivative, term by term.</div>';
+  antiTerms.forEach((t,i)=> html += termRowHTML(prefix, i));
+  html += `<div class="evalrow"><span class="flabel2">F(${fmtNum(hi)})</span><input type="text" inputmode="decimal" data-k="${prefix}-hi" autocomplete="off"></div>`;
+  html += `<div class="evalrow"><span class="flabel2">F(${fmtNum(lo)})</span><input type="text" inputmode="decimal" data-k="${prefix}-lo" autocomplete="off"></div>`;
+  html += `<div class="resultrow"><span class="sym">${resultLabel} =</span><input type="text" inputmode="decimal" data-k="${prefix}-result" autocomplete="off"><span class="unit">${resultUnit}</span></div>`;
+  return html;
+}
+function fmtNum(x){ const r = Math.round(x*1000)/1000; return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0+$/,'').replace(/\.$/,''); }
+
+function buildCalcStagesHTML(p){
+  const u = p.units;
+  let html = '';
+  // Stage 1: define dm
+  const opts = dmChoices(p.heightExpr, p.densityExpr, 'dx');
+  html += `<div class="stage" data-stage="dm"><h3>Step 1 &middot; Define dm</h3>
+    <div class="stagenote">A thin strip at position <b>x</b> has width <b>dx</b> and height <b>${p.heightExpr}</b>. The material's density there is <b>${p.densityExpr}</b> ${u.dens}. Which expression gives the mass of that strip?</div>
+    <select class="mc-select" data-k="dm-choice">
+      <option value="">Choose one&hellip;</option>
+      ${opts.map((o,i)=>`<option value="${i}" data-correct="${o.correct}">${o.text}</option>`).join('')}
+    </select>
+  </div>`;
+  // Stage 2: M
+  if (p.family==='triangle'){
+    html += `<div class="stage locked" data-stage="M"><h3>Step 2 &middot; Find the total mass M</h3>
+      <div class="stagenote">Density is uniform here, so M is just density times area &mdash; no integral needed.</div>
+      <div class="evalrow"><span class="flabel2">Area (m²)</span><input type="text" inputmode="decimal" data-k="area-result" autocomplete="off"></div>
+      <div class="resultrow"><span class="sym">M =</span><input type="text" inputmode="decimal" data-k="M-result" autocomplete="off"><span class="unit">${u.mass}</span></div>
+    </div>`;
+  } else {
+    html += `<div class="stage locked" data-stage="M"><h3>Step 2 &middot; Find the total mass M = &#8747;dm</h3>
+      ${integralStageHTML('M', p.dmAnti, p.boundLo, p.boundHi, 'M', u.mass)}
+    </div>`;
+  }
+  // Stage 3: numerator N
+  html += `<div class="stage locked" data-stage="N"><h3>Step 3 &middot; Find the numerator &#8747;x&middot;dm</h3>
+    ${integralStageHTML('N', p.numAnti, p.boundLo, p.boundHi, 'N', u.mass+'·'+u.len)}
+  </div>`;
+  // Stage 4: xbar
+  html += `<div class="stage locked" data-stage="xbar"><h3>Step 4 &middot; Center of mass, x direction</h3>
+    <div class="resultrow"><span class="sym">x&#772; = N / M =</span><input type="text" inputmode="decimal" data-k="xbar-result" autocomplete="off"><span class="unit">${u.len}</span></div>
+  </div>`;
+
+  if (p.family==='triangle'){
+    const optsR = dmChoices(p.heightExprR, p.densityExpr, 'dx');
+    html += `<div class="stage locked" data-stage="dmR"><h3>Step 5 &middot; Rotate the picture, define dm again</h3>
+      <div class="stagenote">Turn the figure on its side so the leg that was vertical is now along the bottom. The new height function is <b>${p.heightExprR}</b>. Density is still uniform (${p.densityExpr} ${u.dens}). Which expression gives dm now?</div>
+      <select class="mc-select" data-k="dmR-choice">
+        <option value="">Choose one&hellip;</option>
+        ${optsR.map((o,i)=>`<option value="${i}" data-correct="${o.correct}">${o.text}</option>`).join('')}
+      </select>
+    </div>`;
+    html += `<div class="stage locked" data-stage="Nr"><h3>Step 6 &middot; Find the new numerator</h3>
+      ${integralStageHTML('Nr', p.numAntiR, p.boundLoR, p.boundHiR, 'N&prime;', u.mass+'·'+u.len)}
+    </div>`;
+    html += `<div class="stage locked" data-stage="ybar"><h3>Step 7 &middot; Center of mass, y direction</h3>
+      <div class="stagenote">M is the same total mass as before &mdash; rotating the picture doesn't change it. <span class="given-value">M = ${fmtNum(p.M)} ${u.mass}</span></div>
+      <div class="resultrow"><span class="sym">y&#772; = N&prime; / M =</span><input type="text" inputmode="decimal" data-k="ybar-result" autocomplete="off"><span class="unit">${u.len}</span></div>
+    </div>`;
+  }
+  return html;
+}
+
+function stageOrder(p){
+  return p.family==='triangle' ? ['dm','M','N','xbar','dmR','Nr','ybar'] : ['dm','M','N','xbar'];
+}
+
+function setStageLocked(stageKey, locked){
+  const el = document.querySelector(`.stage[data-stage="${stageKey}"]`);
+  if (!el) return;
+  el.classList.toggle('locked', locked);
+  el.querySelectorAll('input,select').forEach(inp=>inp.disabled = locked);
+}
+
+function newCalcProblem(){
+  calcState.problem = generateCalcProblem(calcState.difficulty);
+  calcState.solved = false;
+  renderCalc();
+}
+
+function renderCalc(){
+  const p = calcState.problem;
+  document.getElementById('calcDiagTitle').textContent = FAMILY_LABEL[p.family];
+  const wrap = document.getElementById('calcDiagramWrap');
+  wrap.innerHTML = '';
+  wrap.appendChild(buildCalcDiagram(p, false));
+  const capParts = [`Region under <b>y = ${p.heightExpr}</b> for 0 &le; x &le; ${p.boundHi}, density <b>${p.densityExpr}</b> ${p.units.dens}.`];
+  document.getElementById('calcCaption').innerHTML = capParts.join(' ');
+
+  document.getElementById('calcStages').innerHTML = buildCalcStagesHTML(p);
+  const order = stageOrder(p);
+  order.forEach((k,i)=> setStageLocked(k, i>0));
+  document.getElementById('calcSolvedBanner').classList.remove('show');
+  document.getElementById('calcTally').textContent = 'Solved: '+calcState.tally;
+
+  attachCalcGrading();
+}
+
+function attachCalcGrading(){
+  const p = calcState.problem;
+  const order = stageOrder(p);
+
+  function tryUnlock(stageKey){
+    const idx = order.indexOf(stageKey);
+    if (idx>=0 && idx<order.length-1) setStageLocked(order[idx+1], false);
+    checkCalcSolved();
+  }
+
+  // Stage: dm choice (and dmR)
+  ['dm','dmR'].forEach(stageKey=>{
+    const sel = document.querySelector(`[data-k="${stageKey}-choice"]`);
+    if (!sel) return;
+    sel.onchange = ()=>{
+      const opt = sel.options[sel.selectedIndex];
+      const ok = sel.value!=='' && opt.dataset.correct==='true';
+      sel.classList.toggle('correct', sel.value!=='' && ok);
+      sel.classList.toggle('wrong', sel.value!=='' && !ok);
+      if (ok) tryUnlock(stageKey);
+      else checkCalcSolved();
+    };
+  });
+
+  function wireIntegralStage(prefix, antiTerms, lo, hi, trueResult, stageKey){
+    let termsOk = new Array(antiTerms.length).fill(false);
+    function checkTermsDone(){ return termsOk.every(Boolean); }
+    antiTerms.forEach((t,i)=>{
+      const signEl = document.querySelector(`[data-k="${prefix}-sign${i}"]`);
+      const magEl = document.querySelector(`[data-k="${prefix}-mag${i}"]`);
+      const expEl = document.querySelector(`[data-k="${prefix}-exp${i}"]`);
+      function grade(){
+        const sign = Number(signEl.value);
+        const mag = parseStudentNumber(magEl.value);
+        const exp = parseStudentNumber(expEl.value);
+        const magOk = Number.isFinite(mag) && withinTolerance(sign*mag, t.coef);
+        const expOk = Number.isFinite(exp) && exp===t.exp;
+        magEl.classList.toggle('correct', magEl.value.trim()!=='' && magOk);
+        magEl.classList.toggle('wrong', magEl.value.trim()!=='' && !magOk);
+        expEl.classList.toggle('correct', expEl.value.trim()!=='' && expOk);
+        expEl.classList.toggle('wrong', expEl.value.trim()!=='' && !expOk);
+        termsOk[i] = magOk && expOk;
+        if (checkTermsDone()){
+          document.querySelector(`[data-k="${prefix}-hi"]`).disabled = false;
+          document.querySelector(`[data-k="${prefix}-lo"]`).disabled = false;
+        }
+        checkCalcSolved();
+      }
+      signEl.onchange = grade; magEl.oninput = grade; expEl.oninput = grade;
+    });
+    const hiEl = document.querySelector(`[data-k="${prefix}-hi"]`);
+    const loEl = document.querySelector(`[data-k="${prefix}-lo"]`);
+    const resultEl = document.querySelector(`[data-k="${prefix}-result"]`);
+    hiEl.disabled = true; loEl.disabled = true; resultEl.disabled = true;
+    const trueHi = evalTerms(antiTerms, hi), trueLo = evalTerms(antiTerms, lo);
+    function gradeEval(){
+      const vHi = parseStudentNumber(hiEl.value), vLo = parseStudentNumber(loEl.value);
+      const okHi = Number.isFinite(vHi) && withinTolerance(vHi, trueHi);
+      const okLo = Number.isFinite(vLo) && withinTolerance(vLo, trueLo);
+      hiEl.classList.toggle('correct', hiEl.value.trim()!=='' && okHi);
+      hiEl.classList.toggle('wrong', hiEl.value.trim()!=='' && !okHi);
+      loEl.classList.toggle('correct', loEl.value.trim()!=='' && okLo);
+      loEl.classList.toggle('wrong', loEl.value.trim()!=='' && !okLo);
+      resultEl.disabled = !(okHi && okLo);
+      checkCalcSolved();
+    }
+    hiEl.oninput = gradeEval; loEl.oninput = gradeEval;
+    resultEl.oninput = ()=>{
+      const v = parseStudentNumber(resultEl.value);
+      const ok = Number.isFinite(v) && withinTolerance(v, trueResult);
+      resultEl.classList.toggle('correct', resultEl.value.trim()!=='' && ok);
+      resultEl.classList.toggle('wrong', resultEl.value.trim()!=='' && !ok);
+      if (ok) tryUnlock(stageKey);
+      else checkCalcSolved();
+    };
+  }
+
+  if (p.family==='triangle'){
+    const areaEl = document.querySelector('[data-k="area-result"]');
+    const mEl = document.querySelector('[data-k="M-result"]');
+    areaEl.oninput = ()=>{
+      const v = parseStudentNumber(areaEl.value);
+      const ok = Number.isFinite(v) && Math.abs(v-p.area)<=0.03;
+      areaEl.classList.toggle('correct', areaEl.value.trim()!=='' && ok);
+      areaEl.classList.toggle('wrong', areaEl.value.trim()!=='' && !ok);
+      mEl.disabled = !ok;
+      checkCalcSolved();
+    };
+    mEl.disabled = true;
+    mEl.oninput = ()=>{
+      const v = parseStudentNumber(mEl.value);
+      const ok = Number.isFinite(v) && withinTolerance(v, p.M);
+      mEl.classList.toggle('correct', mEl.value.trim()!=='' && ok);
+      mEl.classList.toggle('wrong', mEl.value.trim()!=='' && !ok);
+      if (ok) tryUnlock('M');
+      else checkCalcSolved();
+    };
+  } else {
+    wireIntegralStage('M', p.dmAnti, p.boundLo, p.boundHi, p.M, 'M');
+  }
+
+  wireIntegralStage('N', p.numAnti, p.boundLo, p.boundHi, p.N, 'N');
+
+  const xbarEl = document.querySelector('[data-k="xbar-result"]');
+  xbarEl.oninput = ()=>{
+    const v = parseStudentNumber(xbarEl.value);
+    const ok = Number.isFinite(v) && withinTolerance(v, p.xbar);
+    xbarEl.classList.toggle('correct', xbarEl.value.trim()!=='' && ok);
+    xbarEl.classList.toggle('wrong', xbarEl.value.trim()!=='' && !ok);
+    if (ok) tryUnlock('xbar');
+    else checkCalcSolved();
+  };
+
+  if (p.family==='triangle'){
+    wireIntegralStage('Nr', p.numAntiR, p.boundLoR, p.boundHiR, p.Nr, 'Nr');
+    const ybarEl = document.querySelector('[data-k="ybar-result"]');
+    ybarEl.oninput = ()=>{
+      const v = parseStudentNumber(ybarEl.value);
+      const ok = Number.isFinite(v) && withinTolerance(v, p.ybar);
+      ybarEl.classList.toggle('correct', ybarEl.value.trim()!=='' && ok);
+      ybarEl.classList.toggle('wrong', ybarEl.value.trim()!=='' && !ok);
+      if (ok) tryUnlock('ybar');
+      else checkCalcSolved();
+    };
+  }
+}
+
+function checkCalcSolved(){
+  if (calcState.solved) return;
+  const p = calcState.problem;
+  const order = stageOrder(p);
+  const lastKey = order[order.length-1];
+  const finalInput = document.querySelector(`[data-k="${lastKey}-result"]`);
+  if (finalInput && finalInput.classList.contains('correct')){
+    calcState.solved = true;
+    calcState.tally++;
+    document.getElementById('calcTally').textContent = 'Solved: '+calcState.tally;
+    document.getElementById('calcSolvedBanner').classList.add('show');
+    document.querySelectorAll('#calcStages input, #calcStages select').forEach(inp=>inp.disabled=true);
+  }
+}
+
+document.getElementById('calcDiffSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-diff]');
+  if (!btn) return;
+  document.querySelectorAll('#calcDiffSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  calcState.difficulty = btn.dataset.diff;
+  newCalcProblem();
+});
+document.getElementById('calcNewBtn').onclick = newCalcProblem;
+
+/* =========================================================================
+   CALCULUS EXPLORE -- Riemann-sum triangle
+   ========================================================================= */
+const RIEMANN_A = 20, RIEMANN_B = 10; // fixed, per Larry's own spec
+function riemannHeightAt(x){ return (RIEMANN_B/RIEMANN_A)*x; }
+const RIEMANN_TRUE_XBAR = (2/3)*RIEMANN_A, RIEMANN_TRUE_YBAR = RIEMANN_B/3;
+const RIEMANN_TRUE_AREA = 0.5*RIEMANN_A*RIEMANN_B;
+
+function genRiemannRectangles(dx){
+  const n = Math.ceil(RIEMANN_A/dx - 1e-9);
+  const rects = [];
+  for (let i=0;i<n;i++){
+    const x0=i*dx, x1=Math.min((i+1)*dx, RIEMANN_A);
+    const width=x1-x0, h=riemannHeightAt(x0);
+    rects.push({ x0,x1,width,height:h, area:width*h, cx:x0+width/2, cy:h/2,
+      gap:[{x:x0,y:h},{x:x1,y:h},{x:x1,y:riemannHeightAt(x1)}] });
+  }
+  return rects;
+}
+function polyArea(pts){ let s=0; for (let i=0;i<pts.length;i++){ const p=pts[i], q=pts[(i+1)%pts.length]; s+=p.x*q.y-q.x*p.y; } return Math.abs(s)/2; }
+
+function renderRiemann(){
+  const dx = Number(document.getElementById('dxSlider').value);
+  document.getElementById('dxReadout').textContent = dx+' m';
+  const rects = genRiemannRectangles(dx);
+  document.getElementById('rectCountReadout').textContent = rects.length + (rects.length===1?' rectangle':' rectangles');
+
+  const pieces = rects.map(r=>({ mass:r.area, x:r.cx, y:r.cy }));
+  const approx = centerOfMass(pieces);
+  const gapTotal = rects.reduce((s,r)=>s+polyArea(r.gap),0);
+
+  document.getElementById('riemannTrueCom').textContent = `(${fmtNum(RIEMANN_TRUE_XBAR)}, ${fmtNum(RIEMANN_TRUE_YBAR)}) m`;
+  document.getElementById('riemannApproxCom').textContent = `(${fmtNum(approx.xbar)}, ${fmtNum(approx.ybar)}) m`;
+  document.getElementById('riemannDiff').textContent = `Δx̄ = ${fmtNum(Math.abs(approx.xbar-RIEMANN_TRUE_XBAR))} m, Δȳ = ${fmtNum(Math.abs(approx.ybar-RIEMANN_TRUE_YBAR))} m`;
+  document.getElementById('riemannGapArea').textContent = `${fmtNum(gapTotal)} m² (of ${fmtNum(RIEMANN_TRUE_AREA)} m² total)`;
+
+  const wrap = document.getElementById('riemannDiagramWrap');
+  wrap.innerHTML = '';
+  const { svg, toPx } = makeGridSVG(-0.6, RIEMANN_A+1, -0.6, RIEMANN_B+1.5, {x:0,y:0}, 30);
+
+  // rectangles + gaps
+  rects.forEach(r=>{
+    const a=toPx(r.x0,0), b=toPx(r.x1,r.height);
+    svg.appendChild(svgEl('rect',{x:Math.min(a.px,b.px), y:Math.min(a.py,b.py),
+      width:Math.abs(b.px-a.px), height:Math.abs(b.py-a.py),
+      fill:'var(--obj3)', 'fill-opacity':0.5, stroke:'var(--obj3)', 'stroke-width':1}));
+    const gpts = r.gap.map(pt=>toPx(pt.x,pt.y));
+    svg.appendChild(svgEl('polygon',{points:gpts.map(p=>p.px+','+p.py).join(' '), fill:'var(--warning)', 'fill-opacity':0.65}));
+  });
+  // hypotenuse + outline
+  const o=toPx(0,0), tip=toPx(RIEMANN_A,RIEMANN_B), base=toPx(RIEMANN_A,0);
+  svg.appendChild(svgEl('line',{x1:o.px,y1:o.py,x2:tip.px,y2:tip.py, stroke:'var(--ink)', 'stroke-width':2.5}));
+  svg.appendChild(svgEl('line',{x1:tip.px,y1:tip.py,x2:base.px,y2:base.py, stroke:'var(--ink)', 'stroke-width':1.6, 'stroke-dasharray':'4 3'}));
+
+  // CoM dots
+  const trueP = toPx(RIEMANN_TRUE_XBAR, RIEMANN_TRUE_YBAR);
+  svg.appendChild(svgEl('circle',{cx:trueP.px,cy:trueP.py,r:7,fill:'var(--ink)',stroke:'var(--surface)','stroke-width':2}));
+  const approxP = toPx(approx.xbar, approx.ybar);
+  svg.appendChild(svgEl('line',{x1:trueP.px,y1:trueP.py,x2:approxP.px,y2:approxP.py, stroke:'var(--ink-muted)', 'stroke-width':1.3, 'stroke-dasharray':'3 3'}));
+  svg.appendChild(svgEl('circle',{cx:approxP.px,cy:approxP.py,r:7,fill:'var(--accent-warm)',stroke:'var(--surface)','stroke-width':2}));
+
+  wrap.appendChild(svg);
+}
+document.getElementById('dxSlider').addEventListener('input', renderRiemann);
+
+/* =========================================================================
+   MODE / DIFFICULTY WIRING
+   ========================================================================= */
+document.getElementById('modeTabs').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-mode]');
+  if (!btn) return;
+  document.querySelectorAll('#modeTabs button').forEach(b=>b.classList.toggle('active', b===btn));
+  const mode = btn.dataset.mode;
+  document.getElementById('algebraMode').style.display = mode==='algebra' ? '' : 'none';
+  document.getElementById('exploreMode').style.display = mode==='explore' ? '' : 'none';
+  document.getElementById('calcMode').style.display = mode==='calc' ? '' : 'none';
+  document.getElementById('riemannMode').style.display = mode==='riemann' ? '' : 'none';
+  if (mode==='explore') renderExplore();
+  if (mode==='calc' && !calcState.problem) newCalcProblem();
+  if (mode==='riemann') renderRiemann();
+});
+
+document.getElementById('diffSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-diff]');
+  if (!btn) return;
+  document.querySelectorAll('#diffSeg button').forEach(b=>b.classList.toggle('active', b===btn));
+  state.difficulty = btn.dataset.diff;
+  newAlgebraProblem();
+});
+document.getElementById('newProblemBtn').onclick = newAlgebraProblem;
+
+/* =========================================================================
+   TEST HOOK
+   ========================================================================= */
+window.__com = {
+  state, explore,
+  newProblem: newAlgebraProblem,
+  setDifficulty(d){ state.difficulty=d; newAlgebraProblem(); },
+  setMode(m){ document.querySelector(`#modeTabs button[data-mode="${m}"]`).click(); },
+  fillCorrect(){
+    const p = state.problem;
+    p.table.forEach((piece,i)=>{
+      ['mass','x','y'].forEach(field=>{
+        const input = document.querySelector(`[data-k="${field}${i}"]`);
+        input.value = piece[field==='mass'?'mass':field];
+        input.dispatchEvent(new Event('input'));
+      });
+    });
+    const fx=document.querySelector('[data-k="final-x"]'), fy=document.querySelector('[data-k="final-y"]');
+    fx.value = Number(p.comRel.xbar.toPrecision(2));
+    fy.value = Number(p.comRel.ybar.toPrecision(2));
+    fx.dispatchEvent(new Event('input'));
+    fy.dispatchEvent(new Event('input'));
+  },
+  fillWrong(){
+    const input = document.querySelector('[data-k="mass0"]');
+    input.value = '999999';
+    input.dispatchEvent(new Event('input'));
+  },
+  addBall(x,y,mass){ explore.balls.push({x,y,mass:mass||4}); renderExplore(); },
+  clearExplore(){ explore.balls=[]; renderExplore(); },
+
+  calcState,
+  newCalcProblem,
+  setCalcDifficulty(d){ calcState.difficulty=d; newCalcProblem(); },
+  fillCorrectTermRow(prefix, i, term){
+    document.querySelector(`[data-k="${prefix}-sign${i}"]`).value = term.coef<0 ? '-1' : '1';
+    document.querySelector(`[data-k="${prefix}-sign${i}"]`).dispatchEvent(new Event('change'));
+    const mag = document.querySelector(`[data-k="${prefix}-mag${i}"]`);
+    mag.value = round4(Math.abs(term.coef)); mag.dispatchEvent(new Event('input'));
+    const exp = document.querySelector(`[data-k="${prefix}-exp${i}"]`);
+    exp.value = term.exp; exp.dispatchEvent(new Event('input'));
+  },
+  fillCorrectIntegralStage(prefix, antiTerms, lo, hi, trueResult){
+    antiTerms.forEach((t,i)=> window.__com.fillCorrectTermRow(prefix, i, t));
+    const hiV = evalTerms(antiTerms, hi), loV = evalTerms(antiTerms, lo);
+    const hiEl = document.querySelector(`[data-k="${prefix}-hi"]`); hiEl.value = round4(hiV); hiEl.dispatchEvent(new Event('input'));
+    const loEl = document.querySelector(`[data-k="${prefix}-lo"]`); loEl.value = round4(loV); loEl.dispatchEvent(new Event('input'));
+    const resEl = document.querySelector(`[data-k="${prefix}-result"]`); resEl.value = round4(trueResult); resEl.dispatchEvent(new Event('input'));
+  },
+  fillCorrectCalc(){
+    const p = calcState.problem;
+    function pickCorrectOption(key){
+      const sel = document.querySelector(`[data-k="${key}"]`);
+      for (let i=0;i<sel.options.length;i++){ if (sel.options[i].dataset.correct==='true'){ sel.value = sel.options[i].value; break; } }
+      sel.dispatchEvent(new Event('change'));
+    }
+    pickCorrectOption('dm-choice');
+    if (p.family==='triangle'){
+      const areaEl = document.querySelector('[data-k="area-result"]'); areaEl.value = round4(p.area); areaEl.dispatchEvent(new Event('input'));
+      const mEl = document.querySelector('[data-k="M-result"]'); mEl.value = round4(p.M); mEl.dispatchEvent(new Event('input'));
+    } else {
+      window.__com.fillCorrectIntegralStage('M', p.dmAnti, p.boundLo, p.boundHi, p.M);
+    }
+    window.__com.fillCorrectIntegralStage('N', p.numAnti, p.boundLo, p.boundHi, p.N);
+    const xbarEl = document.querySelector('[data-k="xbar-result"]'); xbarEl.value = round4(p.xbar); xbarEl.dispatchEvent(new Event('input'));
+    if (p.family==='triangle'){
+      pickCorrectOption('dmR-choice');
+      window.__com.fillCorrectIntegralStage('Nr', p.numAntiR, p.boundLoR, p.boundHiR, p.Nr);
+      const ybarEl = document.querySelector('[data-k="ybar-result"]'); ybarEl.value = round4(p.ybar); ybarEl.dispatchEvent(new Event('input'));
+    }
+  },
+  fillWrongCalc(){
+    const sel = document.querySelector('[data-k="dm-choice"]');
+    for (let i=0;i<sel.options.length;i++){ if (sel.options[i].dataset.correct==='false'){ sel.value = sel.options[i].value; break; } }
+    sel.dispatchEvent(new Event('change'));
+  },
+
+  setDx(dx){
+    const slider = document.getElementById('dxSlider');
+    slider.value = dx;
+    slider.dispatchEvent(new Event('input'));
+  },
+  riemannState(){
+    const dx = Number(document.getElementById('dxSlider').value);
+    const rects = genRiemannRectangles(dx);
+    const pieces = rects.map(r=>({ mass:r.area, x:r.cx, y:r.cy }));
+    const approx = centerOfMass(pieces);
+    const gapTotal = rects.reduce((s,r)=>s+polyArea(r.gap),0);
+    return { dx, n:rects.length, approx, gapTotal, trueXbar:RIEMANN_TRUE_XBAR, trueYbar:RIEMANN_TRUE_YBAR, trueArea:RIEMANN_TRUE_AREA };
+  },
+};
+
+newAlgebraProblem();
+</script>
+</body>
+</html>
