@@ -1,0 +1,819 @@
+<title>Trig &amp; Exponential Derivatives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --obj1:#1a8f7b; --obj2:#c4791e; --obj3:#3163b0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,Georgia,"Iowan Old Style",serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+header.top{border-bottom:1px solid var(--line-strong);padding-bottom:18px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--ink-muted)}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif;font-weight:600;font-size:32px;margin:6px 0 8px}
+.desc{color:var(--ink-soft);font-size:15px;max-width:70ch}
+
+nav.catbar{
+  display:flex;gap:8px;margin:22px 0 0;padding:6px;flex-wrap:wrap;
+  background:var(--surface-alt);border:1px solid var(--line-strong);border-radius:14px;
+}
+nav.catbar button{
+  font-family:inherit;font-weight:600;font-size:15.5px;padding:12px 22px;border-radius:10px;
+  flex:1 1 140px;border:1px solid transparent;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+nav.catbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.toolbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin:16px 0 22px;
+}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden}
+.seg button{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 16px;border:none;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+.seg button.active{background:var(--accent);color:var(--accent-ink)}
+.btn{
+  font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:14px;padding:10px 16px;
+  border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tally{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink-soft)}
+.tally b{color:var(--ink);font-size:15px}
+
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow);padding:20px;margin-bottom:18px;
+}
+.panel h2.ph{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--ink-muted);margin:0 0 12px;
+}
+.prompt{font-family:"Fraunces",serif;font-size:21px;margin:0 0 10px;color:var(--ink)}
+.prompt .sub{color:var(--ink-muted);font-size:13px;font-family:"IBM Plex Mono",monospace;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;font-style:normal}
+
+.stephint{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-muted);margin:2px 0 16px;text-transform:uppercase;letter-spacing:.05em}
+
+.graphstack{display:flex;flex-direction:column;gap:16px;margin-top:6px}
+.graphbox{width:100%}
+.graphbox .glabel{font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin:0 0 6px}
+svg.graph{
+  width:100%;height:auto;max-width:100%;display:block;
+  background:var(--surface-alt);border:1px solid var(--line);border-radius:10px;
+}
+.axislabel{font-family:"IBM Plex Mono",monospace;font-size:12.5px;fill:var(--ink-muted)}
+.tick{font-family:"IBM Plex Mono",monospace;font-size:11.5px;fill:var(--ink-muted)}
+.curve{fill:none;stroke:var(--ink-soft);stroke-width:2.5}
+.curve.deriv{stroke:var(--obj3)}
+.axis{stroke:var(--line-strong);stroke-width:1.5}
+.gridline{stroke:var(--line);stroke-width:1}
+.clickcatch{fill:transparent;cursor:crosshair}
+
+.tangentline{stroke:var(--accent-warm);stroke-width:3;stroke-linecap:round}
+.tangentline.preview{opacity:.55;stroke-dasharray:none}
+.tangentpoint{fill:var(--accent-warm);stroke:var(--surface);stroke-width:1.5}
+.guideline{stroke:var(--accent-warm);stroke-width:1.25;stroke-dasharray:5 4;opacity:.75}
+.hline{stroke:var(--obj3);stroke-width:2;stroke-dasharray:6 4}
+.hlinepoint{fill:var(--obj3);stroke:var(--surface);stroke-width:1.5}
+.overlay.hidden{display:none}
+
+.tablewrap{display:flex;gap:20px;flex-wrap:wrap;margin-top:22px}
+.tablecard{flex:1 1 320px;min-width:270px}
+.tablecard .tlabel{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--ink-muted);margin:0 0 8px;
+}
+table.datatable{width:100%;border-collapse:collapse;font-family:"IBM Plex Mono",monospace;font-size:13.5px}
+table.datatable th{
+  text-align:right;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--ink-muted);border-bottom:1.5px solid var(--line-strong);padding:6px 8px;
+}
+table.datatable th:first-child,table.datatable td:first-child{text-align:left}
+table.datatable td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
+table.datatable tbody tr:nth-child(even){background:var(--surface-alt)}
+table.datatable td.mcol{color:var(--obj3);font-weight:600}
+table.datatable td.ycol.echo{color:var(--obj3);font-weight:600}
+
+.eqrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0 4px}
+
+.mathgrid{
+  display:grid;gap:14px 18px;align-items:baseline;overflow-x:auto;padding-bottom:6px;
+}
+.mathgrid .rowlabel{
+  font-family:"Fraunces",serif;font-style:italic;font-size:19px;color:var(--ink-soft);
+  padding-right:10px;white-space:nowrap;
+}
+.term{display:flex;align-items:baseline;font-family:"Fraunces",serif;font-size:19px;white-space:nowrap}
+.term .op{color:var(--ink-muted);margin:0 4px}
+.term input.coef,.term input.arg{
+  font-family:"IBM Plex Mono",monospace;text-align:center;border-radius:6px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);
+}
+.term input.coef{width:48px;font-size:16.5px;padding:6px 2px}
+.term input.arg{width:38px;font-size:16.5px;padding:6px 2px}
+.term sup{font-size:.75em;top:-.7em;position:relative}
+.term input:disabled,.term select:disabled{opacity:.7;cursor:default}
+.term select.typebox{
+  font-family:"Fraunces",serif;font-size:16px;border-radius:6px;border:1.5px solid var(--line-strong);
+  background:var(--surface);color:var(--ink);padding:3px 2px;
+}
+.term select.signbox{
+  font-family:"IBM Plex Mono",monospace;font-size:15px;border-radius:6px;border:1.5px solid var(--line-strong);
+  background:var(--surface);color:var(--ink-soft);padding:5px 1px;width:34px;text-align:center;margin-right:3px;
+}
+.term input.good,.term select.good{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--surface))}
+.term input.bad,.term select.bad{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, var(--surface))}
+
+.stage{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.stage .hint{font-size:13.5px;color:var(--ink-muted);margin-bottom:10px}
+.donebar{margin-top:14px;display:flex;align-items:center;gap:10px}
+.feedback{font-family:"IBM Plex Mono",monospace;font-size:13.5px;margin-top:10px}
+.feedback.good{color:var(--good)}
+
+details.notebook{margin-top:8px}
+details.notebook summary{
+  cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-muted);padding:14px 0;
+}
+details.notebook .nbbody{padding:6px 2px 14px;color:var(--ink-soft);font-size:14.5px;line-height:1.7}
+details.notebook .nbbody ol{padding-left:22px}
+
+@media (max-width:430px){
+  .mathgrid{gap:8px 4px}
+  h1{font-size:26px}
+  .tablewrap{gap:14px}
+}
+</style>
+
+<div class="frame">
+  <header class="top">
+    <div class="eyebrow">AP Physics · Calculus Toolkit</div>
+    <h1>Trig &amp; Exponential Derivatives</h1>
+    <p class="desc">See how the slope of a sine, cosine, or exponential curve becomes the height of its derivative graph, then practice the symbolic rules that produce it.</p>
+  </header>
+
+  <nav class="catbar">
+    <button id="tab-explore" class="active" onclick="setMode('explore')">Explore Graphs</button>
+    <button id="tab-math" onclick="setMode('math')">Math Mode</button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="seg" id="famseg">
+      <button id="fam-trig" class="active" onclick="setFamily('trig')">Trig</button>
+      <button id="fam-exp" onclick="setFamily('exp')">Exponential</button>
+    </div>
+    <button class="btn" id="primaryActionBtn" onclick="primaryAction()">Generate new data</button>
+    <div class="tally"><span id="tallylabel">Equations explored</span>: <b id="tallyval">0</b></div>
+  </div>
+
+  <section id="panel-explore" class="panel">
+    <h2 class="ph">Exploration mode</h2>
+    <p class="prompt"><span class="sub">Original function</span><span id="fEquation"></span></p>
+    <div class="eqrow" id="showDerivRow">
+      <button class="btn primary" id="showDerivBtn" onclick="showDerivative()">Create the derivative</button>
+    </div>
+    <p class="prompt" id="fPrimeRow" style="display:none"><span class="sub">Derivative</span><span id="fPrimeEquation"></span></p>
+    <p class="stephint" id="exploreHint">One full cycle of f(x) is drawn below. Press "Create the derivative" to see f ′(x) line up underneath it.</p>
+    <div class="graphstack">
+      <div class="graphbox">
+        <div class="glabel">f(x)</div>
+        <svg class="graph" id="svgF" viewBox="0 0 900 300" width="900" height="300"></svg>
+      </div>
+      <div class="graphbox" id="fPrimeGraphBox" style="display:none">
+        <div class="glabel">f ′(x)</div>
+        <svg class="graph" id="svgFp" viewBox="0 0 900 300" width="900" height="300"></svg>
+      </div>
+    </div>
+    <div class="tablewrap" id="tableWrap" style="display:none">
+      <div class="tablecard">
+        <div class="tlabel">f(x) — 12 sample points</div>
+        <table class="datatable" id="table1">
+          <thead><tr><th>x</th><th>y</th><th>m (slope)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="tablecard">
+        <div class="tlabel">f ′(x) — same 12 x-values</div>
+        <table class="datatable" id="table2">
+          <thead><tr><th>x</th><th>y</th><th>m (slope)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel-math" class="panel" style="display:none">
+    <h2 class="ph">Math mode</h2>
+    <p class="prompt" id="mathPrompt" style="font-size:16px">A function is given below. Fill in the sign, coefficient, and any argument box for its derivative — then do it again for the second derivative.</p>
+    <div class="mathgrid" id="mathgrid"></div>
+    <div class="donebar" id="mathDone" style="display:none">
+      <span class="feedback good">All correct — nice work.</span>
+      <button class="btn primary" onclick="newMathProblem()">Next problem</button>
+    </div>
+  </section>
+
+  <details class="notebook">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="nbbody">
+      <ol>
+        <li>When f(x) = sin(x) is increasing most steeply (crossing zero going up), what does f ′(x) look like there? When f(x) is momentarily flat (at a peak or trough), what does f ′(x) look like there?</li>
+        <li>Why does differentiating sin(kx) produce cos(kx), but differentiating cos(kx) produces <i>negative</i> sin(kx)? Why does the sign only show up on one of the two?</li>
+        <li>For y = Ae<sup>Bx</sup>, the derivative is y′ = ABe<sup>Bx</sup> — the same exponential shape, just rescaled. Why does exponential growth (or decay) have the special property that a function's rate of change is always proportional to the function's own current value?</li>
+        <li>If B is negative (decay), the curve is getting smaller, but is its slope actually zero anywhere on the graph? What does that tell you about how quickly a decaying quantity ever truly reaches zero?</li>
+        <li>In the two tables, every "m" value in the first table reappears as a "y" value in the second table. In your own words, what does that reappearance mean about the relationship between a graph and the graph of its derivative?</li>
+        <li>Doubling B (making the trig wave twice as "squeezed" or the exponential twice as steep) doubles the derivative's coefficient. Why does making a graph's features happen twice as fast, along the x-axis, also make its slopes twice as steep?</li>
+      </ol>
+    </div>
+  </details>
+</div>
+
+<script>
+"use strict";
+/* ================= math model (mirrors build scripts/model.js) ================= */
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function pick(rnd,arr){return arr[Math.floor(rnd()*arr.length)];}
+function pm(rnd){return rnd()<0.5?-1:1;}
+function randInt(rnd,lo,hi){return lo+Math.floor(rnd()*(hi-lo+1));}
+
+const TRIG_A_RANGE=[1,4];
+const TRIG_B_RANGE=[1,3];
+const EXP_A_RANGE=[1,4];
+const EXP_B_MAG_RANGE=[1,3];
+const EXP_ARG_CAP=2;
+
+function makeTrigTerm(rnd){
+  const type = pick(rnd,["sin","cos"]);
+  const a = randInt(rnd,TRIG_A_RANGE[0],TRIG_A_RANGE[1]) * pm(rnd);
+  const k = randInt(rnd,TRIG_B_RANGE[0],TRIG_B_RANGE[1]);
+  return {kind:type, type, a, k};
+}
+function makeExpTerm(rnd){
+  const a = randInt(rnd,EXP_A_RANGE[0],EXP_A_RANGE[1]) * pm(rnd);
+  const k = randInt(rnd,EXP_B_MAG_RANGE[0],EXP_B_MAG_RANGE[1]) * pm(rnd);
+  return {kind:"exp", a, k};
+}
+function makeExploreTerm(rnd, family){ return family==="exp" ? makeExpTerm(rnd) : makeTrigTerm(rnd); }
+function makeMathTerm(rnd){
+  const kind = pick(rnd,["sin","cos","exp"]);
+  if(kind==="exp") return makeExpTerm(rnd);
+  const a = randInt(rnd,TRIG_A_RANGE[0],TRIG_A_RANGE[1]) * pm(rnd);
+  const k = randInt(rnd,TRIG_B_RANGE[0],TRIG_B_RANGE[1]);
+  return {kind, type:kind, a, k};
+}
+function diffTerm(t){
+  if(t.kind==="exp") return {kind:"exp", a:t.a*t.k, k:t.k};
+  if(t.type==="sin") return {kind:"cos", type:"cos", a:t.a*t.k, k:t.k};
+  return {kind:"sin", type:"sin", a:-t.a*t.k, k:t.k};
+}
+function evalTerm(t,x){ return t.kind==="exp" ? t.a*Math.exp(t.k*x) : t.a*Math[t.type](t.k*x); }
+function domainForTerm(t){
+  return t.kind==="exp" ? [-EXP_ARG_CAP/Math.abs(t.k), EXP_ARG_CAP/Math.abs(t.k)] : [0, 2*Math.PI/t.k];
+}
+function sample12(t){
+  const [lo,hi]=domainForTerm(t);
+  const d1=diffTerm(t), d2=diffTerm(d1);
+  const rows=[];
+  for(let i=0;i<12;i++){
+    const x = lo + (hi-lo)*i/11;
+    rows.push({x, y0:evalTerm(t,x), y1:evalTerm(d1,x), y2:evalTerm(d2,x)});
+  }
+  return rows;
+}
+function termBoxSpec(t){
+  if(t===null) return {coefSign:1, coefMag:0, exp:null, arg:null, type:null};
+  if(t.kind==="exp") return {coefSign:t.a<0?-1:1, coefMag:Math.abs(t.a), exp:null, arg:t.k, type:null};
+  return {coefSign:t.a<0?-1:1, coefMag:Math.abs(t.a), exp:null, arg:t.k, type:t.type};
+}
+function gradeCoefBox(spec,signGiven,magGiven){
+  if(magGiven==="" || magGiven==null) return false;
+  const magOk = Number(magGiven)===spec.coefMag;
+  if(spec.coefMag===0) return magOk;
+  return magOk && Number(signGiven)===spec.coefSign;
+}
+function gradeBox(expected,given){
+  if(expected===null) return true;
+  if(typeof expected==="string") return given===expected;
+  return Number(given)===expected;
+}
+function clipLineToRect(x1,y1,x2,y2,rect){
+  const dx=x2-x1, dy=y2-y1;
+  if(dx===0 && dy===0) return null;
+  let tMin=-Infinity, tMax=Infinity;
+  const checks=[[-dx,x1-rect.xmin],[dx,rect.xmax-x1],[-dy,y1-rect.ymin],[dy,rect.ymax-y1]];
+  for(const [p,q] of checks){
+    if(p===0){ if(q<0) return null; }
+    else { const t=q/p; if(p<0) tMin=Math.max(tMin,t); else tMax=Math.min(tMax,t); }
+  }
+  if(tMin>tMax) return null;
+  return {x1:x1+tMin*dx, y1:y1+tMin*dy, x2:x1+tMax*dx, y2:y1+tMax*dy};
+}
+function fmt2(v){ return (Math.round(v*100)/100).toFixed(2); }
+function fmtSingleTerm(t){
+  const neg = t.a<0, magVal = Math.abs(t.a);
+  let body;
+  if(t.kind==="exp"){
+    const kk = t.k<0 ? `−${Math.abs(t.k)}` : `${t.k}`;
+    body = `${magVal===1?"":magVal}e<sup>${kk}x</sup>`;
+  } else {
+    body = `${magVal===1?"":magVal}${t.type}(${t.k}x)`;
+  }
+  return (neg?"−":"") + body;
+}
+
+/* ================= app state ================= */
+let rnd = mulberry32(Date.now() ^ 0x9e3779b9);
+const state = {
+  mode: "explore",
+  family: "trig",
+  tally: 0,
+  explore: null,
+  calc: null,
+};
+function newSeed(){ rnd = mulberry32((Math.random()*4294967296)>>>0); }
+
+function setMode(m){
+  state.mode = m;
+  document.getElementById("tab-explore").classList.toggle("active", m==="explore");
+  document.getElementById("tab-math").classList.toggle("active", m==="math");
+  document.getElementById("panel-explore").style.display = m==="explore" ? "" : "none";
+  document.getElementById("panel-math").style.display = m==="math" ? "" : "none";
+  document.getElementById("famseg").style.display = m==="explore" ? "flex" : "none";
+  document.getElementById("primaryActionBtn").textContent = m==="explore" ? "Generate new data" : "New problem";
+  document.getElementById("tallylabel").textContent = m==="explore" ? "Equations explored" : "Solved this session";
+  document.getElementById("tallyval").textContent = state.tally;
+  if(m==="explore") startExplore(); else newMathProblem();
+}
+function setFamily(f){
+  state.family = f;
+  document.getElementById("fam-trig").classList.toggle("active", f==="trig");
+  document.getElementById("fam-exp").classList.toggle("active", f==="exp");
+  startExplore();
+}
+function primaryAction(){
+  if(state.mode==="explore") startExplore(); else newMathProblem();
+}
+
+/* ================= Explore mode ================= */
+function startExplore(){
+  const term = makeExploreTerm(rnd, state.family);
+  state.tally++;
+  document.getElementById("tallyval").textContent = state.tally;
+  state.explore = {
+    term, derivShown:false, scrubX:null, pinned:false,
+  };
+  document.getElementById("fPrimeRow").style.display = "none";
+  document.getElementById("fPrimeGraphBox").style.display = "none";
+  document.getElementById("tableWrap").style.display = "none";
+  document.getElementById("showDerivRow").style.display = "flex";
+  document.getElementById("exploreHint").textContent = "One full cycle of f(x) is drawn below. Press “Create the derivative” to see f ′(x) line up underneath it.";
+  document.getElementById("fEquation").innerHTML = "f(x) = " + fmtSingleTerm(term);
+  renderFGraph();
+}
+function showDerivative(){
+  const ex = state.explore;
+  if(!ex || ex.derivShown) return;
+  ex.derivShown = true;
+  const d1 = diffTerm(ex.term);
+  document.getElementById("fPrimeEquation").innerHTML = "f ′(x) = " + fmtSingleTerm(d1);
+  document.getElementById("fPrimeRow").style.display = "";
+  document.getElementById("fPrimeGraphBox").style.display = "";
+  document.getElementById("showDerivRow").style.display = "none";
+  document.getElementById("exploreHint").textContent = "Move your pointer across f(x) to preview the tangent line and slope; click to pin a point in place.";
+  document.getElementById("tableWrap").style.display = "flex";
+  renderFGraph();
+  renderFpGraph();
+  renderTables();
+}
+
+const SVGNS="http://www.w3.org/2000/svg";
+function svgEl(tag,attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+function niceStep(range, targetTicks){
+  const raw = range/targetTicks;
+  const magn = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw/magn;
+  let step;
+  if(norm<1.5) step=1; else if(norm<3) step=2; else if(norm<7) step=5; else step=10;
+  return step*magn;
+}
+function svgPxFromEvent(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+const GW=900, GH=300, GML=60, GMR=20, GMT=16, GMB=40;
+const GPW = GW-GML-GMR, GPH = GH-GMT-GMB;
+
+function buildScale(lo,hi,yMin,yMax){
+  const xToPx = x => GML + ((x-lo)/(hi-lo))*GPW;
+  const yToPx = y => GMT + GPH - ((y-yMin)/(yMax-yMin))*GPH;
+  const pxToX = px => lo + ((px-GML)/GPW)*(hi-lo);
+  return {xToPx, yToPx, pxToX, lo, hi, yMin, yMax};
+}
+
+function drawAxesAndCurve(svg, fn, lo, hi, yLabel, curveClass){
+  svg.innerHTML = "";
+  const xs=[]; for(let i=0;i<=160;i++) xs.push(lo + (hi-lo)*i/160);
+  const ys = xs.map(x=>fn(x));
+  let yMin=Math.min(...ys), yMax=Math.max(...ys);
+  if(yMax-yMin<0.5){ yMax+=0.5; yMin-=0.5; }
+  const pad=(yMax-yMin)*0.14; yMin-=pad; yMax+=pad;
+  const scale = buildScale(lo,hi,yMin,yMax);
+
+  const xStep = niceStep(hi-lo, 8), yStep = niceStep(yMax-yMin, 5);
+  for(let gx=Math.ceil(lo/xStep)*xStep; gx<=hi+1e-9; gx+=xStep){
+    svg.appendChild(svgEl("line",{class:"gridline",x1:scale.xToPx(gx),x2:scale.xToPx(gx),y1:GMT,y2:GMT+GPH}));
+    const t=svgEl("text",{class:"tick",x:scale.xToPx(gx),y:GMT+GPH+16,"text-anchor":"middle"}); t.textContent=fmt2(gx); svg.appendChild(t);
+  }
+  for(let gy=Math.ceil(yMin/yStep)*yStep; gy<=yMax; gy+=yStep){
+    svg.appendChild(svgEl("line",{class:"gridline",x1:GML,x2:GML+GPW,y1:scale.yToPx(gy),y2:scale.yToPx(gy)}));
+    const t=svgEl("text",{class:"tick",x:GML-8,y:scale.yToPx(gy)+4,"text-anchor":"end"}); t.textContent=fmt2(gy); svg.appendChild(t);
+  }
+  if(yMin<=0 && yMax>=0) svg.appendChild(svgEl("line",{class:"axis",x1:GML,x2:GML+GPW,y1:scale.yToPx(0),y2:scale.yToPx(0)}));
+  else svg.appendChild(svgEl("line",{class:"axis",x1:GML,x2:GML+GPW,y1:GMT+GPH,y2:GMT+GPH}));
+  svg.appendChild(svgEl("line",{class:"axis",x1:GML,x2:GML,y1:GMT,y2:GMT+GPH}));
+  const xlab=svgEl("text",{class:"axislabel",x:GML+GPW/2,y:GH-4,"text-anchor":"middle"}); xlab.textContent="x"; svg.appendChild(xlab);
+  const ylab=svgEl("text",{class:"axislabel",x:14,y:GMT+GPH/2,"text-anchor":"middle",transform:`rotate(-90 14 ${GMT+GPH/2})`}); ylab.textContent=yLabel; svg.appendChild(ylab);
+
+  let d = "";
+  xs.forEach((x,i)=>{ const px=scale.xToPx(x), py=scale.yToPx(ys[i]); d += (i===0?"M":"L")+px+" "+py+" "; });
+  svg.appendChild(svgEl("path",{class:"curve"+(curveClass?" "+curveClass:""), d}));
+
+  const rect = {xmin:GML, xmax:GML+GPW, ymin:GMT, ymax:GMT+GPH};
+  return {scale, rect};
+}
+
+function renderFGraph(){
+  const ex = state.explore, t = ex.term;
+  const [lo,hi] = domainForTerm(t);
+  const svg = document.getElementById("svgF");
+  const {scale, rect} = drawAxesAndCurve(svg, x=>evalTerm(t,x), lo, hi, "f(x)", "");
+  ex.fScale = scale; ex.fRect = rect;
+
+  const overlay = svgEl("g",{class:"overlay hidden", id:"fOverlay"});
+  overlay.appendChild(svgEl("line",{class:"tangentline", id:"tangentSeg"}));
+  overlay.appendChild(svgEl("circle",{class:"tangentpoint", id:"tangentPt", r:6}));
+  overlay.appendChild(svgEl("line",{class:"guideline", id:"fGuideV"}));
+  svg.appendChild(overlay);
+
+  if(ex.derivShown){
+    const hit = svgEl("rect",{class:"clickcatch", x:rect.xmin, y:rect.ymin, width:rect.xmax-rect.xmin, height:rect.ymax-rect.ymin});
+    hit.addEventListener("pointermove", (e)=>{
+      const px = svgPxFromEvent(svg,e);
+      const x = Math.min(hi, Math.max(lo, scale.pxToX(px.x)));
+      updateTangent(x, false);
+    });
+    hit.addEventListener("pointerleave", ()=>{ if(!ex.pinned) clearTangent(); });
+    hit.addEventListener("click", (e)=>{
+      const px = svgPxFromEvent(svg,e);
+      const x = Math.min(hi, Math.max(lo, scale.pxToX(px.x)));
+      updateTangent(x, true);
+    });
+    svg.appendChild(hit);
+    if(ex.scrubX!=null) updateTangent(ex.scrubX, ex.pinned);
+  }
+}
+function renderFpGraph(){
+  const ex = state.explore, t = ex.term, d1 = diffTerm(t);
+  const [lo,hi] = domainForTerm(t);
+  const svg = document.getElementById("svgFp");
+  const {scale, rect} = drawAxesAndCurve(svg, x=>evalTerm(d1,x), lo, hi, "f ′(x)", "deriv");
+  ex.fpScale = scale; ex.fpRect = rect;
+
+  const overlay = svgEl("g",{class:"overlay hidden", id:"fpOverlay"});
+  overlay.appendChild(svgEl("line",{class:"hline", id:"hLine"}));
+  overlay.appendChild(svgEl("circle",{class:"hlinepoint", id:"hPt", r:6}));
+  overlay.appendChild(svgEl("line",{class:"guideline", id:"fpGuideV"}));
+  svg.appendChild(overlay);
+  if(ex.scrubX!=null) placeFpOverlay(ex.scrubX);
+}
+
+// A tangent segment has a fixed length in *screen* pixels along the curve's
+// own slope direction in data-space, then gets clipped to the plot rect —
+// same geometry helper (clipLineToRect) Derivative Practice uses for its
+// ruler line, reused verbatim per the house pattern of drawing everything
+// from the model rather than hand-placing it.
+function updateTangent(x, pin){
+  const ex = state.explore;
+  ex.scrubX = x; ex.pinned = pin;
+  const t = ex.term, d1 = diffTerm(t);
+  const y = evalTerm(t,x), m = evalTerm(d1,x);
+  const scale = ex.fScale, rect = ex.fRect;
+  // half-length of the tangent segment, in data-x units: a fixed fraction
+  // of the domain width so it always reads as "short" regardless of family.
+  const [lo,hi] = domainForTerm(t);
+  const dx = (hi-lo)*0.09;
+  const p1x=x-dx, p1y=y-m*dx, p2x=x+dx, p2y=y+m*dx;
+  const clip = clipLineToRect(scale.xToPx(p1x), scale.yToPx(p1y), scale.xToPx(p2x), scale.yToPx(p2y), rect);
+  const seg = document.getElementById("tangentSeg");
+  const pt = document.getElementById("tangentPt");
+  const guide = document.getElementById("fGuideV");
+  const overlay = document.getElementById("fOverlay");
+  overlay.classList.remove("hidden");
+  seg.classList.toggle("preview", !pin);
+  if(clip){ seg.setAttribute("x1",clip.x1); seg.setAttribute("y1",clip.y1); seg.setAttribute("x2",clip.x2); seg.setAttribute("y2",clip.y2); seg.style.display=""; }
+  else seg.style.display="none";
+  pt.setAttribute("cx", scale.xToPx(x)); pt.setAttribute("cy", scale.yToPx(y));
+  guide.setAttribute("x1", scale.xToPx(x)); guide.setAttribute("x2", scale.xToPx(x));
+  guide.setAttribute("y1", rect.ymin); guide.setAttribute("y2", rect.ymax);
+
+  if(ex.derivShown) placeFpOverlay(x);
+}
+function placeFpOverlay(x){
+  const ex = state.explore;
+  const t = ex.term, d1 = diffTerm(t);
+  const m = evalTerm(d1,x);
+  const scale = ex.fpScale, rect = ex.fpRect;
+  if(!scale) return;
+  const hLine = document.getElementById("hLine");
+  const hPt = document.getElementById("hPt");
+  const guide = document.getElementById("fpGuideV");
+  const overlay = document.getElementById("fpOverlay");
+  overlay.classList.remove("hidden");
+  hLine.setAttribute("x1", rect.xmin); hLine.setAttribute("x2", rect.xmax);
+  hLine.setAttribute("y1", scale.yToPx(m)); hLine.setAttribute("y2", scale.yToPx(m));
+  hPt.setAttribute("cx", scale.xToPx(x)); hPt.setAttribute("cy", scale.yToPx(m));
+  guide.setAttribute("x1", scale.xToPx(x)); guide.setAttribute("x2", scale.xToPx(x));
+  guide.setAttribute("y1", rect.ymin); guide.setAttribute("y2", rect.ymax);
+}
+function clearTangent(){
+  const ex = state.explore;
+  ex.scrubX = null;
+  const fo = document.getElementById("fOverlay"); if(fo) fo.classList.add("hidden");
+  const fpo = document.getElementById("fpOverlay"); if(fpo) fpo.classList.add("hidden");
+}
+
+function renderTables(){
+  const ex = state.explore, t = ex.term;
+  const rows = sample12(t);
+  const tb1 = document.querySelector("#table1 tbody");
+  const tb2 = document.querySelector("#table2 tbody");
+  tb1.innerHTML = rows.map(r=>`<tr><td>${fmt2(r.x)}</td><td>${fmt2(r.y0)}</td><td class="mcol">${fmt2(r.y1)}</td></tr>`).join("");
+  tb2.innerHTML = rows.map(r=>`<tr><td>${fmt2(r.x)}</td><td class="ycol echo">${fmt2(r.y1)}</td><td class="mcol">${fmt2(r.y2)}</td></tr>`).join("");
+}
+
+/* ================= Math mode ================= */
+function startCalcProblem(){
+  const t = makeMathTerm(rnd);
+  state.calc = {
+    original: t,
+    stage: "first",
+    firstTarget: diffTerm(t),
+    secondTarget: null,
+    firstDone: false,
+    secondDone: false,
+    focus: null,
+  };
+  state.calc.secondTarget = diffTerm(state.calc.firstTarget);
+  renderCalc();
+}
+function newMathProblem(){ startCalcProblem(); }
+
+function fmtTerm(t){
+  const c = t.a, neg = c<0, magVal = Math.abs(c);
+  let body;
+  if(t.kind==="exp"){
+    body = `${magVal===1?"":magVal}e<sup>${t.k}x</sup>`;
+  } else {
+    body = `${magVal===1?"":magVal}${t.type}(${t.k}x)`;
+  }
+  return {neg, body};
+}
+function renderTermList(t){
+  const {neg,body} = fmtTerm(t);
+  return `<span class="op">${neg?"−":""}</span>${body}`;
+}
+
+function renderCalc(){
+  const c = state.calc;
+  const grid = document.getElementById("mathgrid");
+  grid.innerHTML = "";
+  grid.style.gridTemplateColumns = `max-content max-content`;
+
+  const r1 = document.createElement("div");
+  r1.className = "rowlabel"; r1.textContent = "f(x) =";
+  grid.appendChild(r1);
+  const cell1 = document.createElement("div");
+  cell1.className = "term";
+  const {neg,body} = fmtTerm(c.original);
+  cell1.innerHTML = `<span class="op">${neg?"−":""}</span>${body}`;
+  grid.appendChild(cell1);
+
+  const r2 = document.createElement("div");
+  r2.className = "rowlabel"; r2.textContent = "f ′(x) =";
+  grid.appendChild(r2);
+  const cell2 = document.createElement("div");
+  cell2.className = "term";
+  cell2.appendChild(buildTermInputs(diffTerm(c.original), "d1", 0));
+  grid.appendChild(cell2);
+
+  renderStageArea();
+  restoreFocus();
+  checkAllBoxes();
+}
+
+function buildTermInputs(term, stageKey, idx){
+  const wrap = document.createElement("span");
+  wrap.className = "term";
+
+  const signSel = document.createElement("select");
+  signSel.className = "signbox";
+  signSel.dataset.k = `${stageKey}-${idx}-sign`;
+  signSel.innerHTML = `<option value="1" selected>+</option><option value="-1">−</option>`;
+  wrap.appendChild(signSel);
+
+  const coefInput = document.createElement("input");
+  coefInput.type = "text"; coefInput.className = "coef";
+  coefInput.dataset.k = `${stageKey}-${idx}-coef`;
+  coefInput.autocomplete = "off";
+  wrap.appendChild(coefInput);
+
+  if(term.kind==="exp"){
+    wrap.appendChild(document.createTextNode("e"));
+    const sup = document.createElement("sup");
+    const argInput = document.createElement("input");
+    argInput.type = "text"; argInput.className = "arg";
+    argInput.dataset.k = `${stageKey}-${idx}-arg`;
+    argInput.autocomplete = "off";
+    sup.appendChild(argInput);
+    sup.appendChild(document.createTextNode("x"));
+    wrap.appendChild(sup);
+  } else {
+    const sel = document.createElement("select");
+    sel.className = "typebox";
+    sel.dataset.k = `${stageKey}-${idx}-type`;
+    sel.innerHTML = `<option value="" disabled selected>?</option><option value="sin">sin</option><option value="cos">cos</option>`;
+    wrap.appendChild(sel);
+    wrap.appendChild(document.createTextNode("("));
+    const argInput = document.createElement("input");
+    argInput.type = "text"; argInput.className = "arg";
+    argInput.dataset.k = `${stageKey}-${idx}-arg`;
+    argInput.autocomplete = "off";
+    wrap.appendChild(argInput);
+    wrap.appendChild(document.createTextNode("x)"));
+  }
+  return wrap;
+}
+
+function renderStageArea(){
+  const c = state.calc;
+  let area = document.getElementById("stageArea");
+  if(area) area.remove();
+  area = document.createElement("div");
+  area.id = "stageArea";
+  document.getElementById("panel-math").insertBefore(area, document.getElementById("mathDone"));
+
+  if(c.firstDone){
+    const s1 = document.createElement("div");
+    s1.className = "stage";
+    s1.innerHTML = `<div class="hint">f ′(x) =</div><div class="prompt" style="font-size:17px">${renderTermList(c.firstTarget)}</div>`;
+    area.appendChild(s1);
+
+    if(!c.secondDone){
+      const s2 = document.createElement("div");
+      s2.className = "stage";
+      const grid2 = document.createElement("div");
+      grid2.className = "mathgrid";
+      grid2.style.gridTemplateColumns = `max-content max-content`;
+      const r1 = document.createElement("div"); r1.className="rowlabel"; r1.textContent="f ″(x) =";
+      grid2.appendChild(r1);
+      const cell = document.createElement("div");
+      cell.className = "term";
+      cell.appendChild(buildTermInputs(diffTerm(c.firstTarget), "d2", 0));
+      grid2.appendChild(cell);
+      s2.appendChild(grid2);
+      area.appendChild(s2);
+    }
+  }
+  if(c.secondDone){
+    const s3 = document.createElement("div");
+    s3.className = "stage";
+    s3.innerHTML = `<div class="hint">f ″(x) =</div><div class="prompt" style="font-size:17px">${renderTermList(diffTerm(c.firstTarget))}</div>`;
+    area.appendChild(s3);
+    document.getElementById("mathDone").style.display = "flex";
+  } else {
+    document.getElementById("mathDone").style.display = "none";
+  }
+  wireInputs();
+}
+function wireInputs(){
+  document.querySelectorAll("#mathgrid input, #stageArea input, #stageArea select, #mathgrid select").forEach(el=>{
+    el.oninput = onCalcInput;
+    el.onchange = onCalcInput;
+    el.onfocus = ()=>{ state.calc.focus = {key:el.dataset.k, start:el.selectionStart, end:el.selectionEnd}; };
+  });
+}
+function onCalcInput(e){
+  state.calc.focus = {key:e.target.dataset.k, start:e.target.selectionStart, end:e.target.selectionEnd};
+  checkAllBoxes();
+}
+function restoreFocus(){
+  const f = state.calc.focus;
+  if(!f) return;
+  const el = document.querySelector(`[data-k="${f.key}"]`);
+  if(el){ el.focus(); try{ el.setSelectionRange(f.start,f.end); }catch(e){} }
+}
+function checkTermBoxes(target, stageKey, i){
+  const spec = termBoxSpec(target);
+  let ok = true;
+  const signEl = document.querySelector(`[data-k="${stageKey}-${i}-sign"]`);
+  const coefEl = document.querySelector(`[data-k="${stageKey}-${i}-coef"]`);
+  if(!signEl || !coefEl) return false;
+  {
+    const touched = coefEl.value !== "";
+    const good = touched && gradeCoefBox(spec, signEl.value, coefEl.value);
+    toggleGood(coefEl, touched ? good : null);
+    toggleGood(signEl, touched ? good : null);
+    ok = ok && good;
+  }
+  if(spec.arg !== null){
+    const argEl = document.querySelector(`[data-k="${stageKey}-${i}-arg"]`);
+    if(!argEl) return false;
+    const good = argEl.value!=="" && gradeBox(spec.arg, argEl.value); toggleGood(argEl, argEl.value==="" ? null : good); ok = ok && good;
+  }
+  if(spec.type !== null){
+    const typeEl = document.querySelector(`[data-k="${stageKey}-${i}-type"]`);
+    if(!typeEl) return false;
+    const good = typeEl.value!=="" && gradeBox(spec.type, typeEl.value); toggleGood(typeEl, typeEl.value==="" ? null : good); ok = ok && good;
+  }
+  return ok;
+}
+function lockBoxes(stageKey){
+  document.querySelectorAll(`[data-k^="${stageKey}-"]`).forEach(el=>{ el.disabled = true; });
+}
+function checkAllBoxes(){
+  const c = state.calc;
+  const firstAllGreen = checkTermBoxes(diffTerm(c.original), "d1", 0);
+  const wasFirstDone = c.firstDone;
+  c.firstDone = firstAllGreen;
+  if(!wasFirstDone && c.firstDone) lockBoxes("d1");
+
+  let secondAllGreen = c.firstDone;
+  if(c.firstDone) secondAllGreen = checkTermBoxes(diffTerm(c.firstTarget), "d2", 0);
+  const wasSecondDone = c.secondDone;
+  c.secondDone = secondAllGreen;
+  if(!wasSecondDone && c.secondDone) lockBoxes("d2");
+
+  if(wasFirstDone !== c.firstDone || wasSecondDone !== c.secondDone){
+    renderStageArea();
+  }
+  if(!wasSecondDone && c.secondDone){
+    state.tally++;
+    document.getElementById("tallyval").textContent = state.tally;
+  }
+}
+function toggleGood(el, good){
+  el.classList.remove("good","bad");
+  if(good===true) el.classList.add("good");
+  else if(good===false) el.classList.add("bad");
+}
+
+/* ================= test hook ================= */
+window.__ted = {
+  getState: ()=>state,
+  setMode, setFamily, primaryAction,
+  showDerivative,
+  scrubAt: (x)=>updateTangent(x,false),
+  pinAt: (x)=>updateTangent(x,true),
+  clearTangent,
+  newMathProblem,
+  setCalcBox: (key,val)=>{ const el=document.querySelector(`[data-k="${key}"]`); if(el){ el.value=val; el.dispatchEvent(new Event("input")); } },
+};
+
+/* boot */
+startExplore();
+</script>
