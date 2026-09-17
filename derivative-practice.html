@@ -1,0 +1,1216 @@
+<title>Derivative Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+  --obj1:#1a8f7b; --obj2:#c4791e; --obj3:#3163b0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  --obj1:#229b86; --obj2:#c97f22; --obj3:#5c86d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,Georgia,"Iowan Old Style",serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px;margin:0 auto;padding:28px 20px 64px}
+header.top{border-bottom:1px solid var(--line-strong);padding-bottom:18px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.12em;font-size:12.5px;color:var(--ink-muted)}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif;font-weight:600;font-size:32px;margin:6px 0 8px}
+.desc{color:var(--ink-soft);font-size:15px;max-width:70ch}
+
+nav.catbar{
+  display:flex;gap:8px;margin:22px 0 0;padding:6px;flex-wrap:wrap;
+  background:var(--surface-alt);border:1px solid var(--line-strong);border-radius:14px;
+}
+nav.catbar button{
+  font-family:inherit;font-weight:600;font-size:15.5px;padding:12px 22px;border-radius:10px;
+  flex:1 1 140px;border:1px solid transparent;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+nav.catbar button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.toolbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface-alt);border-radius:12px;padding:10px 14px;margin:16px 0 22px;
+}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden}
+.seg button{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 16px;border:none;background:transparent;color:var(--ink-soft);cursor:pointer;
+}
+.seg button.active{background:var(--accent);color:var(--accent-ink)}
+.btn{
+  font-family:"IBM Plex Sans",sans-serif;font-weight:600;font-size:14px;padding:10px 16px;
+  border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.tally{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:13.5px;color:var(--ink-soft)}
+.tally b{color:var(--ink);font-size:15px}
+
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow);padding:20px;margin-bottom:18px;
+}
+.panel h2.ph{
+  font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--ink-muted);margin:0 0 12px;
+}
+.prompt{font-family:"Fraunces",serif;font-size:19px;font-style:italic;margin:0 0 16px;color:var(--ink)}
+.prompt b{font-style:normal;font-weight:600}
+
+.graphwrap{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.graphbox{flex:1 1 480px;min-width:280px}
+svg.graph{
+  width:auto;height:auto;max-width:100%;max-height:56vh;display:block;
+  background:var(--surface-alt);border:1px solid var(--line);border-radius:10px;
+}
+.axislabel{font-family:"IBM Plex Mono",monospace;font-size:12.5px;fill:var(--ink-muted)}
+.tick{font-family:"IBM Plex Mono",monospace;font-size:11.5px;fill:var(--ink-muted)}
+.curve{fill:none;stroke:var(--ink-soft);stroke-width:2.5}
+.band{fill:var(--accent);opacity:.10}
+.axis{stroke:var(--line-strong);stroke-width:1.5}
+.gridline{stroke:var(--line);stroke-width:1}
+.target circle{fill:none;stroke:var(--obj3);stroke-width:2.5}
+
+.rulerline{stroke:var(--accent-warm);stroke-width:9;opacity:.32;stroke-linecap:round}
+.rulercenter{stroke:var(--accent-warm);stroke-width:1.5;opacity:.85;pointer-events:none}
+.rulerhandle{fill:var(--accent-warm);stroke:var(--surface);stroke-width:2;cursor:grab}
+.rulerhandle:active{cursor:grabbing}
+.rulergrip{fill:var(--surface);stroke:var(--accent-warm);stroke-width:2;stroke-dasharray:3 2;cursor:grab}
+.rulergrip:active{cursor:grabbing}
+.confirmedline{stroke:var(--accent-warm);stroke-width:2.5}
+.clickcatch{fill:transparent;cursor:crosshair}
+.clickmarker{stroke:var(--surface);stroke-width:1.5;pointer-events:none}
+.clickmarker.mA{fill:var(--obj1)}
+.clickmarker.mB{fill:var(--obj2)}
+.stephint{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-muted);margin:-10px 0 14px;text-transform:uppercase;letter-spacing:.05em}
+
+.readout{flex:0 0 200px;min-width:180px;font-family:"IBM Plex Mono",monospace;font-size:14px}
+.readout .row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:8px;background:var(--surface-alt)}
+.readout .swatch{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.readout .lbl{color:var(--ink-muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;display:block}
+.readout .val{color:var(--ink);font-weight:600;font-size:14.5px}
+.readout .val.dim{color:var(--ink-muted);font-weight:400}
+
+.answerrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+input.slopebox{
+  font-family:"IBM Plex Mono",monospace;font-size:16px;width:110px;padding:9px 10px;
+  border-radius:8px;border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);
+}
+select.unitbox{
+  font-family:"IBM Plex Mono",monospace;font-size:14px;padding:9px 10px;border-radius:8px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);min-width:110px;
+}
+input.slopebox.good,select.unitbox.good{border-color:var(--good);box-shadow:0 0 0 2px color-mix(in srgb, var(--good) 22%, transparent)}
+input.slopebox.bad,select.unitbox.bad{border-color:var(--critical);box-shadow:0 0 0 2px color-mix(in srgb, var(--critical) 18%, transparent)}
+.feedback{font-family:"IBM Plex Mono",monospace;font-size:13.5px;margin-top:10px}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--critical)}
+
+.mathgrid{
+  display:grid;gap:14px 18px;align-items:baseline;overflow-x:auto;padding-bottom:6px;
+}
+.mathgrid .rowlabel{
+  font-family:"Fraunces",serif;font-style:italic;font-size:19px;color:var(--ink-soft);
+  padding-right:10px;white-space:nowrap;
+}
+.term{display:flex;align-items:baseline;font-family:"Fraunces",serif;font-size:19px;white-space:nowrap}
+.term .op{color:var(--ink-muted);margin:0 4px}
+.term input.coef,.term input.exp,.term input.arg{
+  font-family:"IBM Plex Mono",monospace;text-align:center;border-radius:6px;
+  border:1.5px solid var(--line-strong);background:var(--surface);color:var(--ink);
+}
+.term input.coef,.term input.arg{width:48px;font-size:16.5px;padding:6px 2px}
+.term sup{font-size:.75em;top:-.7em;position:relative}
+.term input.exp{width:30px;font-size:13.5px;padding:2px 1px}
+.term input.arg{width:32px}
+.term input:disabled,.term select:disabled{opacity:.7;cursor:default}
+.term select.typebox{
+  font-family:"Fraunces",serif;font-size:16px;border-radius:6px;border:1.5px solid var(--line-strong);
+  background:var(--surface);color:var(--ink);padding:3px 2px;
+}
+.term select.signbox{
+  font-family:"IBM Plex Mono",monospace;font-size:15px;border-radius:6px;border:1.5px solid var(--line-strong);
+  background:var(--surface);color:var(--ink-soft);padding:5px 1px;width:34px;text-align:center;margin-right:3px;
+}
+.term input.good,.term select.good{border-color:var(--good);background:color-mix(in srgb, var(--good) 12%, var(--surface))}
+.term input.bad,.term select.bad{border-color:var(--critical);background:color-mix(in srgb, var(--critical) 10%, var(--surface))}
+
+.stage{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.stage.locked{opacity:.45}
+.stage .hint{font-size:13.5px;color:var(--ink-muted);margin-bottom:10px}
+.donebar{margin-top:14px;display:flex;align-items:center;gap:10px}
+
+details.notebook{margin-top:8px}
+details.notebook summary{
+  cursor:pointer;font-family:"IBM Plex Mono",monospace;font-size:13px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-muted);padding:14px 0;
+}
+details.notebook .nbbody{padding:6px 2px 14px;color:var(--ink-soft);font-size:14.5px;line-height:1.7}
+details.notebook .nbbody ol{padding-left:22px}
+
+@media (max-width:430px){
+  /* In column mode the main axis flips to vertical, so .graphbox's
+     flex-basis:480px (meant as a WIDTH target in the row layout) would
+     otherwise get applied as a forced 480px HEIGHT here, leaving a large
+     empty gap under the graph. Reset it to auto so height just follows
+     content. */
+  .graphwrap{flex-direction:column}
+  .graphbox,.readout{flex-basis:auto}
+  .mathgrid{gap:8px 4px}
+  h1{font-size:26px}
+}
+
+/* ---- custom dropdown popup (see the matching script block below) ---- */
+.customselpanel{
+  position:fixed;z-index:1000;background:var(--surface);border:1.5px solid var(--line-strong);
+  border-radius:8px;box-shadow:0 6px 20px var(--shadow);padding:4px;max-height:min(320px,70vh);
+  overflow-y:auto;box-sizing:border-box;
+}
+.customselopt{padding:7px 12px;border-radius:5px;cursor:pointer;white-space:nowrap;color:var(--ink)}
+.customselopt:hover{background:var(--surface-alt)}
+.customselopt.current{background:color-mix(in srgb, var(--accent) 16%, transparent);font-weight:600}
+.customselopt.disabled{color:var(--ink-muted);cursor:default}
+select.selopen{outline:2px solid var(--accent);outline-offset:1px}
+</style>
+
+<div class="frame">
+  <header class="top">
+    <div class="eyebrow">AP Physics · Calculus Toolkit</div>
+    <h1>Derivative Practice</h1>
+    <p class="desc">Read average and instantaneous rates of change off a graph, then practice the symbolic rules that produce them.</p>
+  </header>
+
+  <nav class="catbar">
+    <button id="tab-graph" class="active" onclick="setMode('graph')">Slopes from Graphs</button>
+    <button id="tab-calc" onclick="setMode('calc')">Symbolic Derivatives</button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="seg" id="diffseg">
+      <button id="diff-easy" class="active" onclick="setDifficulty('easy')">Easy</button>
+      <button id="diff-hard" onclick="setDifficulty('hard')">Hard</button>
+    </div>
+    <button class="btn" onclick="newProblem()">New problem</button>
+    <div class="tally">Solved this session: <b id="tallyval">0</b></div>
+  </div>
+
+  <section id="panel-graph" class="panel">
+    <h2 class="ph">Graph mode</h2>
+    <p class="prompt" id="graphPrompt"></p>
+    <p class="stephint" id="graphStepHint"></p>
+    <div class="graphwrap">
+      <div class="graphbox">
+        <svg class="graph" id="svg" viewBox="0 0 900 560" width="900" height="560"></svg>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+    <div class="answerrow" id="rulerControls">
+      <button class="btn primary" id="useLineBtn" onclick="confirmRulerLine()">Use this line</button>
+    </div>
+    <div class="answerrow" id="pickControls" style="display:none">
+      <button class="btn" id="repositionBtn" onclick="repositionRuler()">Reposition ruler</button>
+      <button class="btn" id="clearPointsBtn" onclick="clearPoints()">Clear points</button>
+    </div>
+    <div class="answerrow" id="graphAnswerRow" style="display:none">
+      <div>
+        <span class="readout lbl" style="display:block;margin-bottom:4px">Slope</span>
+        <input class="slopebox" id="slopeInput" data-k="slope" placeholder="0.0" autocomplete="off">
+      </div>
+      <div>
+        <span class="readout lbl" style="display:block;margin-bottom:4px">Units</span>
+        <select class="unitbox" id="unitInput" data-k="unit"></select>
+      </div>
+      <button class="btn primary" id="checkGraphBtn" onclick="checkGraphAnswer()">Check</button>
+    </div>
+    <div class="feedback" id="graphFeedback"></div>
+  </section>
+
+  <section id="panel-calc" class="panel" style="display:none">
+    <h2 class="ph">Symbolic mode</h2>
+    <p class="prompt" id="calcPrompt">A function is given below. Fill in the coefficient and exponent for the derivative of each term.</p>
+    <div class="mathgrid" id="mathgrid"></div>
+    <div class="donebar" id="calcDone" style="display:none">
+      <span class="feedback good">All correct — nice work.</span>
+      <button class="btn primary" onclick="newProblem()">Next problem</button>
+    </div>
+  </section>
+
+  <details class="notebook">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="nbbody">
+      <ol>
+        <li>Why does a secant line between two points on a position-time graph give an <i>average</i> velocity, while a tangent line gives an <i>instantaneous</i> velocity?</li>
+        <li>If you pick your two secant points closer and closer together, what does the secant line start to look like? What does that suggest about how a derivative is defined?</li>
+        <li>For a straight-line (linear) position-time graph, why is the secant slope the same no matter which two points you choose?</li>
+        <li>When you differentiate a constant term, the term disappears rather than becoming zero-times-something. Why does that make sense graphically?</li>
+        <li>Why does differentiating sin(kx) produce cos(kx), but differentiating cos(kx) produces <i>negative</i> sin(kx)? Why does the sign only show up on one of the two?</li>
+      </ol>
+    </div>
+  </details>
+</div>
+
+<script>
+"use strict";
+/* ================= custom dropdown popup =================
+   Native <select> option lists are drawn by the browser's own chrome,
+   not by this page — and at a non-100% browser zoom level that native
+   popup can end up mis-anchored, opening away from (detached from) the
+   select box that triggered it, especially once a select has been
+   rebuilt (its options replaced via innerHTML, which this page does
+   constantly on every re-render). The fix: suppress the native popup
+   and draw our own, positioned with getBoundingClientRect() at the
+   moment it opens, so it's always anchored to the select's real,
+   current on-screen box regardless of zoom. The real <select> element
+   still holds the value, options, disabled state, and change/input
+   events exactly as before — this only changes how the list is drawn,
+   so every existing .value / .dataset / classList / disabled / event
+   hook in the rest of this file keeps working unmodified. */
+(function(){
+  let panel=null, forSel=null;
+  function close(){
+    if(panel){ panel.remove(); panel=null; }
+    if(forSel){ forSel.classList.remove("selopen"); forSel=null; }
+    document.removeEventListener("scroll", close, true);
+    window.removeEventListener("resize", close);
+  }
+  function open(sel){
+    if(sel.disabled) return;
+    close();
+    const opts=Array.from(sel.options);
+    if(!opts.length) return;
+    const rect=sel.getBoundingClientRect();
+    const cs=getComputedStyle(sel);
+    panel=document.createElement("div");
+    panel.className="customselpanel";
+    panel.style.fontFamily=cs.fontFamily; panel.style.fontSize=cs.fontSize;
+    panel.style.minWidth=rect.width+"px";
+    opts.forEach(opt=>{
+      const row=document.createElement("div");
+      row.className="customselopt"+(opt.disabled?" disabled":"")+(opt.value===sel.value?" current":"");
+      row.textContent=opt.textContent;
+      if(!opt.disabled){
+        row.addEventListener("mousedown",(e)=>{
+          e.preventDefault(); e.stopPropagation();
+          sel.value=opt.value;
+          sel.dispatchEvent(new Event("input",{bubbles:true}));
+          sel.dispatchEvent(new Event("change",{bubbles:true}));
+          close();
+          sel.focus();
+        });
+      }
+      panel.appendChild(row);
+    });
+    document.body.appendChild(panel);
+    // Position AFTER inserting (so its real rendered size is known), then
+    // clamp inside the viewport so it can never run off the right/bottom
+    // edge — this is exactly the kind of screen-relative math the native
+    // popup apparently gets wrong under zoom, so it's worth doing
+    // carefully rather than trusting a single top/left guess.
+    let left=rect.left, top=rect.bottom+4;
+    const pr=panel.getBoundingClientRect();
+    if(left+pr.width>window.innerWidth-6) left=Math.max(6,window.innerWidth-pr.width-6);
+    if(top+pr.height>window.innerHeight-6) top=Math.max(6,rect.top-pr.height-4);
+    panel.style.left=left+"px"; panel.style.top=top+"px";
+    forSel=sel; sel.classList.add("selopen");
+    // Any scroll (including an inner scrollable container like .mathgrid)
+    // or a resize (which is exactly what a browser zoom change fires)
+    // invalidates the position we just computed, so just close it rather
+    // than risk drawing it somewhere stale.
+    document.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+  }
+  document.addEventListener("mousedown",(e)=>{
+    const sel=e.target.closest("select");
+    if(sel){
+      if(sel.disabled) return;
+      e.preventDefault();
+      sel.focus();
+      if(forSel===sel) close(); else open(sel);
+      return;
+    }
+    if(panel && !panel.contains(e.target)) close();
+  });
+  document.addEventListener("keydown",(e)=>{
+    const sel=document.activeElement;
+    if(!sel || sel.tagName!=="SELECT") return;
+    if(e.key==="Enter" || e.key===" "){
+      e.preventDefault();
+      if(forSel===sel) close(); else open(sel);
+    } else if(e.key==="Escape"){
+      close();
+    } else if(e.key==="ArrowDown" || e.key==="ArrowUp"){
+      e.preventDefault();
+      const opts=Array.from(sel.options).filter(o=>!o.disabled);
+      if(!opts.length) return;
+      let idx=opts.findIndex(o=>o.value===sel.value);
+      idx = e.key==="ArrowDown" ? Math.min(opts.length-1, idx+1) : Math.max(0, idx-1);
+      if(opts[idx].value!==sel.value){
+        sel.value=opts[idx].value;
+        sel.dispatchEvent(new Event("input",{bubbles:true}));
+        sel.dispatchEvent(new Event("change",{bubbles:true}));
+      }
+      if(forSel===sel) open(sel);
+    }
+  });
+  document.addEventListener("focusout",(e)=>{
+    if(e.target && e.target.tagName==="SELECT"){
+      setTimeout(()=>{ if(document.activeElement!==e.target) close(); }, 0);
+    }
+  });
+})();
+
+/* ================= math model (mirrors build scripts/model.js) ================= */
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function pick(rnd,arr){return arr[Math.floor(rnd()*arr.length)];}
+function mag(rnd,lo,hi){return lo+rnd()*(hi-lo);}
+function pm(rnd){return rnd()<0.5?-1:1;}
+function round1(v){return Math.round(v*10)/10;}
+
+const CONTEXTS=[
+  {key:"pos-time",xLabel:"time",xUnit:"s",yLabel:"position",yUnit:"m",slopeUnit:"m/s",slopeName:"velocity",distractors:["s/m","m","s","m/s²","m·s"]},
+  {key:"vel-time",xLabel:"time",xUnit:"s",yLabel:"velocity",yUnit:"m/s",slopeUnit:"m/s²",slopeName:"acceleration",distractors:["m/s","s²/m","s","m·s","s/m"]},
+];
+const DOMAIN_CHOICES=[10,20,30,40,50];
+const MIN_SUBRANGE_WIDTH=3;
+const MAX_SECANT_WIDTH=8;
+const MAX_TANGENT_WIDTH=6;
+const MIN_ABS_RISE_FOR_RELATIVE_TOL=0.05;
+const SLOPE_TOLERANCE_PCT=0.25;
+const SLOPE_ABS_FLOOR=0.75;
+function roundSigFigs(v,n){ if(v===0||!isFinite(v)) return 0; const d=Math.ceil(Math.log10(Math.abs(v))); const factor=Math.pow(10,n-d); return Math.round(v*factor)/factor; }
+
+function makeGraphFunction(rnd,D){
+  const family=pick(rnd,["linear","quadratic"]);
+  const targetRise=mag(rnd,0.6*D,4*D)*pm(rnd);
+  if(family==="linear"){
+    const m=round1(targetRise/D);
+    const b=round1(mag(rnd,-20,20));
+    return {family,m,b};
+  }
+  const a=round1(targetRise/(D*D));
+  const b=round1(mag(rnd,-1,1)*(D/4));
+  const c=round1(mag(rnd,-15,15));
+  return {family:"quadratic",a,b,c};
+}
+function evalGraphFunction(fn,x){ return fn.family==="linear" ? fn.m*x+fn.b : fn.a*x*x+fn.b*x+fn.c; }
+
+function makeSubrange(rnd,D,width){ const maxLo=D-width; const lo=Math.floor(mag(rnd,0,maxLo)); return [lo,lo+width]; }
+
+function generateGraphProblem(rnd,{allowTangent}){
+  const ctx=pick(rnd,CONTEXTS);
+  const D=pick(rnd,DOMAIN_CHOICES);
+  const fn=makeGraphFunction(rnd,D);
+  const kind = allowTangent && rnd()<0.5 ? "tangent" : "secant";
+  if(kind==="secant"){
+    const width=Math.min(MAX_SECANT_WIDTH,Math.max(MIN_SUBRANGE_WIDTH,Math.round(D*mag(rnd,0.1,0.3))));
+    const [lo,hi]=makeSubrange(rnd,D,Math.min(width,D));
+    return {kind,ctx,D,fn,pickWindow:[lo,hi]};
+  }
+  const margin=Math.max(2,Math.round(D*0.15));
+  const t0=Math.round(mag(rnd,margin,D-margin));
+  const width=Math.min(MAX_TANGENT_WIDTH,Math.max(MIN_SUBRANGE_WIDTH,Math.round(D*mag(rnd,0.1,0.2))));
+  let lo=t0-Math.floor(width/2), hi=t0+Math.ceil(width/2);
+  lo=Math.max(0,lo); hi=Math.min(D,hi);
+  if(hi-lo<MIN_SUBRANGE_WIDTH){ if(lo===0) hi=Math.min(D,lo+MIN_SUBRANGE_WIDTH); else lo=Math.max(0,hi-MIN_SUBRANGE_WIDTH); }
+  return {kind,ctx,D,fn,tangentPoint:t0,pickWindow:[lo,hi]};
+}
+function derivGraphFunction(fn,x){ return fn.family==="linear" ? fn.m : 2*fn.a*x+fn.b; }
+function trueSlope(problem){
+  if(problem.kind==="secant"){
+    const [lo,hi]=problem.pickWindow;
+    return (evalGraphFunction(problem.fn,hi)-evalGraphFunction(problem.fn,lo))/(hi-lo);
+  }
+  return derivGraphFunction(problem.fn, problem.tangentPoint);
+}
+function slopePercentError(trueVal,studentSlope){
+  if(!isFinite(studentSlope)) return null;
+  if(Math.abs(trueVal)<MIN_ABS_RISE_FOR_RELATIVE_TOL) return null;
+  return (Math.abs(studentSlope-trueVal)/Math.abs(trueVal))*100;
+}
+function gradeSlopeAgainstTrue(trueVal,studentSlope,tolerance){
+  if(tolerance==null) tolerance=SLOPE_TOLERANCE_PCT;
+  if(!isFinite(studentSlope)) return false;
+  const absErr=Math.abs(studentSlope-trueVal);
+  if(Math.abs(trueVal)<MIN_ABS_RISE_FOR_RELATIVE_TOL) return absErr<=SLOPE_ABS_FLOOR;
+  return absErr/Math.abs(trueVal)<=tolerance;
+}
+function clipLineToRect(x1,y1,x2,y2,rect){
+  const dx=x2-x1, dy=y2-y1;
+  if(dx===0 && dy===0) return null;
+  let tMin=-Infinity, tMax=Infinity;
+  const checks=[[-dx,x1-rect.xmin],[dx,rect.xmax-x1],[-dy,y1-rect.ymin],[dy,rect.ymax-y1]];
+  for(const [p,q] of checks){
+    if(p===0){ if(q<0) return null; }
+    else { const t=q/p; if(p<0) tMin=Math.max(tMin,t); else tMax=Math.min(tMax,t); }
+  }
+  if(tMin>tMax) return null;
+  return {x1:x1+tMin*dx, y1:y1+tMin*dy, x2:x1+tMax*dx, y2:y1+tMax*dy};
+}
+
+/* ---- Mode 2 model ---- */
+function makePolyTerms(rnd,hard){
+  const termCount=hard?(rnd()<0.5?4:5):(rnd()<0.5?3:4);
+  const maxDeg=hard?5:4;
+  const exps=new Set();
+  while(exps.size<termCount) exps.add(Math.floor(rnd()*(maxDeg+1)));
+  const powers=Array.from(exps).sort((a,b)=>b-a);
+  return powers.map(exp=>{ let coef=Math.floor(mag(rnd,1,9))*pm(rnd); if(coef===0) coef=1; return {kind:"poly",coef,exp}; });
+}
+function diffPolyTerm(t){ if(t.exp===0) return null; return {kind:"poly",coef:t.coef*t.exp,exp:t.exp-1}; }
+function makeTranscendentalProblem(rnd,family,hard){
+  const a=Math.floor(mag(rnd,1,6))*pm(rnd);
+  const k=Math.floor(mag(rnd,2,hard?5:4));
+  const term = family==="exp" ? {kind:"exp",a,k} : {kind:family,a,k,type:family};
+  const terms=[term];
+  if(rnd()<0.4){ let c=Math.floor(mag(rnd,2,12))*pm(rnd); if(c===0) c=3; terms.push({kind:"poly",coef:c,exp:0}); }
+  return terms;
+}
+function diffTerm(t){
+  if(t.kind==="poly") return diffPolyTerm(t);
+  if(t.kind==="exp") return {kind:"exp",a:t.a*t.k,k:t.k};
+  if(t.type==="sin") return {kind:"cos",type:"cos",a:t.a*t.k,k:t.k};
+  return {kind:"sin",type:"sin",a:-t.a*t.k,k:t.k};
+}
+function differentiateAll(terms){ return terms.map(diffTerm).filter(t=>t!==null); }
+// A vanished term (t===null) still gets a real sign+magnitude box pair
+// expecting 0, with no exponent/arg/type factor. A poly term ALWAYS gets an
+// exponent box, no matter the value (including 1) — nothing is auto-filled
+// just because it looks obvious. An exp/trig term always gets an "arg" box
+// for the coefficient inside the function (the k in e^(kx) or
+// sin/cos(kx)) — the chain rule doesn't change k, but the student writes it
+// in again rather than having it carried over for them.
+function termBoxSpec(t){
+  if(t===null) return {coefSign:1, coefMag:0, exp:null, arg:null, type:null, hasX:false};
+  if(t.kind==="poly") return {coefSign:t.coef<0?-1:1, coefMag:Math.abs(t.coef), exp:t.exp, arg:null, type:null, hasX:true};
+  if(t.kind==="exp") return {coefSign:t.a<0?-1:1, coefMag:Math.abs(t.a), exp:null, arg:t.k, type:null, hasX:false};
+  return {coefSign:t.a<0?-1:1, coefMag:Math.abs(t.a), exp:null, arg:t.k, type:t.type, hasX:false};
+}
+function gradeCoefBox(spec,signGiven,magGiven){
+  if(magGiven==="" || magGiven==null) return false;
+  const magOk = Number(magGiven)===spec.coefMag;
+  if(spec.coefMag===0) return magOk;
+  return magOk && Number(signGiven)===spec.coefSign;
+}
+function gradeBox(expected,given){
+  if(expected===null) return true;
+  if(typeof expected==="string") return given===expected;
+  return Number(given)===expected;
+}
+
+/* ================= app state ================= */
+let rnd = mulberry32(Date.now() ^ 0x9e3779b9);
+const state = {
+  mode: "graph",
+  difficulty: "easy",
+  tally: 0,
+  graph: null,
+  calc: null,
+};
+
+function newSeed(){ rnd = mulberry32((Math.random()*4294967296)>>>0); }
+
+function setMode(m){
+  state.mode = m;
+  document.getElementById("tab-graph").classList.toggle("active", m==="graph");
+  document.getElementById("tab-calc").classList.toggle("active", m==="calc");
+  document.getElementById("panel-graph").style.display = m==="graph" ? "" : "none";
+  document.getElementById("panel-calc").style.display = m==="calc" ? "" : "none";
+  newProblem();
+}
+function setDifficulty(d){
+  state.difficulty = d;
+  document.getElementById("diff-easy").classList.toggle("active", d==="easy");
+  document.getElementById("diff-hard").classList.toggle("active", d==="hard");
+  newProblem();
+}
+function newProblem(){
+  if(state.mode==="graph") startGraphProblem(); else startCalcProblem();
+}
+
+/* ================= Mode 1: graph ================= */
+/* stage machine: "positioning" (dragging the transparent ruler into place)
+   -> "picking" (ruler is gone; a solid line is drawn; free clicks anywhere
+   in the plot register as Point A / Point B, used as-is — no snapping to
+   the line, no distance cutoff). Grading always compares the student's
+   typed slope against the problem's true secant/tangent value, never
+   against their own ruler placement or clicks. */
+function startGraphProblem(){
+  const problem = generateGraphProblem(rnd, {allowTangent: state.difficulty==="hard"});
+  const D = problem.D;
+  state.graph = {
+    problem, stage:"positioning",
+    ruler: {ax:D*0.2, ay:null, bx:D*0.8, by:null}, // ay/by set once we know the y-range, below
+    confirmedLine: null,
+    A:null, B:null, checked:false, correct:false,
+  };
+  renderGraphPrompt();
+  renderGraphSvg();
+  renderReadout();
+  // A fresh problem always starts in "positioning": show the ruler confirm
+  // button and hide the picking-stage controls, regardless of which stage
+  // the previous problem ended on (without this reset, confirming a line
+  // or finishing a problem left these stuck from the last problem, and
+  // "Use this line" never came back on the next one).
+  document.getElementById("rulerControls").style.display = "flex";
+  document.getElementById("pickControls").style.display = "none";
+  document.getElementById("graphAnswerRow").style.display = "none";
+  document.getElementById("graphFeedback").textContent = "";
+  document.getElementById("graphFeedback").className = "feedback";
+}
+function renderGraphPrompt(){
+  const p = state.graph.problem, ctx = p.ctx;
+  const el = document.getElementById("graphPrompt");
+  if(p.kind==="secant"){
+    el.innerHTML = `A ${ctx.yLabel} vs. ${ctx.xLabel} graph is shown (${ctx.yLabel} in ${ctx.yUnit}, ${ctx.xLabel} in ${ctx.xUnit}). `+
+      `Find the average ${ctx.slopeName} between <b>${ctx.xLabel} = ${p.pickWindow[0]} ${ctx.xUnit}</b> and <b>${ctx.xLabel} = ${p.pickWindow[1]} ${ctx.xUnit}</b>.`;
+  } else {
+    el.innerHTML = `A ${ctx.yLabel} vs. ${ctx.xLabel} graph is shown (${ctx.yLabel} in ${ctx.yUnit}, ${ctx.xLabel} in ${ctx.xUnit}). `+
+      `Find the instantaneous ${ctx.slopeName} at <b>${ctx.xLabel} = ${p.tangentPoint} ${ctx.xUnit}</b> (marked on the graph).`;
+  }
+  updateStepHint();
+}
+function updateStepHint(){
+  const el = document.getElementById("graphStepHint");
+  const gr = state.graph;
+  if(gr.stage==="positioning") el.textContent = "Step 1 of 2 — drag the ruler's ends to line it up, or drag its middle to slide it, then confirm.";
+  else if(gr.A==null || gr.B==null) el.textContent = "Step 2 of 2 — click any two spots on the line to read off coordinates for your calculation.";
+  else el.textContent = "Type the slope you calculate from the two points below.";
+}
+
+const SVGNS="http://www.w3.org/2000/svg";
+function svgEl(tag,attrs){ const e=document.createElementNS(SVGNS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+function niceStep(range, targetTicks){
+  const raw = range/targetTicks;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw/mag;
+  let step;
+  if(norm<1.5) step=1; else if(norm<3) step=2; else if(norm<7) step=5; else step=10;
+  return step*mag;
+}
+
+// Convert a pointer event's screen position to SVG viewBox coordinates,
+// independent of how the SVG is actually scaled/laid out on screen.
+function svgPxFromEvent(svg, evt){
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function dataPointFromEvent(svg, evt, scale){
+  const px = svgPxFromEvent(svg, evt);
+  return { x: scale.pxToX(px.x), y: scale.pxToY(px.y) };
+}
+// Attach a plain "drag this handle to here" behavior — used for the two
+// ruler end-handles, which rotate the ruler around the OTHER handle.
+function attachDragHandle(el, svg, scale, onMove){
+  el.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    const move = (ev)=>{ onMove(dataPointFromEvent(svg, ev, scale)); };
+    const up = ()=>{ el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+  });
+}
+// Attach a "drag this to translate both ruler ends together" behavior —
+// used for the middle grip.
+function attachDragTranslate(el, svg, scale, ruler, onUpdate){
+  el.addEventListener("pointerdown", (e)=>{
+    e.preventDefault();
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    const start = dataPointFromEvent(svg, e, scale);
+    const r0 = {ax:ruler.ax, ay:ruler.ay, bx:ruler.bx, by:ruler.by};
+    const move = (ev)=>{
+      const cur = dataPointFromEvent(svg, ev, scale);
+      const dx = cur.x-start.x, dy = cur.y-start.y;
+      ruler.ax = r0.ax+dx; ruler.ay = r0.ay+dy;
+      ruler.bx = r0.bx+dx; ruler.by = r0.by+dy;
+      onUpdate();
+    };
+    const up = ()=>{ el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+  });
+}
+
+function renderGraphSvg(){
+  const svg = document.getElementById("svg");
+  svg.innerHTML = "";
+  const p = state.graph.problem;
+  const D = p.D;
+  const W=900,H=560, ML=64,MR=24,MT=24,MB=52;
+  const plotW=W-ML-MR, plotH=H-MT-MB;
+
+  const xs=[]; for(let i=0;i<=120;i++) xs.push(D*i/120);
+  const ys = xs.map(x=>evalGraphFunction(p.fn,x));
+  let yMin=Math.min(...ys), yMax=Math.max(...ys);
+  if(yMax-yMin<1){ yMax+=1; yMin-=1; }
+  const pad=(yMax-yMin)*0.12; yMin-=pad; yMax+=pad;
+
+  const xToPx = x => ML + (x/D)*plotW;
+  const yToPx = y => MT + plotH - ((y-yMin)/(yMax-yMin))*plotH;
+  const pxToX = px => ((px-ML)/plotW)*D;
+  const pxToY = py => yMin + ((MT+plotH-py)/plotH)*(yMax-yMin);
+  const scale = {xToPx, yToPx, pxToX, pxToY};
+  state.graph.scale = scale;
+  const rect = {xmin:0, xmax:D, ymin:yMin, ymax:yMax};
+
+  const gr = state.graph;
+  if(gr.ruler.ay==null){
+    // First render of a fresh problem: drop the ruler at vertical center.
+    gr.ruler.ay = gr.ruler.by = (yMin+yMax)/2;
+  }
+
+  // grid + axes
+  const xStep = niceStep(D, 8), yStep = niceStep(yMax-yMin, 6);
+  for(let gx=0; gx<=D+1e-9; gx+=xStep){
+    svg.appendChild(svgEl("line",{class:"gridline",x1:xToPx(gx),x2:xToPx(gx),y1:MT,y2:MT+plotH}));
+    const t=svgEl("text",{class:"tick",x:xToPx(gx),y:MT+plotH+18,"text-anchor":"middle"}); t.textContent=Math.round(gx*10)/10; svg.appendChild(t);
+  }
+  for(let gy=Math.ceil(yMin/yStep)*yStep; gy<=yMax; gy+=yStep){
+    svg.appendChild(svgEl("line",{class:"gridline",x1:ML,x2:ML+plotW,y1:yToPx(gy),y2:yToPx(gy)}));
+    const t=svgEl("text",{class:"tick",x:ML-8,y:yToPx(gy)+4,"text-anchor":"end"}); t.textContent=Math.round(gy*10)/10; svg.appendChild(t);
+  }
+  svg.appendChild(svgEl("line",{class:"axis",x1:ML,x2:ML+plotW,y1:MT+plotH,y2:MT+plotH}));
+  svg.appendChild(svgEl("line",{class:"axis",x1:ML,x2:ML,y1:MT,y2:MT+plotH}));
+  const xlab=svgEl("text",{class:"axislabel",x:ML+plotW/2,y:H-8,"text-anchor":"middle"}); xlab.textContent=`${p.ctx.xLabel} (${p.ctx.xUnit})`; svg.appendChild(xlab);
+  const ylab=svgEl("text",{class:"axislabel",x:16,y:MT+plotH/2,"text-anchor":"middle",transform:`rotate(-90 16 ${MT+plotH/2})`}); ylab.textContent=`${p.ctx.yLabel} (${p.ctx.yUnit})`; svg.appendChild(ylab);
+
+  // pick-window band — a visual hint for where to line the ruler up, not an
+  // enforced constraint (students may place the ruler and click anywhere).
+  const [lo,hi]=p.pickWindow;
+  svg.appendChild(svgEl("rect",{class:"band",x:xToPx(lo),y:MT,width:xToPx(hi)-xToPx(lo),height:plotH}));
+
+  // curve
+  let d = "";
+  xs.forEach((x,i)=>{ const px=xToPx(x), py=yToPx(ys[i]); d += (i===0?"M":"L")+px+" "+py+" "; });
+  svg.appendChild(svgEl("path",{class:"curve",d}));
+
+  // tangent target marker
+  if(p.kind==="tangent"){
+    const ty = evalGraphFunction(p.fn, p.tangentPoint);
+    const g = svgEl("g",{class:"target"});
+    g.appendChild(svgEl("circle",{cx:xToPx(p.tangentPoint),cy:yToPx(ty),r:10}));
+    svg.appendChild(g);
+  }
+
+  if(gr.stage==="positioning") renderRulerOverlay(svg, scale, rect);
+  else renderPickingOverlay(svg, scale, rect);
+}
+
+function renderRulerOverlay(svg, scale, rect){
+  const gr = state.graph;
+  const lineEl = svgEl("line",{class:"rulerline"});
+  const centerEl = svgEl("line",{class:"rulercenter"});
+  const gripEl = svgEl("circle",{class:"rulergrip", r:9});
+  const handleAEl = svgEl("circle",{class:"rulerhandle handleA", r:11});
+  const handleBEl = svgEl("circle",{class:"rulerhandle handleB", r:11});
+  svg.appendChild(lineEl); svg.appendChild(centerEl);
+  svg.appendChild(gripEl); svg.appendChild(handleAEl); svg.appendChild(handleBEl);
+
+  function redraw(){
+    const clip = clipLineToRect(gr.ruler.ax, gr.ruler.ay, gr.ruler.bx, gr.ruler.by, rect);
+    [lineEl, centerEl].forEach(el=>{
+      if(clip){
+        el.setAttribute("x1", scale.xToPx(clip.x1)); el.setAttribute("y1", scale.yToPx(clip.y1));
+        el.setAttribute("x2", scale.xToPx(clip.x2)); el.setAttribute("y2", scale.yToPx(clip.y2));
+        el.style.display = "";
+      } else el.style.display = "none";
+    });
+    handleAEl.setAttribute("cx", scale.xToPx(gr.ruler.ax)); handleAEl.setAttribute("cy", scale.yToPx(gr.ruler.ay));
+    handleBEl.setAttribute("cx", scale.xToPx(gr.ruler.bx)); handleBEl.setAttribute("cy", scale.yToPx(gr.ruler.by));
+    gripEl.setAttribute("cx", scale.xToPx((gr.ruler.ax+gr.ruler.bx)/2)); gripEl.setAttribute("cy", scale.yToPx((gr.ruler.ay+gr.ruler.by)/2));
+  }
+  redraw();
+  attachDragHandle(handleAEl, svg, scale, (pt)=>{ gr.ruler.ax=pt.x; gr.ruler.ay=pt.y; redraw(); });
+  attachDragHandle(handleBEl, svg, scale, (pt)=>{ gr.ruler.bx=pt.x; gr.ruler.by=pt.y; redraw(); });
+  attachDragTranslate(gripEl, svg, scale, gr.ruler, redraw);
+}
+
+function renderPickingOverlay(svg, scale, rect){
+  const gr = state.graph;
+  const line = gr.confirmedLine;
+  const clip = clipLineToRect(line.ax, line.ay, line.bx, line.by, rect);
+  if(clip){
+    svg.appendChild(svgEl("line",{class:"confirmedline",
+      x1:scale.xToPx(clip.x1), y1:scale.yToPx(clip.y1), x2:scale.xToPx(clip.x2), y2:scale.yToPx(clip.y2)}));
+  }
+  if(gr.A) svg.appendChild(svgEl("circle",{class:"clickmarker mA", cx:scale.xToPx(gr.A.x), cy:scale.yToPx(gr.A.y), r:7}));
+  if(gr.B) svg.appendChild(svgEl("circle",{class:"clickmarker mB", cx:scale.xToPx(gr.B.x), cy:scale.yToPx(gr.B.y), r:7}));
+
+  // Free-click catcher over the whole plot: clicks register exactly where
+  // they land — no snapping to the line, no distance cutoff — so a sloppy
+  // click shows up later as % error against the true slope, on purpose.
+  if(!gr.checked){
+    const ML=64, MT=24, plotW=900-64-24, plotH=560-24-52;
+    const hit = svgEl("rect",{class:"clickcatch", x:ML, y:MT, width:plotW, height:plotH});
+    hit.addEventListener("click", (e)=>{
+      const px = svgPxFromEvent(svg, e);
+      registerClick(scale.pxToX(px.x), scale.pxToY(px.y));
+    });
+    svg.appendChild(hit);
+  }
+}
+
+function confirmRulerLine(){
+  const gr = state.graph;
+  gr.confirmedLine = {...gr.ruler};
+  gr.stage = "picking";
+  gr.A = null; gr.B = null;
+  document.getElementById("rulerControls").style.display = "none";
+  document.getElementById("pickControls").style.display = "flex";
+  document.getElementById("graphAnswerRow").style.display = "none";
+  renderGraphSvg();
+  renderReadout();
+  updateStepHint();
+}
+function repositionRuler(){
+  const gr = state.graph;
+  gr.ruler = {...gr.confirmedLine};
+  gr.stage = "positioning";
+  gr.A = null; gr.B = null;
+  document.getElementById("rulerControls").style.display = "flex";
+  document.getElementById("pickControls").style.display = "none";
+  document.getElementById("graphAnswerRow").style.display = "none";
+  document.getElementById("graphFeedback").textContent = "";
+  document.getElementById("graphFeedback").className = "feedback";
+  renderGraphSvg();
+  renderReadout();
+  updateStepHint();
+}
+function clearPoints(){
+  const gr = state.graph;
+  if(gr.checked) return;
+  gr.A = null; gr.B = null;
+  document.getElementById("graphAnswerRow").style.display = "none";
+  document.getElementById("graphFeedback").textContent = "";
+  document.getElementById("graphFeedback").className = "feedback";
+  renderGraphSvg();
+  renderReadout();
+  updateStepHint();
+}
+function registerClick(dataX, dataY){
+  const gr = state.graph;
+  if(gr.stage!=="picking" || gr.checked) return;
+  const pt = { x: roundSigFigs(dataX,2), y: roundSigFigs(dataY,2) };
+  if(gr.A==null) gr.A = pt;
+  else if(gr.B==null) gr.B = pt;
+  else gr.B = pt; // both already set: a third click replaces B
+  renderGraphSvg();
+  renderReadout();
+  updateStepHint();
+  if(gr.A && gr.B){
+    fillUnitSelect();
+    document.getElementById("slopeInput").value = "";
+    document.getElementById("slopeInput").classList.remove("good","bad");
+    document.getElementById("unitInput").classList.remove("good","bad");
+    document.getElementById("graphAnswerRow").style.display = "flex";
+  } else {
+    document.getElementById("graphAnswerRow").style.display = "none";
+  }
+}
+function renderReadout(){
+  const gr = state.graph;
+  const el = document.getElementById("readout");
+  el.innerHTML = pointRow("obj1","Point A", gr.A) + pointRow("obj2","Point B", gr.B);
+}
+function pointRow(colorVar, label, pt){
+  const val = pt ? `(${pt.x}, ${pt.y})` : "—";
+  return `<div class="row"><span class="swatch" style="background:var(--${colorVar})"></span>`+
+    `<span><span class="lbl">${label}</span><span class="val ${pt?'':'dim'}">${val}</span></span></div>`;
+}
+function fillUnitSelect(){
+  const gr = state.graph, ctx = gr.problem.ctx;
+  const sel = document.getElementById("unitInput");
+  const opts = [ctx.slopeUnit, ...ctx.distractors];
+  // shuffle deterministically-ish using rnd is fine (visual variety only)
+  for(let i=opts.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [opts[i],opts[j]]=[opts[j],opts[i]]; }
+  sel.innerHTML = `<option value="" disabled selected>choose…</option>` + opts.map(u=>`<option value="${u}">${u}</option>`).join("");
+}
+function checkGraphAnswer(){
+  const gr = state.graph, p = gr.problem;
+  if(gr.A==null || gr.B==null) return;
+  const trueVal = trueSlope(p);
+  const studentSlope = Number(document.getElementById("slopeInput").value);
+  const studentUnit = document.getElementById("unitInput").value;
+  const slopeOk = Number.isFinite(studentSlope) && gradeSlopeAgainstTrue(trueVal, studentSlope);
+  const unitOk = studentUnit === p.ctx.slopeUnit;
+  document.getElementById("slopeInput").classList.toggle("good", slopeOk);
+  document.getElementById("slopeInput").classList.toggle("bad", !slopeOk);
+  document.getElementById("unitInput").classList.toggle("good", unitOk);
+  document.getElementById("unitInput").classList.toggle("bad", !unitOk);
+  const fb = document.getElementById("graphFeedback");
+  const pct = Number.isFinite(studentSlope) ? slopePercentError(trueVal, studentSlope) : null;
+  const errPhrase = pct!=null ? `${pct.toFixed(1)}% off the true value`
+    : (Number.isFinite(studentSlope) ? `${Math.abs(studentSlope-trueVal).toFixed(2)} ${p.ctx.slopeUnit} off the true value` : "not a number");
+  if(slopeOk && unitOk){
+    fb.textContent = `Correct — your slope was ${errPhrase}. Click New problem to keep going.`;
+    fb.className = "feedback good";
+    if(!gr.checked){ state.tally++; document.getElementById("tallyval").textContent = state.tally; }
+    gr.checked = true; gr.correct = true;
+    updateStepHint();
+    document.getElementById("pickControls").style.display = "none";
+  } else {
+    let msg = [];
+    if(!slopeOk) msg.push(`your slope was ${errPhrase}`);
+    if(!unitOk) msg.push(`check the units`);
+    fb.textContent = "Not quite — " + msg.join("; ") + ". Try repositioning the ruler more carefully, or re-click your two points.";
+    fb.className = "feedback bad";
+  }
+}
+
+/* ================= Mode 2: calc ================= */
+function startCalcProblem(){
+  const hard = state.difficulty==="hard";
+  let terms;
+  if(!hard){
+    terms = makePolyTerms(rnd,false);
+  } else {
+    const fam = pick(rnd, ["poly","exp","sin","cos"]);
+    terms = fam==="poly" ? makePolyTerms(rnd,true) : makeTranscendentalProblem(rnd, fam, true);
+  }
+  state.calc = {
+    original: terms,
+    stage: "first", // 'first' | 'second' | 'done'
+    firstTarget: differentiateAll(terms),
+    secondTarget: null,
+    firstDone: false,
+    secondDone: false,
+    focus: null,
+  };
+  state.calc.secondTarget = differentiateAll(state.calc.firstTarget);
+  renderCalc();
+}
+
+function fmtTerm(t){
+  const c = t.coef!=null ? t.coef : t.a;
+  const neg = c<0;
+  const magVal = Math.abs(c);
+  let body;
+  if(t.kind==="poly"){
+    if(t.exp===0) body = `${magVal}`;
+    else if(t.exp===1) body = (magVal===1?"":magVal)+"x";
+    else body = (magVal===1?"":magVal)+`x<sup>${t.exp}</sup>`;
+  } else if(t.kind==="exp"){
+    body = `${magVal===1?"":magVal}e<sup>${t.k}x</sup>`;
+  } else {
+    body = `${magVal===1?"":magVal}${t.type}(${t.k}x)`;
+  }
+  return {neg, body};
+}
+function renderTermList(terms){
+  if(terms.length===0) return "0";
+  return terms.map((t,i)=>{
+    const {neg,body} = fmtTerm(t);
+    const sign = i===0 ? (neg?"−":"") : (neg?" − ":" + ");
+    return `<span class="op">${sign}</span>${body}`;
+  }).join("");
+}
+
+function renderCalc(){
+  const c = state.calc;
+  const grid = document.getElementById("mathgrid");
+  grid.innerHTML = "";
+  grid.style.gridTemplateColumns = `max-content repeat(${c.original.length}, max-content)`;
+
+  // row 1: f(x) statement, one term per column
+  const r1 = document.createElement("div");
+  r1.className = "rowlabel"; r1.textContent = "f(x) =";
+  grid.appendChild(r1);
+  c.original.forEach((t,i)=>{
+    const cell = document.createElement("div");
+    cell.className = "term";
+    const {neg,body} = fmtTerm(t);
+    const sign = i===0 ? (neg?"−":"") : (neg?"−":"+");
+    cell.innerHTML = `<span class="op">${sign}</span>${body}`;
+    grid.appendChild(cell);
+  });
+
+  // row 2: f'(x) input boxes, one column per surviving term
+  const r2 = document.createElement("div");
+  r2.className = "rowlabel"; r2.textContent = "f ′(x) =";
+  grid.appendChild(r2);
+  c.original.forEach((orig,i)=>{
+    const cell = document.createElement("div");
+    cell.className = "term";
+    cell.appendChild(buildTermInputs(diffTerm(orig), "d1", i, i===0));
+    grid.appendChild(cell);
+  });
+
+  renderStageArea();
+  restoreFocus();
+  checkAllBoxes();
+}
+
+/* term===null means this term vanished entirely under differentiation (a
+   lone constant) — it still gets a real sign+magnitude box pair (expecting
+   0), just with no x/exponent factor after it. Every term, including the
+   first, gets its own +/- sign dropdown so the number box only ever holds
+   a magnitude; every term after the first also gets a static "+" glued in
+   front of it for visual clarity, since the sign dropdown (not the glue)
+   is what actually carries a term's real sign. */
+function buildTermInputs(term, stageKey, idx, isFirst){
+  const wrap = document.createElement("span");
+  wrap.className = "term";
+
+  if(!isFirst){
+    const plus = document.createElement("span");
+    plus.className = "op"; plus.textContent = "+";
+    wrap.appendChild(plus);
+  }
+
+  const signSel = document.createElement("select");
+  signSel.className = "signbox";
+  signSel.dataset.k = `${stageKey}-${idx}-sign`;
+  signSel.innerHTML = `<option value="1" selected>+</option><option value="-1">−</option>`;
+  wrap.appendChild(signSel);
+
+  const coefInput = document.createElement("input");
+  coefInput.type = "text"; coefInput.className = "coef";
+  coefInput.dataset.k = `${stageKey}-${idx}-coef`;
+  coefInput.autocomplete = "off";
+  wrap.appendChild(coefInput);
+
+  if(term===null) return wrap; // vanished: no x factor, nothing more to add
+
+  if(term.kind==="poly"){
+    // Every poly term gets "x" plus a real exponent box, no matter what
+    // the new exponent is (including 1) — the student writes every
+    // exponent in themselves rather than having an "obvious" one skipped.
+    wrap.appendChild(document.createTextNode("x"));
+    const sup = document.createElement("sup");
+    const expInput = document.createElement("input");
+    expInput.type = "text"; expInput.className = "exp";
+    expInput.dataset.k = `${stageKey}-${idx}-exp`;
+    expInput.autocomplete = "off";
+    sup.appendChild(expInput);
+    wrap.appendChild(sup);
+  } else if(term.kind==="exp"){
+    // The argument's coefficient (k in e^(kx)) doesn't change under the
+    // chain rule, but it's a real box, not auto-filled text — the student
+    // demonstrates they know it stays the same by writing it in again.
+    wrap.appendChild(document.createTextNode("e"));
+    const sup = document.createElement("sup");
+    const argInput = document.createElement("input");
+    argInput.type = "text"; argInput.className = "exp";
+    argInput.dataset.k = `${stageKey}-${idx}-arg`;
+    argInput.autocomplete = "off";
+    sup.appendChild(argInput);
+    sup.appendChild(document.createTextNode("x"));
+    wrap.appendChild(sup);
+  } else {
+    const sel = document.createElement("select");
+    sel.className = "typebox";
+    sel.dataset.k = `${stageKey}-${idx}-type`;
+    sel.innerHTML = `<option value="" disabled selected>?</option><option value="sin">sin</option><option value="cos">cos</option>`;
+    wrap.appendChild(sel);
+    wrap.appendChild(document.createTextNode("("));
+    const argInput = document.createElement("input");
+    argInput.type = "text"; argInput.className = "arg";
+    argInput.dataset.k = `${stageKey}-${idx}-arg`;
+    argInput.autocomplete = "off";
+    wrap.appendChild(argInput);
+    wrap.appendChild(document.createTextNode("x)"));
+  }
+  return wrap;
+}
+
+function renderStageArea(){
+  const c = state.calc;
+  let area = document.getElementById("stageArea");
+  if(area) area.remove();
+  area = document.createElement("div");
+  area.id = "stageArea";
+  document.getElementById("panel-calc").insertBefore(area, document.getElementById("calcDone"));
+
+  if(c.firstDone){
+    const s1 = document.createElement("div");
+    s1.className = "stage";
+    s1.innerHTML = `<div class="hint">f ′(x) =</div><div class="prompt" style="font-size:17px">${renderTermList(c.firstTarget)}</div>`;
+    area.appendChild(s1);
+
+    // Once the second derivative is fully correct, stop re-rendering its
+    // input boxes (they'd come back empty every re-render) and just show
+    // the finished statement below instead.
+    if(!c.secondDone){
+      const s2 = document.createElement("div");
+      s2.className = "stage";
+      const grid2 = document.createElement("div");
+      grid2.className = "mathgrid";
+      grid2.style.gridTemplateColumns = `max-content repeat(${c.firstTarget.length}, max-content)`;
+      const r1 = document.createElement("div"); r1.className="rowlabel"; r1.textContent="f ″(x) =";
+      grid2.appendChild(r1);
+      c.firstTarget.forEach((t,i)=>{
+        const cell = document.createElement("div");
+        cell.className = "term";
+        cell.appendChild(buildTermInputs(diffTerm(t), "d2", i, i===0));
+        grid2.appendChild(cell);
+      });
+      s2.appendChild(grid2);
+      area.appendChild(s2);
+    }
+  }
+  if(c.secondDone){
+    const s3 = document.createElement("div");
+    s3.className = "stage";
+    s3.innerHTML = `<div class="hint">f ″(x) =</div><div class="prompt" style="font-size:17px">${renderTermList(differentiateAll(c.firstTarget))}</div>`;
+    area.appendChild(s3);
+    document.getElementById("calcDone").style.display = "flex";
+  } else {
+    document.getElementById("calcDone").style.display = "none";
+  }
+  wireInputs();
+}
+function wireInputs(){
+  document.querySelectorAll("#mathgrid input, #stageArea input, #stageArea select, #mathgrid select").forEach(el=>{
+    el.oninput = onCalcInput;
+    el.onchange = onCalcInput;
+    el.onfocus = ()=>{ state.calc.focus = {key:el.dataset.k, start:el.selectionStart, end:el.selectionEnd}; };
+  });
+}
+function onCalcInput(e){
+  state.calc.focus = {key:e.target.dataset.k, start:e.target.selectionStart, end:e.target.selectionEnd};
+  checkAllBoxes();
+}
+function restoreFocus(){
+  const f = state.calc.focus;
+  if(!f) return;
+  const el = document.querySelector(`[data-k="${f.key}"]`);
+  if(el){ el.focus(); try{ el.setSelectionRange(f.start,f.end); }catch(e){} }
+}
+
+/* A vanished term (target === null) still gets a real sign+magnitude box
+   pair expecting 0 — never an automatic pass. Any term is only "ok" once
+   every box IT NEEDS both exists in the DOM and holds the correct value —
+   a box that hasn't been rendered yet (e.g. the second-derivative row, the
+   instant the first derivative just finished) must count as incomplete,
+   never as a silent pass, or a problem can appear "done" before its boxes
+   even exist. */
+function checkTermBoxes(target, stageKey, i){
+  const spec = termBoxSpec(target);
+  let ok = true;
+  const signEl = document.querySelector(`[data-k="${stageKey}-${i}-sign"]`);
+  const coefEl = document.querySelector(`[data-k="${stageKey}-${i}-coef"]`);
+  if(!signEl || !coefEl) return false;
+  {
+    const touched = coefEl.value !== "";
+    const good = touched && gradeCoefBox(spec, signEl.value, coefEl.value);
+    toggleGood(coefEl, touched ? good : null);
+    toggleGood(signEl, touched ? good : null);
+    ok = ok && good;
+  }
+  if(spec.exp !== null){
+    const expEl = document.querySelector(`[data-k="${stageKey}-${i}-exp"]`);
+    if(!expEl) return false;
+    const good = expEl.value!=="" && gradeBox(spec.exp, expEl.value); toggleGood(expEl, expEl.value==="" ? null : good); ok = ok && good;
+  }
+  if(spec.arg !== null){
+    const argEl = document.querySelector(`[data-k="${stageKey}-${i}-arg"]`);
+    if(!argEl) return false;
+    const good = argEl.value!=="" && gradeBox(spec.arg, argEl.value); toggleGood(argEl, argEl.value==="" ? null : good); ok = ok && good;
+  }
+  if(spec.type !== null){
+    const typeEl = document.querySelector(`[data-k="${stageKey}-${i}-type"]`);
+    if(!typeEl) return false;
+    const good = typeEl.value!=="" && gradeBox(spec.type, typeEl.value); toggleGood(typeEl, typeEl.value==="" ? null : good); ok = ok && good;
+  }
+  return ok;
+}
+
+// Disables every box for a stage (e.g. "d1") once it's fully correct, so it
+// can never be edited again. Without this, the first-derivative boxes in
+// #mathgrid stayed live forever, and an idle re-click of a dropdown (or any
+// stray edit) there could flip firstDone back to false — which, on the old
+// logic, silently wiped out whatever the student had already typed into
+// the second-derivative row. Locking a stage the moment it's done makes
+// that impossible: correct answers can't be un-set by accident.
+function lockBoxes(stageKey){
+  document.querySelectorAll(`[data-k^="${stageKey}-"]`).forEach(el=>{ el.disabled = true; });
+}
+
+function checkAllBoxes(){
+  const c = state.calc;
+  let firstAllGreen = true;
+  c.original.forEach((orig,i)=>{
+    if(!checkTermBoxes(diffTerm(orig), "d1", i)) firstAllGreen = false;
+  });
+  const wasFirstDone = c.firstDone;
+  c.firstDone = firstAllGreen;
+  if(!wasFirstDone && c.firstDone) lockBoxes("d1");
+
+  let secondAllGreen = c.firstDone;
+  if(c.firstDone){
+    c.firstTarget.forEach((t,i)=>{
+      if(!checkTermBoxes(diffTerm(t), "d2", i)) secondAllGreen = false;
+    });
+  }
+  const wasSecondDone = c.secondDone;
+  c.secondDone = secondAllGreen;
+  if(!wasSecondDone && c.secondDone) lockBoxes("d2");
+
+  if(wasFirstDone !== c.firstDone || wasSecondDone !== c.secondDone){
+    renderStageArea();
+  }
+  if(!wasSecondDone && c.secondDone){
+    state.tally++;
+    document.getElementById("tallyval").textContent = state.tally;
+  }
+}
+function toggleGood(el, good){
+  el.classList.remove("good","bad");
+  if(good===true) el.classList.add("good");
+  else if(good===false) el.classList.add("bad");
+}
+
+/* ================= test hook ================= */
+window.__dp = {
+  getState: ()=>state,
+  setMode, setDifficulty, newProblem,
+  // Mode 1 (ruler): set the ruler's two handle positions directly in DATA
+  // coordinates (bypassing real pointer-drag simulation), confirm it, then
+  // register a "click" at an exact data-space (x,y) — all real pixel-drag
+  // interaction is still reachable by a human, this just gives tests a
+  // fast, exact way to drive the same state machine.
+  setRuler: (ax,ay,bx,by)=>{ state.graph.ruler = {ax,ay,bx,by}; if(state.graph.stage==="positioning") renderGraphSvg(); },
+  confirmRulerLine,
+  repositionRuler,
+  clearPoints,
+  clickAt: (x,y)=>registerClick(x,y),
+  setSlope: v=>{ document.getElementById("slopeInput").value=v; },
+  setUnit: v=>{ document.getElementById("unitInput").value=v; },
+  check: checkGraphAnswer,
+  setCalcBox: (key,val)=>{ const el=document.querySelector(`[data-k="${key}"]`); if(el){ el.value=val; el.dispatchEvent(new Event("input")); } },
+};
+
+/* boot */
+newProblem();
+</script>
