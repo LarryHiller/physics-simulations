@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vector Plotter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.app{display:grid; grid-template-columns:380px minmax(0,1fr); gap:18px; max-width:1400px; margin:0 auto; padding:12px 16px 40px; align-items:start;}
+@media (max-width:940px){.app{grid-template-columns:1fr;}}
+
+/* ---------- tools column ---------- */
+.tools{position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; padding-right:4px;}
+@media (max-width:940px){.tools{position:static; max-height:none; overflow:visible;}}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:8px; margin-bottom:10px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces","Georgia","Iowan Old Style",serif; font-weight:600; font-size:23px; margin:2px 0 4px;}
+.desc{color:var(--ink-soft); font-size:13px; margin:0;}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:0 1px 2px var(--shadow); padding:11px 14px 13px;}
+.panel + .panel{margin-top:10px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 8px;}
+.row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0;}
+.row > label.lbl{font-size:13px; color:var(--ink-soft); min-width:0;}
+.grow{flex:1 1 120px; min-width:0;}
+.hint{font-size:12px; color:var(--ink-muted); margin:4px 0 0;}
+.note{font-size:12px; color:var(--warning); margin:4px 0 0;}
+
+input[type=text], select{
+  font-family:inherit; font-size:14px; padding:6px 8px; border-radius:8px;
+  border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink); min-width:0;
+}
+input[type=text].num{font-family:"IBM Plex Mono",monospace; font-weight:500; width:100%;}
+input[type=text]:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+input[type=text]:disabled{opacity:.6; background:var(--surface-alt);}
+input.bad{border-color:var(--critical);}
+select{cursor:pointer;}
+.fg{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.fg label{display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--ink-soft);}
+.check{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink); margin:6px 0; cursor:pointer;}
+.check input{width:16px; height:16px; accent-color:var(--accent);}
+
+.btn{font-family:inherit; font-size:14px; font-weight:600; padding:8px 14px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn.small{font-size:12px; padding:4px 9px; font-weight:500;}
+.btn:hover{filter:brightness(1.06);}
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:9px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:12.5px; font-weight:600; padding:5px 10px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button + button{border-left:1px solid var(--line-strong);}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+
+.radios{display:flex; flex-direction:column; gap:5px; margin:6px 0 8px;}
+.radios label{display:flex; align-items:flex-start; gap:8px; font-size:13.5px; cursor:pointer; line-height:1.3;}
+.radios input{margin-top:3px; accent-color:var(--accent);}
+.radios small{display:block; color:var(--ink-muted); font-size:12px;}
+
+.swatches{display:flex; gap:5px; flex-wrap:wrap;}
+.sw{width:22px; height:22px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line-strong); cursor:pointer; padding:0;}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink);}
+
+.card{border:1px solid var(--line-strong); border-radius:12px; padding:9px 10px 10px; margin-top:9px; background:var(--surface-alt);}
+.card .head{display:flex; align-items:center; gap:8px;}
+.letter{flex:0 0 auto; min-width:28px; height:28px; padding:0 6px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-family:"Fraunces",Georgia,serif; font-weight:700; font-size:17px; color:#fff; text-shadow:0 0 2px rgba(0,0,0,.5);}
+.card .warn{font-size:12px; color:var(--warning); margin-top:5px; min-height:0;}
+.sub{font-size:11.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; font-family:"IBM Plex Mono",monospace; margin:0 0 2px;}
+.empty{font-size:12.5px; color:var(--ink-muted); margin:8px 0 0;}
+#status{font-size:12.5px; color:var(--ink-soft); min-height:1.3em; margin:6px 0 0;}
+
+/* ---------- the sheet (what students screenshot) ---------- */
+.stage{min-width:0;}
+.sheet{
+  background:#ffffff; color:#111111; font-family:Arial, Helvetica, sans-serif;
+  border:1px solid var(--line-strong); border-radius:6px; box-shadow:0 2px 8px var(--shadow);
+  padding:16px 18px 18px; max-width:740px; margin:0 auto;
+}
+.sheet input.title-in{
+  display:block; width:100%; font:700 26px Arial, Helvetica, sans-serif; text-align:center; color:#111;
+  border:none; border-bottom:1.5px dashed transparent; background:transparent; padding:4px 6px 8px; min-width:0; margin:0 0 4px; border-radius:0;
+}
+.sheet input.title-in::placeholder{color:#b4b4b4; font-weight:400;}
+.sheet input.title-in:hover, .sheet input.title-in:focus{border-bottom-color:#c8c8c8; outline:none;}
+#plotHost svg{display:block; width:100%; height:auto; touch-action:none;}
+.key{margin-top:10px; border-top:1.5px solid #222; padding-top:8px;}
+.key-title{font:700 15px Arial, Helvetica, sans-serif; margin:0 0 6px;}
+.key-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px 20px;}
+.ki{display:flex; align-items:flex-start; gap:10px; min-width:0;}
+.ki svg{flex:0 0 52px;}
+.kl{font:700 14px/1.3 Arial, Helvetica, sans-serif; overflow-wrap:anywhere;}
+.kv{font:12px/1.35 Arial, Helvetica, sans-serif; color:#555; overflow-wrap:anywhere;}
+.stage-note{max-width:740px; margin:8px auto 0; font-size:12.5px; color:var(--ink-muted); text-align:center;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ================= TOOLS ================= -->
+<aside class="tools" aria-label="Diagram tools">
+  <header>
+    <div class="eyebrow">Unit 0 · Vectors</div>
+    <h1>Vector Plotter</h1>
+    <p class="desc">Build a clean, to-scale vector picture for your lab. Then screenshot it or download it as an image.</p>
+  </header>
+
+  <section class="panel" id="pSetup">
+    <h2>1 · Grid &amp; scale</h2>
+    <div class="row">
+      <label class="lbl" for="quad">Show</label>
+      <select id="quad" class="grow">
+        <option value="q1">1st quadrant only</option>
+        <option value="all">All 4 quadrants</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Largest x shown<input type="text" class="num" id="xmax" value="10" inputmode="decimal"></label>
+      <label>Largest y shown<input type="text" class="num" id="ymax" value="10" inputmode="decimal"></label>
+      <label>x grid spacing<input type="text" class="num" id="xstep" value="1" inputmode="decimal"></label>
+      <label>y grid spacing<input type="text" class="num" id="ystep" value="1" inputmode="decimal"></label>
+    </div>
+    <p class="hint" id="scaleHint">With all 4 quadrants, the grid runs from the negative to the positive of these values.</p>
+    <label class="check"><input type="checkbox" id="equal" checked> Same scale on x and y (keeps angles true)</label>
+    <p class="note" id="scaleNote" hidden></p>
+  </section>
+
+  <section class="panel" id="pAxes">
+    <h2>2 · Axis labels</h2>
+    <div class="sub">Horizontal (x) axis</div>
+    <div class="row">
+      <input type="text" id="xname" class="grow" placeholder="What is measured">
+      <input type="text" id="xunits" style="width:96px" placeholder="units">
+    </div>
+    <div class="sub" style="margin-top:8px">Vertical (y) axis</div>
+    <div class="row">
+      <input type="text" id="yname" class="grow" placeholder="What is measured">
+      <input type="text" id="yunits" style="width:96px" placeholder="units">
+    </div>
+  </section>
+
+  <section class="panel" id="pRose">
+    <h2>3 · Compass rose</h2>
+    <label class="check"><input type="checkbox" id="roseOn"> Add a compass rose</label>
+    <div class="row">
+      <label class="lbl" for="roseStyle">Label it with</label>
+      <select id="roseStyle" class="grow">
+        <option value="xy">x, y notation (+x, +y)</option>
+        <option value="ij">unit vectors (î, ĵ)</option>
+        <option value="deg">degrees (0°, 90°, …)</option>
+        <option value="nesw">N, E, S, W</option>
+      </select>
+    </div>
+    <p class="hint">Drag the rose on the grid to put it where it won't cover your work.</p>
+  </section>
+
+  <section class="panel" id="pPoints">
+    <h2>4 · Data points</h2>
+    <div class="fg">
+      <label>x<input type="text" class="num" id="px" inputmode="decimal" placeholder="x"></label>
+      <label>y<input type="text" class="num" id="py" inputmode="decimal" placeholder="y"></label>
+    </div>
+    <div class="row"><input type="text" id="pname" class="grow" placeholder="What this point represents (optional)"></div>
+    <div class="row"><span class="lbl" style="font-size:13px;color:var(--ink-soft)">Color</span><div class="swatches" id="pSw"></div></div>
+    <div class="row"><button class="btn primary" id="addPoint" type="button">Add point</button><span class="note" id="pMsg" style="margin:0"></span></div>
+    <div id="pointList"></div>
+  </section>
+
+  <section class="panel" id="pVec">
+    <h2>5 · Vectors</h2>
+    <div class="sub">How will you write the vector?</div>
+    <div class="radios" role="radiogroup">
+      <label><input type="radio" name="notation" value="polar" checked><span>Magnitude and direction<small>e.g. 5 m at 37°</small></span></label>
+      <label><input type="radio" name="notation" value="unit"><span>Unit vector notation<small>e.g. 4 î + 3 ĵ</small></span></label>
+    </div>
+    <button class="btn primary" id="addVec" type="button">Add a vector</button>
+    <div id="vecList"></div>
+  </section>
+
+  <section class="panel" id="pKey">
+    <h2>6 · Key &amp; export</h2>
+    <label class="check"><input type="checkbox" id="showVals" checked> Show values in the key</label>
+    <div class="row">
+      <button class="btn primary" id="dlPng" type="button">Download PNG</button>
+      <button class="btn" id="cpPng" type="button">Copy image</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+  </section>
+</aside>
+
+<!-- ================= SHEET ================= -->
+<main class="stage">
+  <div class="sheet" id="sheet">
+    <input type="text" id="title" class="title-in" placeholder="Click here to type a title" aria-label="Diagram title" maxlength="120">
+    <div id="plotHost"></div>
+    <div class="key" id="keyBox" hidden>
+      <div class="key-title">Key</div>
+      <div class="key-grid" id="keyGrid"></div>
+    </div>
+  </div>
+  <p class="stage-note">Everything inside the white box is what gets saved: title, grid, and key.</p>
+</main>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   Constants & state
+   ========================================================= */
+const COLORS=[['#111111','black'],['#d62728','red'],['#1f5fbf','blue'],['#2a9d3a','green'],['#f28e12','orange'],
+              ['#7b3fa0','purple'],['#159a8c','teal'],['#8c564b','brown'],['#e05a9a','pink'],['#7f7f7f','gray']];
+const VEC_ORDER=['#1f5fbf','#d62728','#2a9d3a','#f28e12','#7b3fa0','#159a8c','#8c564b','#e05a9a','#7f7f7f','#111111'];
+const WIDTHS=[['Thin',1.5],['Medium',3],['Bold',5],['Heavy',7]];
+const FONT='Arial, Helvetica, sans-serif';
+const MAXVEC=26;
+
+const S={
+  quad:'q1', xmax:'10', ymax:'10', xstep:'1', ystep:'1', equal:true, showVals:true,
+  title:'', xname:'', xunits:'', yname:'', yunits:'',
+  rose:{on:false, style:'xy', fx:.86, fy:.15},
+  pts:[], vecs:[], notation:'polar', nextId:1, newPtColor:'#d62728'
+};
+
+/* =========================================================
+   Small helpers
+   ========================================================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const N=s=>{ s=String(s==null?'':s).trim().replace(/−/g,'-'); return s===''?NaN:Number(s); };
+const N0=s=>{ s=String(s==null?'':s).trim(); return s===''?0:N(s); };
+const fmt=(n,d=2)=>{ if(!isFinite(n)) return ''; let s=String(parseFloat(n.toFixed(d))); if(s==='-0') s='0'; return s[0]==='-'?'−'+s.slice(1):s; };
+const LETTER=i=>String.fromCharCode(65+i);
+const rad=d=>d*Math.PI/180;
+
+function scaleVals(){
+  const pv=(s,d)=>{ const n=N(s); return (isFinite(n)&&n>0)?n:d; };
+  return {X:pv(S.xmax,10), Y:pv(S.ymax,10), sx:pv(S.xstep,1), sy:pv(S.ystep,1)};
+}
+
+/* =========================================================
+   Model: resolve each vector to real start/end coordinates
+   ========================================================= */
+function compute(){
+  const out=[];
+  S.vecs.forEach((v,i)=>{
+    let ok=true, dx=0, dy=0, x1=0, y1=0;
+    if(v.notation==='polar'){
+      const m=N(v.mag), a=N(v.ang);
+      if(isNaN(m)||isNaN(a)) ok=false; else { dx=m*Math.cos(rad(a)); dy=m*Math.sin(rad(a)); }
+    }else{
+      dx=N(v.cx); dy=N(v.cy);
+      if(isNaN(dx)||isNaN(dy)) ok=false;
+    }
+    if(v.ref){
+      const r=out.find(o=>o.v.id===v.ref);
+      if(!r||!r.ok) ok=false; else { x1=r.x2; y1=r.y2; }
+    }else{
+      x1=N0(v.sx); y1=N0(v.sy);
+      if(isNaN(x1)||isNaN(y1)) ok=false;
+    }
+    out.push({v, i, letter:LETTER(i), ok, x1, y1, x2:x1+dx, y2:y1+dy, dx, dy});
+  });
+  return out;
+}
+function pointsOK(){
+  return S.pts.map((p,i)=>{ const x=N(p.x), y=N(p.y); return {p, i, label:'P'+(i+1), ok:isFinite(x)&&isFinite(y), x, y}; });
+}
+function unitStr(x,y,units){
+  const s=`${fmt(x)} î ${y<0?'−':'+'} ${fmt(Math.abs(y))} ĵ`;
+  return units?`(${s}) ${units}`:s;
+}
+
+/* =========================================================
+   Geometry of the plot
+   ========================================================= */
+const PW=598, ML=76, MR=26, MT=18, MB=64, W=PW+ML+MR;
+function geo(){
+  const sv=scaleVals(), four=S.quad==='all';
+  const xmin=four?-sv.X:0, xmax=sv.X, ymin=four?-sv.Y:0, ymax=sv.Y;
+  const xs=xmax-xmin, ys=ymax-ymin;
+  let PH, note='';
+  if(S.equal){
+    const r=ys/xs, rc=Math.min(1.5,Math.max(.35,r));
+    if(rc!==r) note='These x and y ranges are too different to keep the grid square, so the two scales are not equal here.';
+    PH=PW*rc;
+  }else PH=PW*.8;
+  const H=MT+PH+MB;
+  return {four, xmin,xmax,ymin,ymax,xs,ys, PH, H, note, stepx:sv.sx, stepy:sv.sy,
+    sx:x=>ML+(x-xmin)/xs*PW, sy:y=>MT+PH-(y-ymin)/ys*PH};
+}
+function ticks(min,max,step){
+  if((max-min)/step>150) step=(max-min)/150;
+  const a=[], k0=Math.ceil(min/step-1e-9), k1=Math.floor(max/step+1e-9);
+  for(let k=k0;k<=k1;k++) a.push(parseFloat((k*step).toPrecision(10)));
+  return a;
+}
+
+/* Arrow geometry, shared by the screen, the key, and the PNG export. */
+function arrowGeom(x1,y1,x2,y2,w){
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy);
+  if(len<0.5) return {len, dot:true};
+  const ux=dx/len, uy=dy/len, nx=uy, ny=-ux;
+  const hl=Math.min(len*.7, 10+2.2*w), hw=3.6+w*1.1;
+  const bx=x2-ux*hl*.8, by=y2-uy*hl*.8;
+  const head=[[x2,y2],[x2-ux*hl+nx*hw, y2-uy*hl+ny*hw],[x2-ux*hl-nx*hw, y2-uy*hl-ny*hw]];
+  return {len, ux, uy, nx, ny, bx, by, head};
+}
+const dashFor=w=>`${Math.max(8,w*3.2).toFixed(1)} ${Math.max(5,w*2).toFixed(1)}`;
+const ptsStr=a=>a.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ');
+
+/* =========================================================
+   Drawing the plot (returns an SVG string)
+   ========================================================= */
+function halo(x,y,txt,o){
+  o=o||{};
+  const size=o.size||12, anchor=o.anchor||'middle', weight=o.weight||400, fill=o.fill||'#222';
+  const rot=o.rot?` transform="rotate(${o.rot} ${x.toFixed(1)} ${y.toFixed(1)})"`:'';
+  const hs=o.noHalo?'':` stroke="#fff" stroke-width="${o.hw||3.5}" paint-order="stroke" stroke-linejoin="round"`;
+  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" fill="${fill}" font-family="${FONT}"${hs}${rot}>${esc(txt)}</text>`;
+}
+function axisTitle(name,units){
+  name=name.trim(); units=units.trim();
+  if(name&&units) return `${name} (${units})`;
+  return name||(units?`(${units})`:'');
+}
+const ROSE={
+  xy:['+y','+x','−x','−y'], ij:['+ĵ','+î','−î','−ĵ'],
+  deg:['90°','0°','180°','270°'], nesw:['N','E','W','S']
+};   // order: up, right, left, down
+function roseCenter(G){
+  const m=68;
+  let cx=ML+S.rose.fx*PW, cy=MT+S.rose.fy*G.PH;
+  cx=Math.min(ML+PW-m, Math.max(ML+m, cx)); cy=Math.min(MT+G.PH-m, Math.max(MT+m, cy));
+  return [cx,cy];
+}
+function roseMarkup(G){
+  const [cx,cy]=roseCenter(G), L=ROSE[S.rose.style]||ROSE.xy, len=28;
+  const arrow=(ex,ey)=>{ const g=arrowGeom(0,0,ex,ey,1.6);
+    return `<line x1="0" y1="0" x2="${g.bx.toFixed(1)}" y2="${g.by.toFixed(1)}" stroke="#222" stroke-width="1.6"/><polygon points="${ptsStr(g.head)}" fill="#222"/>`; };
+  return `<g id="rose" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})" style="cursor:grab;touch-action:none">
+    <circle r="66" fill="#fff" fill-opacity=".88" stroke="#9a9a9a" stroke-width=".9"/>
+    ${arrow(0,-len)}${arrow(len,0)}${arrow(-len,0)}${arrow(0,len)}
+    <circle r="2.4" fill="#222"/>
+    ${halo(0,-38,L[0],{size:13,weight:700,noHalo:true})}
+    ${halo(34,4.5,L[1],{size:13,weight:700,anchor:'start',noHalo:true})}
+    ${halo(-34,4.5,L[2],{size:13,weight:700,anchor:'end',noHalo:true})}
+    ${halo(0,47,L[3],{size:13,weight:700,noHalo:true})}
+  </g>`;
+}
+
+function plotSVG(){
+  const G=geo(), o=[];
+  const {sx,sy}=G, right=ML+PW, bottom=MT+G.PH;
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${G.H.toFixed(1)}" width="${W}" height="${G.H.toFixed(1)}" font-family="${FONT}">`);
+  o.push(`<defs><clipPath id="clip"><rect x="${ML}" y="${MT}" width="${PW}" height="${G.PH.toFixed(1)}"/></clipPath></defs>`);
+  o.push(`<rect width="${W}" height="${G.H.toFixed(1)}" fill="#fff"/>`);
+
+  const tx=ticks(G.xmin,G.xmax,G.stepx), ty=ticks(G.ymin,G.ymax,G.stepy);
+  const pxX=PW/(G.xs/G.stepx), pxY=G.PH/(G.ys/G.stepy);
+  // grid lines
+  if(pxX>=5) tx.forEach(x=>o.push(`<line x1="${sx(x).toFixed(1)}" y1="${MT}" x2="${sx(x).toFixed(1)}" y2="${bottom.toFixed(1)}" stroke="#d4d4d4" stroke-width=".8"/>`));
+  if(pxY>=5) ty.forEach(y=>o.push(`<line x1="${ML}" y1="${sy(y).toFixed(1)}" x2="${right}" y2="${sy(y).toFixed(1)}" stroke="#d4d4d4" stroke-width=".8"/>`));
+  // axes
+  const ax0=G.four?sx(0):ML, ay0=G.four?sy(0):bottom;
+  o.push(`<line x1="${ML}" y1="${ay0.toFixed(1)}" x2="${right}" y2="${ay0.toFixed(1)}" stroke="#111" stroke-width="1.8"/>`);
+  o.push(`<line x1="${ax0.toFixed(1)}" y1="${MT}" x2="${ax0.toFixed(1)}" y2="${bottom.toFixed(1)}" stroke="#111" stroke-width="1.8"/>`);
+  o.push(`<rect x="${ML}" y="${MT}" width="${PW}" height="${G.PH.toFixed(1)}" fill="none" stroke="#444" stroke-width="1"/>`);
+
+  // tick marks + labels
+  const ex=Math.max(1,Math.ceil(34/pxX)), ey=Math.max(1,Math.ceil(17/pxY));
+  tx.forEach((x,i)=>{
+    const X=sx(x); const lab=fmt(x,4);
+    o.push(`<line x1="${X.toFixed(1)}" y1="${ay0.toFixed(1)}" x2="${X.toFixed(1)}" y2="${(ay0+(G.four?4:-0)+(G.four?0:5)).toFixed(1)}" stroke="#111" stroke-width="1.2"/>`);
+    if(i%ex!==0) return;
+    if(G.four){ if(x===0) return; o.push(halo(X,ay0+16,lab,{size:12})); }
+    else o.push(halo(X,bottom+18,lab,{size:12,noHalo:true}));
+  });
+  ty.forEach((y,i)=>{
+    const Y=sy(y); const lab=fmt(y,4);
+    o.push(`<line x1="${ax0.toFixed(1)}" y1="${Y.toFixed(1)}" x2="${(ax0-(G.four?4:5)).toFixed(1)}" y2="${Y.toFixed(1)}" stroke="#111" stroke-width="1.2"/>`);
+    if(i%ey!==0) return;
+    if(G.four){ if(y===0) return; o.push(halo(ax0-8,Y+4,lab,{size:12,anchor:'end'})); }
+    else o.push(halo(ML-9,Y+4,lab,{size:12,anchor:'end',noHalo:true}));
+  });
+  if(G.four) o.push(halo(ax0-8,ay0+16,'0',{size:12,anchor:'end'}));
+
+  // axis titles
+  const xt=axisTitle(S.xname,S.xunits), yt=axisTitle(S.yname,S.yunits);
+  if(xt) o.push(halo(ML+PW/2,G.H-14,xt,{size:15,weight:700,noHalo:true}));
+  if(yt) o.push(halo(20,MT+G.PH/2,yt,{size:15,weight:700,noHalo:true,rot:-90}));
+
+  // vectors and points (clipped to the grid)
+  o.push('<g clip-path="url(#clip)">');
+  compute().forEach(c=>{
+    if(!c.ok) return;
+    const v=c.v, w=v.width;
+    const X1=sx(c.x1), Y1=sy(c.y1), X2=sx(c.x2), Y2=sy(c.y2);
+    const g=arrowGeom(X1,Y1,X2,Y2,w);
+    if(g.dot){ o.push(`<circle cx="${X1.toFixed(1)}" cy="${Y1.toFixed(1)}" r="${(w/2+1).toFixed(1)}" fill="${v.color}"/>`); return; }
+    o.push(`<line x1="${X1.toFixed(1)}" y1="${Y1.toFixed(1)}" x2="${g.bx.toFixed(1)}" y2="${g.by.toFixed(1)}" stroke="${v.color}" stroke-width="${w}"${v.dash?` stroke-dasharray="${dashFor(w)}"`:''} stroke-linecap="butt"/>`);
+    o.push(`<polygon points="${ptsStr(g.head)}" fill="${v.color}"/>`);
+    const off=13+w/2, mx=(X1+X2)/2+g.nx*off, my=(Y1+Y2)/2+g.ny*off;
+    o.push(halo(mx,my+5.5,c.letter,{size:17,weight:700,fill:v.color,hw:4}));
+  });
+  pointsOK().forEach(p=>{
+    if(!p.ok) return;
+    const X=sx(p.x), Y=sy(p.y);
+    o.push(`<circle cx="${X.toFixed(1)}" cy="${Y.toFixed(1)}" r="5.5" fill="${p.p.color}" stroke="#111" stroke-width="1"/>`);
+    o.push(halo(X+8,Y-7,p.label,{size:13,weight:700,anchor:'start'}));
+  });
+  o.push('</g>');
+
+  if(S.rose.on) o.push(roseMarkup(G));
+  o.push('</svg>');
+  return o.join('');
+}
+
+/* =========================================================
+   Key
+   ========================================================= */
+function keyItems(){
+  const items=[], cv=compute();
+  pointsOK().forEach(p=>{
+    if(!p.ok) return;
+    items.push({kind:'pt', color:p.p.color,
+      label:p.label+(p.p.name.trim()?' — '+p.p.name.trim():''),
+      sub:S.showVals?`(${fmt(p.x)}, ${fmt(p.y)})`:''});
+  });
+  cv.forEach(c=>{
+    if(!c.ok) return;
+    const v=c.v, u=v.units.trim();
+    let val = v.notation==='polar' ? `${fmt(N(v.mag))}${u?' '+u:''} at ${fmt(N(v.ang))}°` : unitStr(c.dx,c.dy,u);
+    let tail='';
+    if(v.ref){ const r=cv.find(o=>o.v.id===v.ref); tail=`tail at tip of ${r?r.letter:'?'}`; }
+    else if(Math.abs(c.x1)>1e-9||Math.abs(c.y1)>1e-9) tail=`tail at (${fmt(c.x1)}, ${fmt(c.y1)})`;
+    items.push({kind:'vec', color:v.color, width:v.width, dash:v.dash,
+      label:c.letter+(v.name.trim()?' — '+v.name.trim():''),
+      sub:S.showVals?[val,tail].filter(Boolean).join('  ·  '):''});
+  });
+  return items;
+}
+function swatchSVG(it){
+  const w=52, h=22, cy=h/2;
+  if(it.kind==='pt') return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><circle cx="${w/2}" cy="${cy}" r="5.5" fill="${it.color}" stroke="#111" stroke-width="1"/></svg>`;
+  const g=arrowGeom(3,cy,w-3,cy,it.width);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="3" y1="${cy}" x2="${g.bx.toFixed(1)}" y2="${cy}" stroke="${it.color}" stroke-width="${it.width}"${it.dash?` stroke-dasharray="${dashFor(it.width)}"`:''}/><polygon points="${ptsStr(g.head)}" fill="${it.color}"/></svg>`;
+}
+function renderKey(){
+  const items=keyItems();
+  $('keyBox').hidden=!items.length;
+  $('keyGrid').innerHTML=items.map(it=>`<div class="ki">${swatchSVG(it)}<div><div class="kl">${esc(it.label)}</div>${it.sub?`<div class="kv">${esc(it.sub)}</div>`:''}</div></div>`).join('');
+}
+
+/* =========================================================
+   Redraw the sheet (does NOT touch the tool inputs, so typing keeps focus)
+   ========================================================= */
+function draw(){
+  const G=geo();
+  $('plotHost').innerHTML=plotSVG();
+  const nt=$('scaleNote'); nt.hidden=!G.note; nt.textContent=G.note;
+  renderKey();
+  // input validity
+  [['xmax'],['ymax'],['xstep'],['ystep']].forEach(([id])=>{ const n=N(S[id]); $(id).classList.toggle('bad', !(isFinite(n)&&n>0)); });
+  // per-card warnings
+  const cv=compute();
+  cv.forEach(c=>{
+    const el=document.querySelector(`.card[data-id="${c.v.id}"] .warn`); if(!el) return;
+    let msg='';
+    if(!c.ok) msg='Fill in the numbers to draw this vector.';
+    else if(outside(G,c.x1,c.y1)||outside(G,c.x2,c.y2)) msg='Part of this vector is off the grid. Enlarge the scale (or switch to all 4 quadrants).';
+    el.textContent=msg;
+  });
+  pointsOK().forEach(p=>{
+    const el=document.querySelector(`.card[data-pid="${p.p.id}"] .warn`); if(!el) return;
+    el.textContent = !p.ok ? 'Enter both x and y to show this point.' : (outside(G,p.x,p.y)?'This point is off the grid. Enlarge the scale.':'');
+  });
+}
+function outside(G,x,y){ const e=1e-9; return x<G.xmin-e||x>G.xmax+e||y<G.ymin-e||y>G.ymax+e; }
+
+/* Refresh the (disabled) tail boxes of vectors that start at another vector's tip. */
+function syncStarts(){
+  compute().forEach(c=>{
+    if(!c.v.ref) return;
+    const card=document.querySelector(`.card[data-id="${c.v.id}"]`); if(!card) return;
+    const a=card.querySelector('[data-f="sx"]'), b=card.querySelector('[data-f="sy"]');
+    if(a) a.value=c.ok?fmt(c.x1,4):''; if(b) b.value=c.ok?fmt(c.y1,4):'';
+  });
+}
+
+/* =========================================================
+   Tool panels: swatches, point rows, vector cards
+   ========================================================= */
+function swatchesHTML(sel,attr){
+  return COLORS.map(([hex,name])=>`<button type="button" class="sw" ${attr} data-color="${hex}" style="background:${hex}" aria-label="${name}" title="${name}" aria-pressed="${hex===sel}"></button>`).join('');
+}
+function renderPointList(){
+  const host=$('pointList');
+  if(!S.pts.length){ host.innerHTML=''; return; }
+  host.innerHTML=S.pts.map((p,i)=>`
+    <div class="card" data-pid="${p.id}">
+      <div class="head"><span class="letter" style="background:${p.color}">P${i+1}</span>
+        <input type="text" class="num" style="flex:1 1 0" data-f="x" value="${esc(p.x)}" inputmode="decimal" aria-label="x of P${i+1}">
+        <input type="text" class="num" style="flex:1 1 0" data-f="y" value="${esc(p.y)}" inputmode="decimal" aria-label="y of P${i+1}">
+        <button type="button" class="btn small" data-act="del">Remove</button></div>
+      <div class="row"><input type="text" class="grow" data-f="name" value="${esc(p.name)}" placeholder="What this point represents"></div>
+      <div class="swatches" data-sw="pt">${swatchesHTML(p.color,'data-sw-pt')}</div>
+      <div class="warn"></div>
+    </div>`).join('');
+}
+function renderVecList(){
+  const host=$('vecList'), cv=compute();
+  if(!S.vecs.length){ host.innerHTML='<p class="empty">No vectors yet. Pick a notation above, then press Add a vector.</p>'; return; }
+  host.innerHTML=S.vecs.map((v,i)=>{
+    const L=LETTER(i), polar=v.notation==='polar';
+    const refOpts=`<option value="">Custom start (x, y)</option>`+cv.slice(0,i).map(c=>`<option value="${c.v.id}"${v.ref===c.v.id?' selected':''}>Tip of ${c.letter}${c.v.name.trim()?' — '+esc(c.v.name.trim()):''}</option>`).join('');
+    const inputs = polar
+      ? `<label>Magnitude<input type="text" class="num" data-f="mag" value="${esc(v.mag)}" inputmode="decimal" placeholder="5"></label>
+         <label>Direction (°)<input type="text" class="num" data-f="ang" value="${esc(v.ang)}" inputmode="decimal" placeholder="37"></label>`
+      : `<label>x component (î)<input type="text" class="num" data-f="cx" value="${esc(v.cx)}" inputmode="decimal" placeholder="4"></label>
+         <label>y component (ĵ)<input type="text" class="num" data-f="cy" value="${esc(v.cy)}" inputmode="decimal" placeholder="3"></label>`;
+    return `<div class="card" data-id="${v.id}">
+      <div class="head"><span class="letter" style="background:${v.color}">${L}</span>
+        <input type="text" class="grow" data-f="name" value="${esc(v.name)}" placeholder="Name it (e.g. Leg 1, Resultant)">
+        <button type="button" class="btn small" data-act="del">Remove</button></div>
+      <div class="sub" style="margin-top:8px">${polar?'Magnitude &amp; direction':'Unit vector notation'}</div>
+      <div class="fg">${inputs}</div>
+      ${polar?'<p class="hint" style="margin-top:2px">Angle is counterclockwise from the +x axis.</p>':''}
+      <div class="row"><label class="lbl">Units</label><input type="text" data-f="units" value="${esc(v.units)}" style="width:96px" placeholder="units"></div>
+      <div class="sub" style="margin-top:6px">Tail (where it starts)</div>
+      <div class="row"><select data-f="ref" class="grow">${refOpts}</select></div>
+      <div class="fg">
+        <label>Start x<input type="text" class="num" data-f="sx" value="${esc(v.sx)}" inputmode="decimal"${v.ref?' disabled':''}></label>
+        <label>Start y<input type="text" class="num" data-f="sy" value="${esc(v.sy)}" inputmode="decimal"${v.ref?' disabled':''}></label>
+      </div>
+      <div class="sub" style="margin-top:8px">Color</div>
+      <div class="swatches">${swatchesHTML(v.color,'data-sw-vec')}</div>
+      <div class="row" style="margin-top:8px">
+        <div class="seg" role="group" aria-label="Line thickness">${WIDTHS.map(([n,w])=>`<button type="button" data-width="${w}" class="${v.width===w?'active':''}">${n}</button>`).join('')}</div>
+        <div class="seg" role="group" aria-label="Line style"><button type="button" data-dash="0" class="${!v.dash?'active':''}">Solid</button><button type="button" data-dash="1" class="${v.dash?'active':''}">Dashed</button></div>
+      </div>
+      <div class="warn"></div>
+    </div>`;
+  }).join('');
+  syncStarts();
+}
+
+/* =========================================================
+   Actions
+   ========================================================= */
+function addPoint(){
+  const x=N($('px').value), y=N($('py').value), msg=$('pMsg');
+  if(!isFinite(x)||!isFinite(y)){ msg.textContent='Enter a number for both x and y.'; return; }
+  msg.textContent='';
+  S.pts.push({id:S.nextId++, x:$('px').value.trim(), y:$('py').value.trim(), name:$('pname').value.trim(), color:S.newPtColor});
+  $('px').value=''; $('py').value=''; $('pname').value='';
+  renderPointList(); draw(); $('px').focus();
+}
+function addVector(){
+  if(S.vecs.length>=MAXVEC){ $('status').textContent='That is the maximum number of vectors (26).'; return; }
+  const n=S.vecs.length;
+  S.vecs.push({id:S.nextId++, notation:S.notation, mag:'', ang:'', cx:'', cy:'', sx:'0', sy:'0', ref:null,
+    name:'', units:'', color:VEC_ORDER[n%VEC_ORDER.length], width:3, dash:false});
+  renderVecList(); draw();
+  const card=$('vecList').lastElementChild;
+  if(card){ card.scrollIntoView({block:'nearest',behavior:'smooth'}); const f=card.querySelector('input.num'); if(f) f.focus({preventScroll:true}); }
+}
+function removeVector(id){
+  const cv=compute();
+  // vectors that hung off this tip keep their current start position
+  S.vecs.forEach(v=>{ if(v.ref===id){ const c=cv.find(o=>o.v.id===v.id); v.sx=c&&c.ok?fmt(c.x1,4):'0'; v.sy=c&&c.ok?fmt(c.y1,4):'0'; v.ref=null; } });
+  S.vecs=S.vecs.filter(v=>v.id!==id);
+  renderVecList(); draw();
+}
+
+/* =========================================================
+   Wiring
+   ========================================================= */
+// setup / axes / compass / key
+$('quad').addEventListener('change',e=>{ S.quad=e.target.value; draw(); });
+['xmax','ymax','xstep','ystep','xname','xunits','yname','yunits'].forEach(id=>$(id).addEventListener('input',e=>{ S[id]=e.target.value; draw(); }));
+$('title').addEventListener('input',e=>{ S.title=e.target.value; });
+$('equal').addEventListener('change',e=>{ S.equal=e.target.checked; draw(); });
+$('showVals').addEventListener('change',e=>{ S.showVals=e.target.checked; draw(); });
+$('roseOn').addEventListener('change',e=>{ S.rose.on=e.target.checked; draw(); });
+$('roseStyle').addEventListener('change',e=>{ S.rose.style=e.target.value; draw(); });
+document.querySelectorAll('input[name="notation"]').forEach(r=>r.addEventListener('change',e=>{ S.notation=e.target.value; }));
+$('addPoint').addEventListener('click',addPoint);
+['px','py','pname'].forEach(id=>$(id).addEventListener('keydown',e=>{ if(e.key==='Enter') addPoint(); }));
+$('addVec').addEventListener('click',addVector);
+
+// new-point color picker
+$('pSw').innerHTML=swatchesHTML(S.newPtColor,'data-sw-new');
+$('pSw').addEventListener('click',e=>{
+  const b=e.target.closest('[data-sw-new]'); if(!b) return;
+  S.newPtColor=b.dataset.color;
+  $('pSw').innerHTML=swatchesHTML(S.newPtColor,'data-sw-new');
+});
+
+// point rows
+$('pointList').addEventListener('input',e=>{
+  const card=e.target.closest('.card'); if(!card||!e.target.dataset.f) return;
+  const p=S.pts.find(q=>q.id===+card.dataset.pid); if(!p) return;
+  p[e.target.dataset.f]=e.target.value; draw();
+});
+$('pointList').addEventListener('click',e=>{
+  const card=e.target.closest('.card'); if(!card) return;
+  const p=S.pts.find(q=>q.id===+card.dataset.pid); if(!p) return;
+  if(e.target.closest('[data-act="del"]')){ S.pts=S.pts.filter(q=>q!==p); renderPointList(); draw(); return; }
+  const sw=e.target.closest('[data-sw-pt]'); if(sw){ p.color=sw.dataset.color; renderPointList(); draw(); }
+});
+
+// vector cards
+$('vecList').addEventListener('input',e=>{
+  const card=e.target.closest('.card'); if(!card||!e.target.dataset.f||e.target.tagName==='SELECT') return;
+  const v=S.vecs.find(q=>q.id===+card.dataset.id); if(!v) return;
+  v[e.target.dataset.f]=e.target.value; draw(); syncStarts();
+});
+$('vecList').addEventListener('change',e=>{
+  if(e.target.dataset.f!=='ref') return;
+  const card=e.target.closest('.card'), v=S.vecs.find(q=>q.id===+card.dataset.id); if(!v) return;
+  const cur=compute().find(c=>c.v.id===v.id);
+  if(e.target.value){ v.ref=+e.target.value; }
+  else { if(cur&&cur.ok){ v.sx=fmt(cur.x1,4); v.sy=fmt(cur.y1,4); } v.ref=null; }
+  renderVecList(); draw();
+});
+$('vecList').addEventListener('click',e=>{
+  const card=e.target.closest('.card'); if(!card) return;
+  const v=S.vecs.find(q=>q.id===+card.dataset.id); if(!v) return;
+  if(e.target.closest('[data-act="del"]')){ removeVector(v.id); return; }
+  const sw=e.target.closest('[data-sw-vec]'); if(sw){ v.color=sw.dataset.color; renderVecList(); draw(); return; }
+  const wb=e.target.closest('[data-width]'); if(wb){ v.width=+wb.dataset.width; renderVecList(); draw(); return; }
+  const db=e.target.closest('[data-dash]'); if(db){ v.dash=db.dataset.dash==='1'; renderVecList(); draw(); }
+});
+
+// dragging the compass rose
+(function(){
+  const host=$('plotHost'); let drag=null;
+  function toSvg(svg,e){ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+  host.addEventListener('pointerdown',e=>{
+    const g=e.target.closest('#rose'); if(!g) return;
+    const svg=host.querySelector('svg'); const G=geo(), c=roseCenter(G), p=toSvg(svg,e);
+    drag={svg, dx:p.x-c[0], dy:p.y-c[1], id:e.pointerId};
+    svg.setPointerCapture(e.pointerId); g.style.cursor='grabbing'; e.preventDefault();
+  });
+  host.addEventListener('pointermove',e=>{
+    if(!drag||e.pointerId!==drag.id) return;
+    const G=geo(), m=68, p=toSvg(drag.svg,e);
+    let cx=p.x-drag.dx, cy=p.y-drag.dy;
+    cx=Math.min(ML+PW-m,Math.max(ML+m,cx)); cy=Math.min(MT+G.PH-m,Math.max(MT+m,cy));
+    S.rose.fx=(cx-ML)/PW; S.rose.fy=(cy-MT)/G.PH;
+    const g=drag.svg.querySelector('#rose'); if(g) g.setAttribute('transform',`translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
+  });
+  const end=e=>{ if(!drag) return; const g=drag.svg.querySelector('#rose'); if(g) g.style.cursor='grab'; drag=null; };
+  host.addEventListener('pointerup',end); host.addEventListener('pointercancel',end);
+})();
+
+/* =========================================================
+   PNG export: title + plot + key drawn on one canvas
+   ========================================================= */
+function wrapText(ctx,text,maxW){
+  const words=String(text).split(/\s+/), lines=[]; let cur='';
+  words.forEach(w=>{
+    const t=cur?cur+' '+w:w;
+    if(ctx.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=w; }
+  });
+  if(cur) lines.push(cur);
+  return lines;
+}
+function plotImage(){
+  return new Promise((res,rej)=>{
+    const img=new Image(); img.onload=()=>res(img); img.onerror=rej;
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(plotSVG());
+  });
+}
+async function renderCanvas(){
+  const SC=2, CW=W, pad=24, G=geo();
+  const img=await plotImage();
+  const m=document.createElement('canvas').getContext('2d');
+  m.font='700 26px '+FONT;
+  const title=S.title.trim(), tl=title?wrapText(m,title,CW-2*pad):[];
+  const titleH=tl.length?tl.length*32+12:0;
+  const items=keyItems(), colW=(CW-2*pad-20)/2, textW=colW-62;
+  const laid=items.map(it=>{
+    m.font='700 14px '+FONT; const l1=wrapText(m,it.label,textW);
+    m.font='12px '+FONT; const l2=it.sub?wrapText(m,it.sub,textW):[];
+    return {it,l1,l2,h:Math.max(24,l1.length*18+l2.length*16+2)};
+  });
+  const rows=[]; for(let i=0;i<laid.length;i+=2) rows.push(laid.slice(i,i+2));
+  const rowH=rows.map(r=>Math.max(...r.map(x=>x.h))+8);
+  const keyH=items.length?30+rowH.reduce((a,b)=>a+b,0)+8:0;
+  const top=14, total=top+titleH+G.H+(keyH?10:0)+keyH+10;
+  const cv=document.createElement('canvas'); cv.width=CW*SC; cv.height=Math.ceil(total*SC);
+  const ctx=cv.getContext('2d'); ctx.scale(SC,SC);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,total);
+  let y=top;
+  if(tl.length){ ctx.fillStyle='#111'; ctx.font='700 26px '+FONT; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    tl.forEach((l,i)=>ctx.fillText(l,CW/2,y+26+i*32)); y+=titleH; }
+  ctx.drawImage(img,0,y,CW,G.H); y+=G.H;
+  if(keyH){
+    y+=10; ctx.strokeStyle='#222'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(CW-pad,y); ctx.stroke();
+    ctx.fillStyle='#111'; ctx.font='700 15px '+FONT; ctx.textAlign='left'; ctx.fillText('Key',pad,y+22);
+    y+=30;
+    rows.forEach((r,ri)=>{
+      r.forEach((c,ci)=>{
+        const x=pad+ci*(colW+20), it=c.it, cy=y+12;
+        if(it.kind==='pt'){
+          ctx.beginPath(); ctx.arc(x+26,cy,5.5,0,Math.PI*2); ctx.fillStyle=it.color; ctx.fill(); ctx.strokeStyle='#111'; ctx.lineWidth=1; ctx.stroke();
+        }else{
+          const g=arrowGeom(x+3,cy,x+49,cy,it.width);
+          ctx.strokeStyle=it.color; ctx.lineWidth=it.width; ctx.setLineDash(it.dash?[Math.max(8,it.width*3.2),Math.max(5,it.width*2)]:[]);
+          ctx.beginPath(); ctx.moveTo(x+3,cy); ctx.lineTo(g.bx,g.by); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle=it.color; ctx.beginPath(); g.head.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.closePath(); ctx.fill();
+        }
+        ctx.fillStyle='#111'; ctx.font='700 14px '+FONT; ctx.textAlign='left';
+        c.l1.forEach((l,k)=>ctx.fillText(l,x+62,y+14+k*18));
+        ctx.fillStyle='#555'; ctx.font='12px '+FONT;
+        c.l2.forEach((l,k)=>ctx.fillText(l,x+62,y+14+c.l1.length*18+k*16));
+      });
+      y+=rowH[ri];
+    });
+  }
+  return cv;
+}
+function fileName(){
+  const s=S.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return (s||'vector-diagram')+'.png';
+}
+function say(t){ $('status').textContent=t; }
+$('dlPng').addEventListener('click',async()=>{
+  try{
+    const cv=await renderCanvas();
+    cv.toBlob(b=>{
+      const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=fileName();
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      say('Saved '+fileName()+' to your Downloads.');
+    },'image/png');
+  }catch(err){ say('Could not make the image. Take a screenshot of the white box instead.'); }
+});
+$('cpPng').addEventListener('click',async()=>{
+  try{
+    const cv=await renderCanvas();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    say('Copied. Paste it straight into your document.');
+  }catch(err){ say('Copy is not available here. Use Download PNG or take a screenshot.'); }
+});
+
+/* =========================================================
+   Init + test hook
+   ========================================================= */
+renderPointList(); renderVecList(); draw();
+window.__vd={
+  S, compute, keyItems, geo, plotSVG, renderCanvas, addVector, addPoint, draw,
+  renderAll(){ renderPointList(); renderVecList(); draw(); }
+};
+})();
+</script>
+</body>
+</html>

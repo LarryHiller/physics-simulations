@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Histogram Plotter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.app{display:grid; grid-template-columns:400px minmax(0,1fr); gap:18px; max-width:1440px; margin:0 auto; padding:12px 16px 40px; align-items:start;}
+@media (max-width:960px){.app{grid-template-columns:minmax(0,1fr);}}
+.tools{min-width:0;}
+
+/* ---------- tools column ---------- */
+.tools{position:sticky; top:12px; max-height:calc(100vh - 24px); overflow-y:auto; padding-right:4px;}
+@media (max-width:960px){.tools{position:static; max-height:none; overflow:visible;}}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:8px; margin-bottom:10px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces","Georgia","Iowan Old Style",serif; font-weight:600; font-size:23px; margin:2px 0 4px;}
+.desc{color:var(--ink-soft); font-size:13px; margin:0;}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:0 1px 2px var(--shadow); padding:11px 14px 13px;}
+.panel + .panel{margin-top:10px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 8px;}
+.row{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0;}
+.row > label.lbl{font-size:13px; color:var(--ink-soft); min-width:0;}
+.grow{flex:1 1 120px; min-width:0;}
+.hint{font-size:12px; color:var(--ink-muted); margin:4px 0 0;}
+.note{font-size:12px; color:var(--warning); margin:4px 0 0;}
+
+input[type=text], select, textarea{
+  font-family:inherit; font-size:14px; padding:6px 8px; border-radius:8px;
+  border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink); min-width:0;
+}
+textarea{width:100%; font-family:"IBM Plex Mono",monospace; font-size:12.5px; resize:vertical; min-height:58px;}
+input[type=text].num{font-family:"IBM Plex Mono",monospace; font-weight:500; width:100%;}
+input[type=text]:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
+input[type=text]:disabled, select:disabled{opacity:.6; background:var(--surface-alt);}
+input.bad{border-color:var(--critical);}
+select{cursor:pointer; max-width:100%;}
+.fg{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px;}
+.fg input{width:100%;}
+.fg label{display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--ink-soft);}
+.check{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink); margin:6px 0; cursor:pointer;}
+.check input{width:16px; height:16px; accent-color:var(--accent);}
+.check.dis{opacity:.55; cursor:default;}
+
+.btn{font-family:inherit; font-size:14px; font-weight:600; padding:8px 14px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn.small{font-size:12px; padding:4px 9px; font-weight:500;}
+.btn:hover{filter:brightness(1.06);}
+.btn:disabled{opacity:.45; cursor:default; filter:none;}
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:9px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:12.5px; font-weight:600; padding:5px 10px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button + button{border-left:1px solid var(--line-strong);}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+
+.swatches{display:flex; gap:5px; flex-wrap:wrap;}
+.sw{width:22px; height:22px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line-strong); cursor:pointer; padding:0;}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink);}
+
+.card{border:1px solid var(--line-strong); border-radius:12px; padding:9px 10px 10px; margin-top:9px; background:var(--surface-alt);}
+.card .head{display:flex; align-items:center; gap:8px;}
+.card.off{opacity:.75;}
+.letter{flex:0 0 auto; min-width:28px; height:28px; padding:0 6px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-family:"Fraunces",Georgia,serif; font-weight:700; font-size:16px; color:#fff; text-shadow:0 0 2px rgba(0,0,0,.5);}
+.card .warn{font-size:12px; color:var(--warning); margin-top:5px;}
+.sub{font-size:11.5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em; font-family:"IBM Plex Mono",monospace; margin:8px 0 2px;}
+.empty{font-size:12.5px; color:var(--ink-muted); margin:8px 0 0;}
+#status{font-size:12.5px; color:var(--ink-soft); min-height:1.3em; margin:6px 0 0;}
+
+table.dt{width:100%; border-collapse:collapse; margin-top:4px;}
+.dt th{font:600 11px "IBM Plex Sans",sans-serif; color:var(--ink-soft); text-align:center; padding:2px 3px; vertical-align:bottom; line-height:1.2;}
+.dt td{padding:1px 2px;}
+.dt td.ix{color:var(--ink-muted); font-size:11px; text-align:right; width:20px; padding-right:4px;}
+.dt input{width:100%; padding:3px 5px; font-size:13px; font-family:"IBM Plex Mono",monospace; border-radius:6px;}
+
+.toggles{margin-top:10px;}
+.toggles .tl{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:4px;}
+.toggles .tl .sub{margin:0;}
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.chip{display:inline-flex; align-items:center; gap:7px; font-family:inherit; font-size:13px; font-weight:600; padding:4px 10px 4px 6px; border-radius:999px;
+  border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer; max-width:100%;}
+.chip .dot{width:14px; height:14px; border-radius:4px; flex:0 0 14px; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--ink-soft);}
+.chip .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;}
+.chip[aria-pressed="true"]{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, var(--surface));}
+.chip[aria-pressed="false"]{color:var(--ink-muted); background:var(--surface-alt); text-decoration:line-through; text-decoration-thickness:1px;}
+.chip[aria-pressed="false"] .dot{opacity:.35;}
+
+.sigblock{margin-top:9px;}
+.sigblock .dsname{font-weight:600; font-size:13.5px; margin-bottom:4px;}
+.sigtoggle{display:inline-flex; flex-wrap:wrap; gap:5px;}
+.sigtoggle button{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; padding:5px 9px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer;}
+.sigtoggle button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+
+/* ---------- the sheet (what students screenshot) ---------- */
+.stage{min-width:0;}
+.sheet{
+  background:#ffffff; color:#111111; font-family:Arial, Helvetica, sans-serif;
+  border:1px solid var(--line-strong); border-radius:6px; box-shadow:0 2px 8px var(--shadow);
+  padding:16px 18px 18px; max-width:780px; margin:0 auto;
+}
+.sheet input.title-in{
+  display:block; width:100%; font:700 26px Arial, Helvetica, sans-serif; text-align:center; color:#111;
+  border:none; border-bottom:1.5px dashed transparent; background:transparent; padding:4px 6px 8px; min-width:0; margin:0 0 4px; border-radius:0;
+}
+.sheet input.title-in::placeholder{color:#b4b4b4; font-weight:400;}
+.sheet input.title-in:hover, .sheet input.title-in:focus{border-bottom-color:#c8c8c8; outline:none;}
+#plotHost svg{display:block; width:100%; height:auto;}
+.key{margin-top:10px; border-top:1.5px solid #222; padding-top:8px;}
+.key-title{font:700 15px Arial, Helvetica, sans-serif; margin:0 0 6px;}
+.key-cols{display:grid; grid-template-columns:1fr 1fr; gap:0 26px; align-items:start;}
+.kcol h3{font:700 12px Arial, Helvetica, sans-serif; text-transform:uppercase; letter-spacing:.06em; color:#555; margin:0 0 6px;}
+.ki{display:flex; align-items:flex-start; gap:10px; min-width:0; margin-bottom:9px;}
+.ki svg{flex:0 0 44px;}
+.ki .kt{min-width:0; flex:1 1 auto;}
+.kline{font-family:Arial, Helvetica, sans-serif; line-height:1.45; overflow-wrap:anywhere;}
+.kline sup{font-size:.7em; line-height:0;}
+.stage-note{max-width:780px; margin:8px auto 0; font-size:12.5px; color:var(--ink-muted); text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ================= TOOLS ================= -->
+<aside class="tools" aria-label="Histogram tools">
+  <header>
+    <div class="eyebrow">Unit 0 · Data &amp; Models</div>
+    <h1>Histogram Plotter</h1>
+    <p class="desc">Turn your data into a histogram, superimpose a normal curve, and shade the 1σ–5σ ranges to see how closely your data follows it.</p>
+  </header>
+
+  <section class="panel" id="pSetup">
+    <h2>1 · Grid &amp; scale</h2>
+    <div class="fg">
+      <label>Bin width<input type="text" class="num" id="binwidth" value="" placeholder="auto" inputmode="decimal"></label>
+      <label>Significant figures<select id="sf"></select></label>
+    </div>
+    <div class="fg">
+      <label>Smallest x<input type="text" class="num" id="xmin" value="" placeholder="auto" inputmode="decimal"></label>
+      <label>Largest x<input type="text" class="num" id="xmax" value="" placeholder="auto" inputmode="decimal"></label>
+      <label>Tallest bar (y max)<input type="text" class="num" id="ymax" value="" placeholder="auto" inputmode="decimal"></label>
+    </div>
+    <p class="hint">Leave any box blank and it is set automatically from your data. The bin width, left edge, and right edge are shared by every data set so their bars line up.</p>
+    <p class="note" id="rangeNote" hidden></p>
+    <div class="row"><button class="btn small" id="resetGrid" type="button">Reset grid to auto</button></div>
+  </section>
+
+  <section class="panel" id="pAxes">
+    <h2>2 · Axis label</h2>
+    <div class="row">
+      <input type="text" id="xname" class="grow" placeholder="What is measured">
+      <input type="text" id="xunits" style="width:96px" placeholder="units">
+    </div>
+    <p class="hint">Left blank, the axis takes its label from the first data set you show. The count axis is always labeled "Frequency."</p>
+  </section>
+
+  <section class="panel" id="pSets">
+    <h2>3 · Data sets</h2>
+    <button class="btn primary" id="addSet" type="button">Add a data table</button>
+    <div class="toggles" id="setToggles" hidden></div>
+    <div id="setList"></div>
+  </section>
+
+  <section class="panel" id="pCurves">
+    <h2>4 · Gaussian curves</h2>
+    <button class="btn primary" id="addCurve" type="button">Add a curve</button>
+    <span class="note" id="cMsg" style="margin-left:8px"></span>
+    <div id="curveList"><p class="empty">Add a data table first, then superimpose a curve on it.</p></div>
+  </section>
+
+  <section class="panel" id="pSigma">
+    <h2>5 · Highlight ranges (σ)</h2>
+    <p class="hint" style="margin-top:0">Shades the range within k standard deviations of each data set's own mean, and compares it to the 68–95–99.7 rule.</p>
+    <div id="sigmaList"><p class="empty">Add a data table with at least 2 points to highlight ranges.</p></div>
+  </section>
+
+  <section class="panel" id="pKey">
+    <h2>6 · Export</h2>
+    <div class="row">
+      <button class="btn primary" id="dlPng" type="button">Download PNG</button>
+      <button class="btn" id="cpPng" type="button">Copy image</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+  </section>
+</aside>
+
+<!-- ================= SHEET ================= -->
+<main class="stage">
+  <div class="sheet" id="sheet">
+    <input type="text" id="title" class="title-in" placeholder="Click here to type a title" aria-label="Graph title" maxlength="120">
+    <div id="plotHost"></div>
+    <div class="key" id="keyBox" hidden>
+      <div class="key-title">Key</div>
+      <div class="key-cols">
+        <div class="kcol" id="keyLeft"></div>
+        <div class="kcol" id="keyRight"></div>
+      </div>
+    </div>
+  </div>
+  <p class="stage-note">Everything inside the white box is what gets saved: title, graph, and key.</p>
+</main>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   Constants & state
+   ========================================================= */
+const COLORS=[['#111111','black'],['#d62728','red'],['#1f5fbf','blue'],['#2a9d3a','green'],['#f28e12','orange'],
+              ['#7b3fa0','purple'],['#159a8c','teal'],['#8c564b','brown'],['#e05a9a','pink'],['#7f7f7f','gray']];
+const DS_COLORS=['#1f5fbf','#d62728','#2a9d3a','#f28e12','#7b3fa0','#159a8c','#8c564b','#e05a9a'];
+const CURVE_COLORS=['#111111','#d62728','#7b3fa0','#f28e12','#159a8c','#1f5fbf'];
+const FONT='Arial, Helvetica, sans-serif';
+const DEFAULT_ROWS=14, MAX_CURVES_PER_SET=3;
+const WIDTHS=[['Thin',1.5],['Medium',3],['Bold',5],['Heavy',7]];
+const dashFor=w=>`${Math.max(8,w*3.2).toFixed(1)} ${Math.max(5,w*2).toFixed(1)}`;
+const SIGMA_LEVELS=[1,2,3,4,5];
+const EMPIRICAL_LABEL={1:'≈68%',2:'≈95%',3:'≈99.7%',4:'≈99.99%',5:'≈99.9999%'};
+
+const S={
+  binwidth:'', xmin:'', xmax:'', ymax:'', sf:3,
+  title:'', xname:'', xunits:'',
+  sets:[], curves:[], nextId:1
+};
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const N=s=>{ s=String(s==null?'':s).trim().replace(/−/g,'-'); return s===''?NaN:Number(s); };
+const isNum=s=>{ s=String(s==null?'':s).trim(); return s!==''&&isFinite(N(s)); };
+const MINUS='−';
+const neg=s=>s.replace(/-/g,MINUS);
+const blankRow=()=>({v:''});
+const getSet=id=>S.sets.find(d=>d.id===id);
+const setName=(d,i)=>d.name.trim()||('Data set '+(i+1));
+const setIndex=id=>S.sets.findIndex(d=>d.id===id);
+const getCurve=id=>S.curves.find(c=>c.id===id);
+const newSigma=()=>({1:false,2:false,3:false,4:false,5:false});
+
+function niceCeil(v){
+  if(!(v>0)) return 1;
+  const mag=Math.pow(10,Math.floor(Math.log10(v))), n=v/mag;
+  return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*mag;
+}
+function fmtTick(v){
+  if(v===0) return '0';
+  const a=Math.abs(v); let s;
+  if(a>=1e6||a<1e-3) s=v.toExponential(2).replace(/\.?0+e/,'e').replace('e+','e');
+  else s=String(parseFloat(v.toPrecision(7)));
+  return neg(s);
+}
+const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+
+/* Numbers to a chosen number of significant figures, returned as rich-text segments. */
+function numSegs(v,sf){
+  if(!isFinite(v)) return [{t:'?'}];
+  if(v===0) return [{t:'0'}];
+  const sign=v<0?MINUS:'', a=Math.abs(v);
+  let s=a.toPrecision(sf);
+  const useSci=a>=1e6||a<1e-3||/e/.test(s);
+  if(useSci){
+    const [m,e]=a.toExponential(Math.max(0,sf-1)).split('e');
+    return [{t:sign+m+' × 10'},{t:neg(String(parseInt(e,10))),sup:true}];
+  }
+  return [{t:sign+s}];
+}
+const numText=(v,sf)=>numSegs(v,sf).map(s=>s.sup?[...s.t].map(c=>SUP[c]||c).join(''):s.t).join('');
+
+/* =========================================================
+   Statistics & binning model (mirrored in build scripts/model.js —
+   if you change the math, change it in both places)
+   ========================================================= */
+function mean(values){ if(!values.length) return NaN; return values.reduce((s,v)=>s+v,0)/values.length; }
+function sampleStdDev(values){
+  const n=values.length; if(n<2) return NaN;
+  const m=mean(values), ss=values.reduce((s,v)=>s+(v-m)*(v-m),0);
+  return Math.sqrt(ss/(n-1));
+}
+function median(values){
+  if(!values.length) return NaN;
+  const s=values.slice().sort((a,b)=>a-b), n=s.length, mid=Math.floor(n/2);
+  return n%2?s[mid]:(s[mid-1]+s[mid])/2;
+}
+function percentile(values,p){
+  if(!values.length) return NaN;
+  const s=values.slice().sort((a,b)=>a-b), n=s.length;
+  if(n===1) return s[0];
+  const rank=p*(n-1), lo=Math.floor(rank), hi=Math.ceil(rank);
+  if(lo===hi) return s[lo];
+  return s[lo]+(s[hi]-s[lo])*(rank-lo);
+}
+function fractionWithin(values,lo,hi){
+  if(!values.length) return NaN;
+  return values.filter(v=>v>=lo&&v<=hi).length/values.length;
+}
+function niceWidth(raw){
+  if(!(raw>0)) return 1;
+  const mag=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/mag;
+  return (n<1.5?1:n<3.5?2:n<7.5?5:10)*mag;
+}
+function autoBinWidth(values){
+  const n=values.length; if(n<2) return 1;
+  const iqr=percentile(values,0.75)-percentile(values,0.25);
+  if(iqr>0) return niceWidth(2*iqr*Math.pow(n,-1/3));
+  const range=Math.max(...values)-Math.min(...values);
+  if(range>0) return niceWidth(range/(Math.log2(n)+1));
+  return 1;
+}
+function binStart(min,binWidth){ return Math.floor(min/binWidth)*binWidth; }
+// The last bin is closed on both ends ([lo, hi], not [lo, hi)) — the same
+// convention numpy.histogram and R's hist() use — so a value that lands
+// exactly on the final edge (very often the data's own max) joins the last
+// bin instead of being silently dropped. Mirrored in build scripts/model.js.
+function computeBinsFixed(values,binWidth,start,count){
+  const bins=[];
+  if(!(binWidth>0)||!(count>0)) return bins;
+  for(let i=0;i<count;i++) bins.push({lo:start+i*binWidth, hi:start+(i+1)*binWidth, count:0});
+  values.forEach(v=>{
+    let i=Math.floor((v-start)/binWidth+1e-9);
+    if(i===count) i=count-1;
+    if(i>=0&&i<count) bins[i].count++;
+  });
+  return bins;
+}
+function modalBins(bins){
+  if(!bins.length) return [];
+  const top=Math.max(...bins.map(b=>b.count));
+  if(top===0) return [];
+  return bins.filter(b=>b.count===top);
+}
+function gaussianPDF(x,mu,sigma){
+  if(!(sigma>0)) return NaN;
+  const z=(x-mu)/sigma;
+  return Math.exp(-0.5*z*z)/(sigma*Math.sqrt(2*Math.PI));
+}
+function scaledGaussianY(x,mu,sigma,n,binWidth){ return n*binWidth*gaussianPDF(x,mu,sigma); }
+function sigmaRange(mu,sigma,k){ return {lo:mu-k*sigma, hi:mu+k*sigma}; }
+
+/* =========================================================
+   Data helpers
+   ========================================================= */
+function validValues(d){
+  const out=[];
+  d.rows.forEach(r=>{ if(isNum(r.v)) out.push(N(r.v)); });
+  return out;
+}
+function visibleSets(){ return S.sets.filter(d=>d.visible); }
+function allVisibleValues(){ const out=[]; visibleSets().forEach(d=>out.push(...validValues(d))); return out; }
+function varLabel(name,units,fallback){
+  name=name.trim(); units=units.trim();
+  if(name&&units) return `${name} (${units})`;
+  return name||(units?`(${units})`:fallback);
+}
+function curveParams(c){
+  const d=getSet(c.dsId); if(!d) return null;
+  const vals=validValues(d), n=vals.length;
+  if(c.source==='auto'){
+    if(n<2) return null;
+    return {mu:mean(vals), sigma:sampleStdDev(vals), n, auto:true};
+  }
+  const mu=N(c.mu), sigma=N(c.sigma);
+  if(!isFinite(mu)||!isFinite(sigma)||!(sigma>0)||n<1) return null;
+  return {mu,sigma,n,auto:false};
+}
+
+/* =========================================================
+   Grid geometry & shared binning
+   ========================================================= */
+const PW=598, ML=76, MR=26, MT=18, MB=64, W=PW+ML+MR;
+function effectiveBinWidth(vals){
+  const w=N(S.binwidth);
+  if(S.binwidth.trim()!==''&&w>0) return w;
+  return vals.length?autoBinWidth(vals):1;
+}
+function effectiveStart(bw,vals){
+  if(isNum(S.xmin)) return N(S.xmin);
+  return vals.length?binStart(Math.min(...vals),bw):0;
+}
+function effectiveCount(bw,start,vals){
+  const end=isNum(S.xmax)?N(S.xmax):(vals.length?Math.max(...vals):start+bw*10);
+  return Math.max(1,Math.ceil((end-start)/bw-1e-9));
+}
+function geo(){
+  const vals=allVisibleValues();
+  const bad={};
+  if(S.binwidth.trim()!==''&&!(N(S.binwidth)>0)) bad.bw=true;
+  if(S.xmin.trim()!==''&&!isFinite(N(S.xmin))) bad.xmin=true;
+  if(S.xmax.trim()!==''&&!isFinite(N(S.xmax))) bad.xmax=true;
+  if(isNum(S.xmin)&&isNum(S.xmax)&&N(S.xmax)<=N(S.xmin)) bad.xmax=true;
+  const bw=effectiveBinWidth(vals);
+  const start=effectiveStart(bw,vals);
+  const count=effectiveCount(bw,start,vals);
+  const xmin=start, xmax=start+count*bw, xs=xmax-xmin;
+  let maxBar=0;
+  visibleSets().forEach(d=>{
+    const bins=computeBinsFixed(validValues(d),bw,start,count);
+    bins.forEach(b=>{ if(b.count>maxBar) maxBar=b.count; });
+  });
+  let maxCurve=0;
+  S.curves.forEach(c=>{
+    const d=getSet(c.dsId); if(!d||!d.visible) return;
+    const p=curveParams(c); if(!p) return;
+    const peak=scaledGaussianY(p.mu,p.mu,p.sigma,p.n,bw);
+    if(isFinite(peak)&&peak>maxCurve) maxCurve=peak;
+  });
+  const ymAuto=niceCeil(Math.max(maxBar,maxCurve,1)*1.12);
+  const ym=N(S.ymax);
+  if(S.ymax.trim()!==''&&!(ym>0)) bad.ymax=true;
+  const ymax=isNum(S.ymax)&&ym>0?ym:ymAuto;
+  const PH=PW*0.66, H=MT+PH+MB;
+  return {bw,start,count,xmin,xmax,xs,ymax,ys:ymax,PH,H,bad,vals,
+    sx:x=>ML+(x-xmin)/xs*PW, sy:y=>MT+PH-(y/ymax)*PH};
+}
+function ticks(min,max,step){
+  if(!(step>0)) return [];
+  if((max-min)/step>200) step=(max-min)/200;
+  const a=[], k0=Math.ceil(min/step-1e-9), k1=Math.floor(max/step+1e-9);
+  for(let k=k0;k<=k1;k++) a.push(parseFloat((k*step).toPrecision(10)));
+  return a;
+}
+
+/* =========================================================
+   Drawing
+   ========================================================= */
+function halo(x,y,txt,o){
+  o=o||{};
+  const size=o.size||12, anchor=o.anchor||'middle', weight=o.weight||400, fill=o.fill||'#222';
+  const rot=o.rot?` transform="rotate(${o.rot} ${x.toFixed(1)} ${y.toFixed(1)})"`:'';
+  const hs=o.noHalo?'':` stroke="#fff" stroke-width="${o.hw||3.5}" paint-order="stroke" stroke-linejoin="round"`;
+  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" fill="${fill}" font-family="${FONT}"${hs}${rot}>${esc(txt)}</text>`;
+}
+function axisTitle(){
+  if(S.xname.trim()||S.xunits.trim()) return varLabel(S.xname,S.xunits,'');
+  const d=visibleSets()[0]; if(!d) return '';
+  return varLabel(d.xname,d.xunits,'');
+}
+function curvePath(p,bw,G){
+  const NS=260, pts=[];
+  for(let i=0;i<=NS;i++){
+    const x=G.xmin+G.xs*i/NS;
+    pts.push([G.sx(x),G.sy(scaledGaussianY(x,p.mu,p.sigma,p.n,bw))]);
+  }
+  return 'M'+pts.map(pp=>pp[0].toFixed(1)+' '+pp[1].toFixed(1)).join('L');
+}
+function plotSVG(G){
+  G=G||geo();
+  const o=[], {sx,sy}=G, right=ML+PW, bottom=MT+G.PH;
+  o.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${G.H.toFixed(1)}" width="${W}" height="${G.H.toFixed(1)}" font-family="${FONT}">`);
+  o.push(`<defs><clipPath id="clip"><rect x="${ML}" y="${MT}" width="${PW}" height="${G.PH.toFixed(1)}"/></clipPath></defs>`);
+  o.push(`<rect width="${W}" height="${G.H.toFixed(1)}" fill="#fff"/>`);
+
+  const stepx=niceWidth(G.xs/8), stepy=niceWidth(G.ymax/6);
+  const tx=ticks(G.xmin,G.xmax,stepx), ty=ticks(0,G.ymax,stepy);
+  tx.forEach(x=>o.push(`<line x1="${sx(x).toFixed(1)}" y1="${MT}" x2="${sx(x).toFixed(1)}" y2="${bottom.toFixed(1)}" stroke="#e2e2e2" stroke-width=".8"/>`));
+  ty.forEach(y=>o.push(`<line x1="${ML}" y1="${sy(y).toFixed(1)}" x2="${right}" y2="${sy(y).toFixed(1)}" stroke="#e2e2e2" stroke-width=".8"/>`));
+
+  o.push('<g clip-path="url(#clip)">');
+  // sigma bands: outer (largest k) first so overlapping toggled ranges compound in shade
+  const sigItems=[];
+  visibleSets().forEach(d=>{
+    const vals=validValues(d); if(vals.length<2) return;
+    const mu=mean(vals), sd=sampleStdDev(vals);
+    SIGMA_LEVELS.slice().reverse().forEach(k=>{
+      if(!d.sigma[k]) return;
+      const r=sigmaRange(mu,sd,k);
+      sigItems.push({d,k,r});
+    });
+  });
+  sigItems.forEach(({d,r})=>{
+    const x1=Math.max(sx(Math.max(r.lo,G.xmin)),ML), x2=Math.min(sx(Math.min(r.hi,G.xmax)),right);
+    if(x2<=x1) return;
+    o.push(`<rect x="${x1.toFixed(1)}" y="${MT}" width="${(x2-x1).toFixed(1)}" height="${G.PH.toFixed(1)}" fill="${d.color}" fill-opacity="0.11"/>`);
+  });
+  // bars
+  visibleSets().forEach(d=>{
+    const bins=computeBinsFixed(validValues(d),G.bw,G.start,G.count);
+    bins.forEach(b=>{
+      if(!b.count) return;
+      const x1=sx(b.lo), x2=sx(b.hi), y=sy(b.count), y0=sy(0);
+      o.push(`<rect x="${x1.toFixed(1)}" y="${y.toFixed(1)}" width="${(x2-x1).toFixed(1)}" height="${(y0-y).toFixed(1)}" fill="${d.color}" fill-opacity="0.55" stroke="${d.color}" stroke-width="1.3"/>`);
+    });
+  });
+  // curves
+  S.curves.forEach(c=>{
+    const d=getSet(c.dsId); if(!d||!d.visible) return;
+    const p=curveParams(c); if(!p) return;
+    const path=curvePath(p,G.bw,G);
+    o.push(`<path d="${path}" fill="none" stroke="${c.color}" stroke-width="${c.width}"${c.dash?` stroke-dasharray="${dashFor(c.width)}"`:''} stroke-linejoin="round"/>`);
+  });
+  o.push('</g>');
+
+  o.push(`<line x1="${ML}" y1="${bottom.toFixed(1)}" x2="${right}" y2="${bottom.toFixed(1)}" stroke="#111" stroke-width="1.8"/>`);
+  o.push(`<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${bottom.toFixed(1)}" stroke="#111" stroke-width="1.8"/>`);
+  o.push(`<rect x="${ML}" y="${MT}" width="${PW}" height="${G.PH.toFixed(1)}" fill="none" stroke="#444" stroke-width="1"/>`);
+
+  const ex=Math.max(1,Math.ceil(tx.length/12)), ey=Math.max(1,Math.ceil(ty.length/7));
+  tx.forEach((x,i)=>{
+    const X=sx(x);
+    o.push(`<line x1="${X.toFixed(1)}" y1="${bottom.toFixed(1)}" x2="${X.toFixed(1)}" y2="${(bottom+5).toFixed(1)}" stroke="#111" stroke-width="1.2"/>`);
+    if(i%ex===0) o.push(halo(X,bottom+18,fmtTick(x),{size:12,noHalo:true}));
+  });
+  ty.forEach((y,i)=>{
+    const Y=sy(y);
+    o.push(`<line x1="${ML}" y1="${Y.toFixed(1)}" x2="${(ML-5).toFixed(1)}" y2="${Y.toFixed(1)}" stroke="#111" stroke-width="1.2"/>`);
+    if(i%ey===0) o.push(halo(ML-9,Y+4,fmtTick(y),{size:12,anchor:'end',noHalo:true}));
+  });
+
+  const xt=axisTitle();
+  if(xt) o.push(halo(ML+PW/2,G.H-14,xt,{size:15,weight:700,noHalo:true}));
+  o.push(halo(20,MT+G.PH/2,'Frequency',{size:15,weight:700,noHalo:true,rot:-90}));
+
+  o.push('</svg>');
+  return o.join('');
+}
+
+/* =========================================================
+   Key: color decoding on the left, analysis on the right
+   ========================================================= */
+const T=(t,extra)=>Object.assign({t},extra||{});
+function richHTML(segs){ return segs.map(s=>s.sup?`<sup>${esc(s.t)}</sup>`:esc(s.t)).join(''); }
+function swatchSVG(sw){
+  const w=44,h=22,cy=11;
+  if(sw.kind==='line') return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="2" y1="${cy}" x2="${w-2}" y2="${cy}" stroke="${sw.color}" stroke-width="${sw.width}"${sw.dash?` stroke-dasharray="${dashFor(sw.width)}"`:''}/></svg>`;
+  if(sw.kind==='band') return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect x="1" y="1" width="${w-2}" height="${h-2}" fill="${sw.color}" fill-opacity="0.28" stroke="${sw.color}" stroke-opacity="0.5"/></svg>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect x="3" y="3" width="${w-6}" height="${h-6}" fill="${sw.color}" fill-opacity="0.55" stroke="${sw.color}" stroke-width="1.5"/></svg>`;
+}
+function modeText(d,bins,sf){
+  const modes=modalBins(bins);
+  if(!modes.length) return 'no data yet';
+  if(modes.length===1) return `${numText(modes[0].lo,sf)}–${numText(modes[0].hi,sf)}`;
+  const shown=modes.slice(0,3).map(b=>`${numText(b.lo,sf)}–${numText(b.hi,sf)}`).join(', ');
+  return `tied across ${modes.length} bars: ${shown}${modes.length>3?', …':''}`;
+}
+function keyModel(G){
+  const left=[], right=[];
+  visibleSets().forEach(d=>{
+    const vals=validValues(d); if(!vals.length) return;
+    const i=setIndex(d.id), lines=[];
+    lines.push({segs:[T(setName(d,i))], bold:true, size:14});
+    if(d.xname.trim()||d.xunits.trim()) lines.push({segs:[T(varLabel(d.xname,d.xunits,''))], size:12, color:'#555'});
+    left.push({swatch:{kind:'bar',color:d.color}, lines});
+  });
+  S.curves.forEach(c=>{
+    const d=getSet(c.dsId); if(!d||!d.visible) return;
+    const p=curveParams(c); if(!p) return;
+    const lines=[];
+    lines.push({segs:[T(`Normal curve — ${setName(d,setIndex(d.id))}`)], bold:true, size:14});
+    lines.push({segs:[T((c.source==='auto'?'From the data:  μ = ':'Custom:  μ = ')),...numSegs(p.mu,S.sf),T(',  σ = '),...numSegs(p.sigma,S.sf)]});
+    left.push({swatch:{kind:'line',color:c.color,width:c.width,dash:c.dash}, lines});
+  });
+  visibleSets().forEach(d=>{
+    const vals=validValues(d); if(vals.length<2) return;
+    const mu=mean(vals), sd=sampleStdDev(vals);
+    SIGMA_LEVELS.forEach(k=>{
+      if(!d.sigma[k]) return;
+      const r=sigmaRange(mu,sd,k), actual=fractionWithin(vals,r.lo,r.hi);
+      const lines=[
+        {segs:[T(`±${k}σ — ${setName(d,setIndex(d.id))}`)], bold:true, size:14},
+        {segs:[T(`Range:  ${numText(r.lo,S.sf)} to ${numText(r.hi,S.sf)}`)], size:12.5},
+        {segs:[T(`Expected ${EMPIRICAL_LABEL[k]} · your data: ${(actual*100).toFixed(1)}%`)], size:12.5, color:'#555'},
+      ];
+      left.push({swatch:{kind:'band',color:d.color}, lines});
+    });
+  });
+  visibleSets().forEach(d=>{
+    const vals=validValues(d); if(!vals.length) return;
+    const bins=computeBinsFixed(vals,G.bw,G.start,G.count);
+    const lines=[{segs:[T(setName(d,setIndex(d.id)))], bold:true, size:14}];
+    lines.push({segs:[T(`n = ${vals.length}`)], size:13});
+    lines.push({segs:[T('Mean = '),...numSegs(mean(vals),S.sf)]});
+    lines.push({segs:[T('Median = '),...numSegs(median(vals),S.sf)]});
+    lines.push({segs:[T('Mode (tallest bar): '+modeText(d,bins,S.sf))]});
+    lines.push({segs: vals.length>=2 ? [T('Std. dev. = '),...numSegs(sampleStdDev(vals),S.sf)] : [T('Std. dev. needs at least 2 points')]});
+    right.push({swatch:{kind:'bar',color:d.color}, lines});
+  });
+  return {left,right};
+}
+function renderKey(G){
+  const km=keyModel(G);
+  const col=(title,items)=>items.length?`<h3>${title}</h3>`+items.map(it=>`<div class="ki">${swatchSVG(it.swatch)}<div class="kt">${it.lines.map(l=>l.segs?`<div class="kline" style="font-size:${l.size||13}px;${l.bold?'font-weight:700;':''}${l.color?'color:'+l.color+';':''}">${richHTML(l.segs)}</div>`:'').join('')}</div></div>`).join(''):'';
+  $('keyBox').hidden=!(km.left.length||km.right.length);
+  $('keyLeft').innerHTML=col('Colors',km.left);
+  $('keyRight').innerHTML=col('Analysis',km.right);
+}
+
+/* =========================================================
+   Redraw (never touches tool inputs, so typing keeps focus)
+   ========================================================= */
+let lastG=null;
+function draw(){
+  const G=geo(); lastG=G;
+  $('plotHost').innerHTML=plotSVG(G);
+  const nt=$('rangeNote');
+  const badMsgs=[];
+  if(G.bad.bw) badMsgs.push('bin width');
+  if(G.bad.xmin) badMsgs.push('smallest x');
+  if(G.bad.xmax) badMsgs.push('largest x');
+  if(G.bad.ymax) badMsgs.push('y max');
+  nt.hidden=!badMsgs.length; nt.textContent=badMsgs.length?`That doesn't look like a usable number for: ${badMsgs.join(', ')}. Using automatic values there instead.`:'';
+  ['binwidth'].forEach(id=>$(id).classList.toggle('bad',!!G.bad.bw));
+  $('xmin').classList.toggle('bad',!!G.bad.xmin); $('xmax').classList.toggle('bad',!!G.bad.xmax);
+  $('ymax').classList.toggle('bad',!!G.bad.ymax);
+  renderKey(G);
+  updateCurveCards();
+  updateSetWarnings(G);
+}
+function updateSetWarnings(G){
+  S.sets.forEach(d=>{
+    const el=document.querySelector(`.card[data-id="${d.id}"] .warn`); if(!el) return;
+    const vals=validValues(d), out=vals.filter(v=>v<G.xmin-1e-9||v>G.xmax+1e-9).length;
+    el.textContent=out?`${out} point${out>1?'s are':' is'} outside the current x range and not shown. Widen Smallest/Largest x, or press "Reset grid to auto."`:'';
+  });
+}
+
+/* =========================================================
+   Tool panels: data sets
+   ========================================================= */
+function swatchesHTML(sel,attr){
+  return COLORS.map(([hex,name])=>`<button type="button" class="sw" ${attr} data-color="${hex}" style="background:${hex}" aria-label="${name}" title="${name}" aria-pressed="${hex===sel}"></button>`).join('');
+}
+function setCardHTML(d,i){
+  const rows=d.rows.map((r,ri)=>`<tr><td class="ix">${ri+1}</td><td><input type="text" inputmode="decimal" data-r="${ri}" value="${esc(r.v)}" aria-label="value row ${ri+1}"></td></tr>`).join('');
+  return `<div class="card${d.visible?'':' off'}" data-id="${d.id}">
+    <div class="head"><span class="letter" style="background:${d.color}">${i+1}</span>
+      <input type="text" class="grow" data-f="name" value="${esc(d.name)}" placeholder="Name this data set">
+      <button type="button" class="btn small" data-act="del">Remove</button></div>
+    <label class="check"><input type="checkbox" data-f="visible" ${d.visible?'checked':''}> Show this data set on the graph</label>
+    <div class="sub">Variable (what you measured)</div>
+    <div class="row"><input type="text" class="grow" data-f="xname" value="${esc(d.xname)}" placeholder="Name"><input type="text" style="width:88px" data-f="xunits" value="${esc(d.xunits)}" placeholder="units"></div>
+    <div class="sub">Color</div>
+    <div class="swatches">${swatchesHTML(d.color,'data-sw-set')}</div>
+    <div class="sub">Data table</div>
+    <table class="dt"><thead><tr><th></th><th>${esc(varLabel(d.xname,d.xunits,'value'))}</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="row"><button type="button" class="btn small" data-act="addrow">Add row</button><button type="button" class="btn small" data-act="addrows">Add 5 rows</button></div>
+    <div class="sub">Paste data</div>
+    <textarea data-paste placeholder="Paste a column of values copied from a spreadsheet here"></textarea>
+    <div class="row"><button type="button" class="btn small" data-act="import">Import pasted data</button></div>
+    <p class="hint">One value per row. A header row like "Reaction time (s)" is fine and fills in the name and units if blank. You can also paste straight into the table.</p>
+    <div class="warn"></div>
+  </div>`;
+}
+function renderSets(){
+  $('setList').innerHTML=S.sets.length?S.sets.map(setCardHTML).join(''):'<p class="empty">No data yet. Press Add a data table.</p>';
+}
+function renderToggles(){
+  const host=$('setToggles');
+  if(S.sets.length<2){ host.hidden=true; host.innerHTML=''; return; }
+  host.hidden=false;
+  const shown=S.sets.filter(d=>d.visible).length;
+  host.innerHTML=`<div class="tl"><div class="sub">Plotted now (${shown} of ${S.sets.length})</div>
+      <div class="row" style="margin:0;gap:6px"><button type="button" class="btn small" data-tall="1">Show all</button><button type="button" class="btn small" data-tall="0">Hide all</button></div></div>
+    <div class="chips">${S.sets.map((d,i)=>`<button type="button" class="chip" data-tid="${d.id}" aria-pressed="${d.visible}" title="Click to show or hide this data set"><span class="dot" style="background:${d.color}"></span><span class="nm">${esc(setName(d,i))}</span></button>`).join('')}</div>`;
+}
+function setVisible(d,v){
+  d.visible=v;
+  const card=document.querySelector(`.card[data-id="${d.id}"]`);
+  if(card){ card.classList.toggle('off',!v); const cb=card.querySelector('[data-f="visible"]'); if(cb) cb.checked=v; }
+}
+$('setToggles').addEventListener('click',e=>{
+  const all=e.target.closest('[data-tall]');
+  if(all){ S.sets.forEach(d=>setVisible(d,all.dataset.tall==='1')); renderToggles(); draw(); return; }
+  const chip=e.target.closest('[data-tid]'); if(!chip) return;
+  const d=getSet(+chip.dataset.tid); if(!d) return;
+  setVisible(d,!d.visible); renderToggles(); draw();
+});
+function addSet(){
+  const n=S.sets.length;
+  const d={id:S.nextId++, name:'', xname:'', xunits:'', color:DS_COLORS[n%DS_COLORS.length],
+    visible:true, sigma:newSigma(), rows:Array.from({length:DEFAULT_ROWS},blankRow)};
+  S.sets.push(d); renderSets(); renderToggles(); renderCurves(); renderSigma(); draw();
+  const card=$('setList').lastElementChild; if(card){ card.scrollIntoView({block:'nearest',behavior:'smooth'}); const f=card.querySelector('[data-f="name"]'); if(f) f.focus({preventScroll:true}); }
+}
+function removeSet(id){
+  S.sets=S.sets.filter(d=>d.id!==id); S.curves=S.curves.filter(c=>c.dsId!==id);
+  renderSets(); renderToggles(); renderCurves(); renderSigma(); draw();
+}
+
+/* ----- pasting & importing (single column of values) ----- */
+function parseGrid(text){
+  return text.replace(/\r/g,'').split('\n').filter(l=>l.trim()!=='').map(l=>{
+    const cells=l.includes('\t')?l.split('\t'):(l.includes(',')?l.split(','):[l.trim()]);
+    return cells.map(c=>c.trim().replace(/^"|"$/g,''));
+  });
+}
+function parseHeaderCell(c){
+  const m=/^(.*?)\s*[\(\[]\s*(.*?)\s*[\)\]]\s*$/.exec(c);
+  return m?{name:m[1].trim(),units:m[2].trim()}:{name:c.trim(),units:''};
+}
+function importText(d,text){
+  let grid=parseGrid(text); if(!grid.length) return 0;
+  if(grid[0].length&&!isNum(grid[0][0])){
+    const h=grid.shift();
+    if(!d.xname.trim()&&!d.xunits.trim()){ const p=parseHeaderCell(h[0]||''); d.xname=p.name; d.xunits=p.units; }
+  }
+  if(!grid.length) return 0;
+  let start=d.rows.findIndex(r=>String(r.v).trim()==='');
+  if(start<0) start=d.rows.length;
+  grid.forEach((row,i)=>{
+    const ri=start+i; while(d.rows.length<=ri) d.rows.push(blankRow());
+    d.rows[ri].v=row[0]||'';
+  });
+  return grid.length;
+}
+
+/* =========================================================
+   Tool panels: Gaussian curves
+   ========================================================= */
+function defaultCurveColor(d,n){
+  const used=S.curves.filter(c=>c.dsId===d.id).map(c=>c.color);
+  return CURVE_COLORS.find(c=>c!==d.color&&!used.includes(c))||CURVE_COLORS[n%CURVE_COLORS.length];
+}
+function curveCardHTML(c,i){
+  const d=getSet(c.dsId), p=curveParams(c);
+  const dsOpts=S.sets.map((s,si)=>`<option value="${s.id}"${s.id===c.dsId?' selected':''}>${esc(setName(s,si))}</option>`).join('');
+  let paramsHTML='';
+  if(c.source==='auto'){
+    const vals=d?validValues(d):[];
+    paramsHTML=p?`<p class="hint">From the data:  μ = ${numText(p.mu,S.sf)},  σ = ${numText(p.sigma,S.sf)}  (n = ${p.n})</p>`
+      :`<p class="hint">Needs at least 2 data points in this set.</p>`;
+  }else{
+    paramsHTML=`<div class="fg"><label>μ (mean)<input type="text" class="num" data-f="mu" value="${esc(c.mu)}" inputmode="decimal" placeholder="0"></label>
+      <label>σ (standard deviation)<input type="text" class="num" data-f="sigma" value="${esc(c.sigma)}" inputmode="decimal" placeholder="1"></label></div>`;
+  }
+  return `<div class="card" data-cid="${c.id}">
+    <div class="head"><span class="letter" style="background:${c.color}">G${i+1}</span>
+      <select data-f="dsId" class="grow" aria-label="Data set">${dsOpts}</select>
+      <button type="button" class="btn small" data-act="del">Remove</button></div>
+    <div class="row"><div class="seg" role="group" aria-label="Curve source">
+      <button type="button" data-src="auto" class="${c.source==='auto'?'active':''}">Auto-fit from data</button>
+      <button type="button" data-src="custom" class="${c.source==='custom'?'active':''}">Custom μ, σ</button>
+    </div></div>
+    ${paramsHTML}
+    <div class="sub">Curve color</div>
+    <div class="swatches">${swatchesHTML(c.color,'data-sw-curve')}</div>
+    <div class="sub">Line style</div>
+    <div class="row" style="margin-top:2px">
+      <div class="seg" role="group" aria-label="Line thickness">${WIDTHS.map(([n,w])=>`<button type="button" data-cwidth="${w}" class="${c.width===w?'active':''}">${n}</button>`).join('')}</div>
+      <div class="seg" role="group" aria-label="Line style"><button type="button" data-cdash="0" class="${!c.dash?'active':''}">Solid</button><button type="button" data-cdash="1" class="${c.dash?'active':''}">Dashed</button></div>
+    </div>
+  </div>`;
+}
+function renderCurves(){
+  const host=$('curveList');
+  if(!S.sets.length){ host.innerHTML='<p class="empty">Add a data table first, then superimpose a curve on it.</p>'; return; }
+  if(!S.curves.length){ host.innerHTML='<p class="empty">No curves yet. Press Add a curve.</p>'; return; }
+  host.innerHTML=S.curves.map(curveCardHTML).join('');
+}
+function updateCurveCards(){
+  S.curves.forEach(c=>{
+    if(c.source!=='auto') return;
+    const card=document.querySelector(`.card[data-cid="${c.id}"]`); if(!card) return;
+    const hint=card.querySelector('.hint'); if(!hint) return;
+    const p=curveParams(c);
+    hint.textContent=p?`From the data:  μ = ${numText(p.mu,S.sf)},  σ = ${numText(p.sigma,S.sf)}  (n = ${p.n})`:'Needs at least 2 data points in this set.';
+  });
+}
+function addCurve(dsId){
+  const msg=$('cMsg'); msg.textContent='';
+  if(!S.sets.length){ msg.textContent='Add a data table first.'; return; }
+  let d=dsId?getSet(dsId):null;
+  if(!d) d=S.sets.find(s=>s.visible&&S.curves.filter(c=>c.dsId===s.id).length<MAX_CURVES_PER_SET)||S.sets.find(s=>S.curves.filter(c=>c.dsId===s.id).length<MAX_CURVES_PER_SET);
+  if(!d){ msg.textContent=`That is the most curves (${MAX_CURVES_PER_SET}) for each data set.`; return; }
+  const n=S.curves.filter(c=>c.dsId===d.id).length;
+  if(n>=MAX_CURVES_PER_SET){ msg.textContent=`That is the most curves (${MAX_CURVES_PER_SET}) for one data set.`; return; }
+  S.curves.push({id:S.nextId++, dsId:d.id, source:'auto', mu:'', sigma:'', color:defaultCurveColor(d,n), width:3, dash:false});
+  renderCurves(); draw();
+  const card=$('curveList').lastElementChild; if(card) card.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+/* =========================================================
+   Tool panel: sigma-range toggles
+   ========================================================= */
+function renderSigma(){
+  const host=$('sigmaList');
+  const eligible=S.sets.filter(d=>validValues(d).length>=2);
+  if(!eligible.length){ host.innerHTML='<p class="empty">Add a data table with at least 2 points to highlight ranges.</p>'; return; }
+  host.innerHTML=eligible.map(d=>{
+    const i=setIndex(d.id);
+    return `<div class="sigblock" data-sid="${d.id}"><div class="dsname" style="color:${d.color}">${esc(setName(d,i))}</div>
+      <div class="sigtoggle">${SIGMA_LEVELS.map(k=>`<button type="button" data-k="${k}" aria-pressed="${d.sigma[k]}">±${k}σ</button>`).join('')}</div></div>`;
+  }).join('');
+}
+$('sigmaList').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-k]'); if(!btn) return;
+  const block=e.target.closest('[data-sid]'); const d=getSet(+block.dataset.sid); if(!d) return;
+  const k=+btn.dataset.k; d.sigma[k]=!d.sigma[k]; btn.setAttribute('aria-pressed',d.sigma[k]?'true':'false');
+  draw();
+});
+
+/* =========================================================
+   Wiring: setup / axes
+   ========================================================= */
+$('sf').innerHTML=[1,2,3,4,5,6].map(n=>`<option value="${n}"${n===S.sf?' selected':''}>${n}</option>`).join('');
+$('sf').addEventListener('change',e=>{ S.sf=+e.target.value; draw(); });
+['binwidth','xmin','xmax','ymax'].forEach(id=>$(id).addEventListener('input',e=>{ S[id]=e.target.value; draw(); }));
+['xname','xunits'].forEach(id=>$(id).addEventListener('input',e=>{ S[id]=e.target.value; draw(); }));
+$('title').addEventListener('input',e=>{ S.title=e.target.value; });
+$('resetGrid').addEventListener('click',()=>{
+  S.binwidth=S.xmin=S.xmax=S.ymax='';
+  ['binwidth','xmin','xmax','ymax'].forEach(id=>{ $(id).value=''; $(id).classList.remove('bad'); });
+  draw();
+});
+$('addSet').addEventListener('click',addSet);
+$('addCurve').addEventListener('click',()=>addCurve());
+
+/* ----- data set cards ----- */
+const setList=$('setList');
+function cardSet(e){ const c=e.target.closest('.card'); return c?getSet(+c.dataset.id):null; }
+setList.addEventListener('input',e=>{
+  const d=cardSet(e); if(!d) return; const t=e.target;
+  if(t.dataset.r!==undefined){ d.rows[+t.dataset.r].v=t.value; draw(); renderSigma(); return; }
+  if(t.dataset.f&&t.type==='text'){
+    d[t.dataset.f]=t.value; draw();
+    if(t.dataset.f==='name') renderToggles();
+    if(/^x(name|units)$/.test(t.dataset.f)){
+      const card=t.closest('.card'), th=card.querySelector('.dt th:last-child');
+      if(th) th.textContent=varLabel(d.xname,d.xunits,'value');
+    }
+    if(t.dataset.f==='name'){
+      renderSigma();
+      S.curves.forEach(c=>{ if(c.dsId===d.id){ const sel=document.querySelector(`.card[data-cid="${c.id}"] [data-f="dsId"]`); if(sel){ const o=[...sel.options].find(o=>+o.value===d.id); if(o) o.textContent=setName(d,setIndex(d.id)); } } });
+    }
+  }
+});
+setList.addEventListener('change',e=>{
+  const d=cardSet(e); if(!d) return; const t=e.target;
+  if(t.dataset.f==='visible'){ setVisible(d,t.checked); renderToggles(); draw(); }
+});
+setList.addEventListener('click',e=>{
+  const d=cardSet(e); if(!d) return; const t=e.target;
+  if(t.closest('[data-act="del"]')){ removeSet(d.id); return; }
+  const sw=t.closest('[data-sw-set]'); if(sw){ d.color=sw.dataset.color; renderSets(); renderToggles(); renderCurves(); renderSigma(); draw(); return; }
+  if(t.closest('[data-act="addrow"]')){ d.rows.push(blankRow()); renderSets(); draw(); focusCell(d,d.rows.length-1); return; }
+  if(t.closest('[data-act="addrows"]')){ for(let i=0;i<5;i++) d.rows.push(blankRow()); renderSets(); draw(); return; }
+  if(t.closest('[data-act="import"]')){
+    const ta=t.closest('.card').querySelector('[data-paste]'), n=importText(d,ta.value);
+    renderSets(); draw(); renderSigma(); say(n?`Imported ${n} row${n>1?'s':''} into the table.`:'Nothing to import. Paste some values first.');
+  }
+});
+function focusCell(d,r){
+  const inp=document.querySelector(`.card[data-id="${d.id}"] input[data-r="${r}"]`); if(inp) inp.focus();
+}
+setList.addEventListener('keydown',e=>{
+  const t=e.target; if(e.key!=='Enter'||t.dataset.r===undefined) return;
+  const d=cardSet(e); if(!d) return; e.preventDefault();
+  const r=+t.dataset.r;
+  if(r+1>=d.rows.length){ d.rows.push(blankRow()); renderSets(); draw(); }
+  focusCell(d,r+1);
+});
+setList.addEventListener('paste',e=>{
+  const t=e.target; if(t.dataset.r===undefined) return;
+  const text=(e.clipboardData||window.clipboardData).getData('text');
+  if(!/[\t\n]/.test(text.trim())) return; // a single value pastes normally
+  e.preventDefault();
+  const d=cardSet(e), grid=parseGrid(text); if(!grid.length) return;
+  const r0=+t.dataset.r;
+  grid.forEach((row,i)=>{ const ri=r0+i; while(d.rows.length<=ri) d.rows.push(blankRow()); d.rows[ri].v=row[0]||''; });
+  renderSets(); draw(); renderSigma();
+});
+
+/* ----- curve cards ----- */
+const curveList=$('curveList');
+function cardCurve(e){ const c=e.target.closest('.card'); return c?getCurve(+c.dataset.cid):null; }
+curveList.addEventListener('input',e=>{
+  const c=cardCurve(e); if(!c) return; const t=e.target;
+  if(t.dataset.f==='mu'||t.dataset.f==='sigma'){ c[t.dataset.f]=t.value; draw(); }
+});
+curveList.addEventListener('change',e=>{
+  const c=cardCurve(e); if(!c) return; const t=e.target;
+  if(t.dataset.f==='dsId'){ c.dsId=+t.value; renderCurves(); draw(); }
+});
+curveList.addEventListener('click',e=>{
+  const c=cardCurve(e); if(!c) return; const t=e.target;
+  if(t.closest('[data-act="del"]')){ S.curves=S.curves.filter(x=>x!==c); renderCurves(); draw(); return; }
+  const sw=t.closest('[data-sw-curve]'); if(sw){ c.color=sw.dataset.color; renderCurves(); draw(); return; }
+  const cw=t.closest('[data-cwidth]'); if(cw){ c.width=+cw.dataset.cwidth; renderCurves(); draw(); return; }
+  const cd=t.closest('[data-cdash]'); if(cd){ c.dash=cd.dataset.cdash==='1'; renderCurves(); draw(); return; }
+  const src=t.closest('[data-src]'); if(src){ c.source=src.dataset.src; renderCurves(); draw(); return; }
+});
+
+/* =========================================================
+   PNG export: title + plot + key on one canvas
+   ========================================================= */
+function wrapText(ctx,text,maxW){
+  const words=String(text).split(/\s+/), lines=[]; let cur='';
+  words.forEach(w=>{ const t=cur?cur+' '+w:w; if(ctx.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=w; } });
+  if(cur) lines.push(cur); return lines;
+}
+function layoutRich(ctx,segs,size,bold,maxW){
+  const toks=[]; segs.forEach(s=>String(s.t).split(/( )/).forEach(w=>{ if(w!=='') toks.push({t:w,sup:!!s.sup,space:w===' '}); }));
+  const lines=[]; let cur=[], w=0;
+  toks.forEach(k=>{
+    ctx.font=`${bold?'700 ':''}${k.sup?size*.7:size}px ${FONT}`;
+    const tw=ctx.measureText(k.t).width;
+    const canBreak=cur.length&&cur[cur.length-1].space;
+    if(!k.space&&canBreak&&w+tw>maxW){ while(cur.length&&cur[cur.length-1].space) cur.pop(); lines.push(cur); cur=[]; w=0; }
+    if(k.space&&!cur.length) return;
+    cur.push(Object.assign({},k,{w:tw})); w+=tw;
+  });
+  if(cur.length) lines.push(cur);
+  return lines;
+}
+function drawRichLine(ctx,line,x,y,size,bold,color){
+  let cx=x; ctx.fillStyle=color||'#111'; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  line.forEach(k=>{
+    ctx.font=`${bold?'700 ':''}${k.sup?size*.7:size}px ${FONT}`;
+    ctx.fillText(k.t,cx,k.sup?y-size*.38:y); cx+=k.w;
+  });
+}
+function plotImage(G){
+  return new Promise((res,rej)=>{
+    const img=new Image(); img.onload=()=>res(img); img.onerror=rej;
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(plotSVG(G));
+  });
+}
+async function renderCanvas(){
+  const SC=2, CW=W, pad=24, G=lastG||geo();
+  const img=await plotImage(G);
+  const m=document.createElement('canvas').getContext('2d');
+  m.font='700 26px '+FONT;
+  const title=S.title.trim(), tl=title?wrapText(m,title,CW-2*pad):[];
+  const titleH=tl.length?tl.length*32+12:0;
+  const km=keyModel(G), colW=(CW-2*pad-26)/2, textW=colW-54;
+  const layCol=items=>items.map(it=>{
+    const lines=it.lines.map(l=>{ const lay=layoutRich(m,l.segs,l.size||13,!!l.bold,textW); return {l,lay}; });
+    const h=Math.max(24,lines.reduce((s,x)=>s+x.lay.length*(x.l.size||13)*1.45,0)+2);
+    return {it,lines,h};
+  });
+  const L=layCol(km.left), R=layCol(km.right);
+  const colH=a=>a.reduce((s,x)=>s+x.h+9,0);
+  const has=L.length||R.length;
+  const keyH=has?34+22+Math.max(colH(L),colH(R))+6:0;
+  const top=14, total=top+titleH+G.H+(has?10:0)+keyH+8;
+  const cv=document.createElement('canvas'); cv.width=CW*SC; cv.height=Math.ceil(total*SC);
+  const ctx=cv.getContext('2d'); ctx.scale(SC,SC);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,total);
+  let y=top;
+  if(tl.length){ ctx.fillStyle='#111'; ctx.font='700 26px '+FONT; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    tl.forEach((l,i)=>ctx.fillText(l,CW/2,y+26+i*32)); y+=titleH; }
+  ctx.drawImage(img,0,y,CW,G.H); y+=G.H;
+  if(has){
+    y+=10; ctx.strokeStyle='#222'; ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(CW-pad,y); ctx.stroke();
+    ctx.fillStyle='#111'; ctx.font='700 15px '+FONT; ctx.textAlign='left'; ctx.fillText('Key',pad,y+22);
+    y+=34;
+    const drawCol=(items,x0,title)=>{
+      if(!items.length) return;
+      ctx.fillStyle='#555'; ctx.font='700 12px '+FONT; ctx.textAlign='left'; ctx.fillText(title.toUpperCase(),x0,y+14);
+      let yy=y+22;
+      items.forEach(c=>{
+        const it=c.it, sw=it.swatch, cy=yy+11;
+        if(sw.kind==='line'){ ctx.strokeStyle=sw.color; ctx.lineWidth=sw.width; ctx.setLineDash(sw.dash?[Math.max(8,sw.width*3.2),Math.max(5,sw.width*2)]:[]); ctx.beginPath(); ctx.moveTo(x0+2,cy); ctx.lineTo(x0+42,cy); ctx.stroke(); ctx.setLineDash([]); }
+        else if(sw.kind==='band'){ ctx.fillStyle=sw.color; ctx.globalAlpha=0.28; ctx.fillRect(x0+1,cy-10,42,20); ctx.globalAlpha=1; ctx.strokeStyle=sw.color; ctx.lineWidth=1; ctx.strokeRect(x0+1,cy-10,42,20); }
+        else { ctx.fillStyle=sw.color; ctx.globalAlpha=0.55; ctx.fillRect(x0+3,cy-8,38,16); ctx.globalAlpha=1; ctx.strokeStyle=sw.color; ctx.lineWidth=1.5; ctx.strokeRect(x0+3,cy-8,38,16); }
+        let ty=yy+14;
+        c.lines.forEach(({l,lay})=>{ lay.forEach(line=>{ drawRichLine(ctx,line,x0+54,ty,l.size||13,!!l.bold,l.color); ty+=(l.size||13)*1.45; }); });
+        yy+=c.h+9;
+      });
+    };
+    drawCol(L,pad,'Colors'); drawCol(R,pad+colW+26,'Analysis');
+  }
+  return cv;
+}
+function fileName(){
+  const s=S.title.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return (s||'histogram')+'.png';
+}
+function say(t){ $('status').textContent=t; }
+// Saves a blob two ways: through the published Artifact's "downloads"
+// capability when this page is running inside that sandboxed viewer (plain
+// <a download> links do nothing there — the viewer never grants file-download
+// permission on their own), or the classic blob+anchor-click download when
+// it's opened as an ordinary local/standalone HTML file, where window.claude
+// doesn't exist at all. Falls back to the classic path on any capability
+// error other than an explicit decline, so a page served somewhere unusual
+// still tries its best.
+async function savePngBlob(blob,filename){
+  if (window.claude && typeof window.claude.use==='function'){
+    try{
+      const downloads=await window.claude.use('downloads');
+      if (downloads){
+        const res=await downloads.save({filename,data:blob});
+        return {ok:true,via:'capability',status:res.status};
+      }
+    }catch(err){
+      if (err && err.code==='declined') return {ok:false,declined:true};
+      // any other capability error (unavailable, rate_limited, etc.) — fall through
+    }
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  return {ok:true,via:'classic'};
+}
+$('dlPng').addEventListener('click',async()=>{
+  try{
+    const cv=await renderCanvas();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    const res=await savePngBlob(blob,fileName());
+    if (res.declined) say('Save cancelled.');
+    else if (res.via==='capability') say((res.status==='delivered'?'Sent ':'Saved ')+fileName()+'.');
+    else say('Saved '+fileName()+' to your Downloads.');
+  }catch(err){ say('Could not make the image. Take a screenshot of the white box instead.'); }
+});
+$('cpPng').addEventListener('click',async()=>{
+  try{
+    const cv=await renderCanvas();
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+    say('Copied. Paste it straight into your document.');
+  }catch(err){ say('Copy is not available here. Use Download PNG or take a screenshot.'); }
+});
+
+/* =========================================================
+   Init + test hook
+   ========================================================= */
+renderSets(); renderToggles(); renderCurves(); renderSigma(); draw();
+window.__hp={
+  S, mean, sampleStdDev, median, percentile, fractionWithin, niceWidth, autoBinWidth, binStart,
+  computeBinsFixed, modalBins, gaussianPDF, scaledGaussianY, sigmaRange, geo, plotSVG, keyModel, renderCanvas,
+  addSet, addCurve, validValues, importText, numText, fileName, savePngBlob,
+  renderAll(){ renderSets(); renderToggles(); renderCurves(); renderSigma(); draw(); }
+};
+})();
+</script>
+
+</body>
+</html>
