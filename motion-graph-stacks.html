@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion Graph Stacks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:4px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:70ch; margin:0;}
+
+.toolbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:16px 0 14px;
+}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{
+  font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent;
+  color:var(--ink-soft); cursor:pointer;
+}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{
+  font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.tally{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft);}
+.tally b{color:var(--ink); font-size:17px;}
+
+
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow); padding:18px 20px;
+}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-muted); margin:0 0 12px;
+}
+
+/* ---- layout: story on the left, the graph stack on the right */
+.work{display:grid; grid-template-columns:minmax(300px, 380px) minmax(0,1fr); gap:14px; align-items:start;}
+.story h3{font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:21px; margin:0 0 8px; text-wrap:balance;}
+.story .narr{font-family:"Fraunces",Georgia,serif; font-size:17.5px; line-height:1.5; margin:10px 0 0; color:var(--ink);}
+.tags{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; padding:4px 10px; border-radius:14px; background:var(--surface-alt); color:var(--ink-soft); border:1px solid var(--line-strong);}
+.tag.sign{background:var(--accent-warm); border-color:var(--accent-warm); color:#fff;}
+.cartoon{width:100%; height:auto; display:block; background:var(--surface-alt); border-radius:12px; border:1px solid var(--line);}
+.cap{font-size:12.5px; color:var(--ink-muted); margin-top:6px;}
+
+.stagebar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;}
+.stagepill{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; padding:6px 11px; border-radius:10px; border:1.5px solid var(--line-strong); color:var(--ink-muted);}
+.stagepill.on{border-color:var(--accent-warm); color:var(--accent-warm);}
+.stagepill.done{border-color:var(--good); color:var(--good);}
+.tools{display:flex; gap:6px; flex-wrap:wrap; margin-left:auto;}
+.tool{font-family:inherit; font-size:13.5px; font-weight:600; padding:8px 13px; border-radius:9px; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer;}
+.tool.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.hintline{font-size:14.5px; color:var(--ink-soft); margin:0 0 8px; line-height:1.45;}
+.stackwrap{border:1px solid var(--line); border-radius:12px; background:var(--surface); overflow:hidden;}
+#stack{display:block; width:100%; height:auto; touch-action:none; user-select:none; -webkit-user-select:none;}
+.legendrow{display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--ink-soft); margin-top:8px;}
+.legendrow span{display:inline-flex; gap:6px; align-items:center;}
+.dotsw{width:11px; height:11px; border-radius:50%; background:var(--accent-warm); display:inline-block;}
+.linesw{width:22px; height:3px; background:var(--accent); display:inline-block; border-radius:2px;}
+.evlegend{font-size:13px; color:var(--ink-soft); margin-top:6px; line-height:1.6;}
+.evlegend b{font-family:"IBM Plex Mono",monospace; color:var(--ink); margin-right:3px;}
+.actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px;}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.btn.ghost{background:transparent;}
+.result{margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+.score{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.score .pct{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:30px; color:var(--ink);}
+.score .pct.full{color:var(--good);}
+.score .sub{font-size:14px; color:var(--ink-soft);}
+.meter{height:8px; border-radius:6px; background:var(--surface-alt); overflow:hidden; margin:8px 0 10px; border:1px solid var(--line);}
+.meter i{display:block; height:100%; background:var(--accent-warm);}
+.meter i.full{background:var(--good);}
+.fixes{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:7px;}
+.fixes li{font-size:14.5px; line-height:1.45; color:var(--ink); padding-left:0; display:flex; gap:8px;}
+.fixes .gt{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; padding:2px 7px; border-radius:8px; background:var(--surface-alt); color:var(--ink-soft); flex:0 0 auto; height:fit-content; margin-top:2px;}
+.more{font-size:13px; color:var(--ink-muted); margin-top:6px;}
+
+/* stack drawing */
+.gframe{fill:var(--surface);}
+.grid{stroke:var(--line); stroke-width:1;}
+.axis{stroke:var(--ink); stroke-width:2.2;}
+.axhead{fill:var(--ink);}
+.glabel{font-family:"IBM Plex Mono",monospace; font-size:14px; fill:var(--ink-soft); letter-spacing:.04em;}
+.tlabel{font-family:"IBM Plex Mono",monospace; font-size:12px; fill:var(--ink-muted);}
+.evline{stroke:var(--accent-warm); stroke-width:1.3; stroke-dasharray:5 5; opacity:.75;}
+.evnum{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; fill:var(--accent-warm);}
+.seg{fill:none; stroke:var(--accent); stroke-width:3.4; stroke-linecap:round;}
+.seg.hit{stroke-width:16; stroke:transparent; cursor:pointer;}
+.spike{fill:none; stroke:var(--accent); stroke-width:3; stroke-linejoin:round;}
+.spikeguide{stroke:var(--accent-warm); stroke-width:1.5; stroke-dasharray:3 3;}
+.pt{fill:var(--accent-warm); stroke:var(--surface); stroke-width:2;}
+.pt.sel{stroke:var(--accent); stroke-width:3.5;}
+.pt.spk{fill:var(--accent-warm);}
+.handle{fill:var(--surface); stroke:var(--accent); stroke-width:2; cursor:ns-resize;}
+.model .seg{stroke:var(--ink-muted); stroke-dasharray:6 5; stroke-width:2.4;}
+.model .spike{stroke:var(--ink-muted); stroke-dasharray:4 4; stroke-width:2;}
+.model .pt{fill:none; stroke:var(--ink-muted); stroke-width:2;}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+
+@media (max-width:980px){ .work{grid-template-columns:minmax(0,1fr);} .story{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px;} }
+@media (max-width:700px){ .story{display:block;} .tools{margin-left:0;} h1{font-size:26px;} }
+@media (max-width:430px){ .frame{padding:18px 16px 48px;} .panel{padding:14px 12px;} .tally{margin-left:0; flex-basis:100%;} .story .narr{font-size:16.5px;} }
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 1 · Kinematics</div>
+    <h1>Motion Graph Stacks</h1>
+    <p class="desc">Read the story, then sketch position, velocity and acceleration against the same time axis. Start with the points you're sure of, check them, then connect them with the right shapes.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="btn primary" id="newBtn">New problem</button>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="work">
+    <section class="panel story" id="storyPanel">
+      <div>
+        <div class="tags" id="tags"></div>
+        <h3 id="title"></h3>
+        <svg class="cartoon" id="cartoon" viewBox="0 0 380 270" role="img" aria-label="Cartoon of the situation with velocity arrows"></svg>
+        <div class="cap">Arrows show the velocity at key moments, in time order from left to right (top to bottom for the bumper cars). Longer arrows mean faster.</div>
+      </div>
+      <p class="narr" id="narr"></p>
+    </section>
+
+    <section class="panel" id="graphPanel">
+      <div class="stagebar">
+        <span class="stagepill on" id="pill1">1 · Key points</span>
+        <span class="stagepill" id="pill2">2 · Connect</span>
+        <div class="tools" id="tools"></div>
+      </div>
+      <p class="hintline" id="hint"></p>
+      <div class="stackwrap"><svg id="stack" viewBox="0 0 760 700" aria-label="Position, velocity and acceleration graphs"></svg></div>
+      <div class="legendrow">
+        <span><i class="dotsw"></i>key points</span>
+        <span><i class="linesw"></i>connecting lines and spikes</span>
+        <span id="modelKey" hidden><i class="linesw" style="background:var(--ink-muted)"></i>model answer</span>
+      </div>
+      <div class="evlegend" id="evlegend"></div>
+      <div class="actions" id="actions"></div>
+      <div class="result" id="result" hidden></div>
+    </section>
+  </div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="body">
+      <p>1. At the top of a ball's flight, what is its velocity? What is its acceleration? How do the three graphs show both answers at the same moment?</p>
+      <p>2. Why does the velocity graph jump at a bounce, while the position graph only has a sharp corner?</p>
+      <p>3. Why does a bounce show up as a spike on the acceleration graph? Which way does the spike point for a floor, a wall on the right, and the spring at the bottom of a ramp? Why?</p>
+      <p>4. A ball speeds up on the way down, but its acceleration is negative the whole time. Use the graphs to explain why that isn't a contradiction.</p>
+      <p>5. Look at a flight with no bounce. How does the slope of the velocity graph compare in every part? What does that tell you about the acceleration?</p>
+      <p>6. How can you tell from the position graph alone where velocity is zero? Where acceleration is negative?</p>
+      <p>7. For a ramp problem, what changes in the graphs if you measure position from the spring instead of from the top?</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Conceptual Motion Graphs — story model, answer keys and grading.
+// No numbers are shown to students. Each story is simulated with hidden
+// numbers so the app knows the true shape; grading only ever looks at
+// qualitative features (sign, order, relative size, slope, concavity,
+// alignment in time), never at a student's vertical scale.
+// Inlined into the page by build.js and required by the Node tests.
+(function (root) {
+"use strict";
+
+const G = 10;                      // hidden gravity for the simulation
+const GRAPHS = ["s", "v", "a"];
+const GNAME = { s: "Position", v: "Velocity", a: "Acceleration" };
+
+// ---------------------------------------------------------------- tolerances
+// All in the graphs' normalized units: time 0…1 across, value −1…+1 up.
+const TOL = {
+  zero: 0.05,        // a point this close to the axis counts as zero (the UI also snaps)
+  eventT: 0.03,      // Easy: a point must sit this close to its event line
+  alignT: 0.045,     // Hard: the same event in two graphs must line up this closely
+  clear: 0.03,       // "higher/lower" needs at least this much separation
+  equalAbs: 0.03, equalRel: 0.18, // "about the same size"
+  straight: 0.045,   // a line bent less than this is straight
+  flat: 0.08,        // an acceleration line must be this level (the page also snaps acceleration dots to an existing level)
+  slopeRel: 0.30,    // parallel velocity lines: slopes within 30%
+  overshoot: 0.06,   // a curve may bulge this far past its end points before it counts as turning around
+  apexFlat: 0.4,     // at a peak, the curve's end slope must be under 40% of the straight-line slope
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const pick = (r, l) => l[Math.floor(r() * l.length)];
+
+// ---------------------------------------------------------------- simulation
+// A story is a start state plus a list of steps:
+//   { move: a, until: "s", target, label }   constant acceleration until position reaches target
+//   { move: a, until: "v0", label }           … until velocity reaches zero (a turning point)
+//   { move: a, dur, label }                   … for a fixed time
+//   { impact: e, label }                      bounce: v → −e·v (instant)
+//   { stop: true, label }                     collision that ends in rest: v → 0 (instant)
+// Graphs always end at the end of the last step.
+function simulate(story) {
+  let t = 0, s = story.s0, v = story.v0;
+  const moves = [], impacts = [], turns = [], bounds = [];
+  story.steps.forEach((st, i) => {
+    if (st.move !== undefined) {
+      const a = st.move;
+      let dur;
+      if (st.dur !== undefined) dur = st.dur;
+      else if (st.until === "v0") dur = -v / a;
+      else if (st.until === "s") {
+        // smallest positive root of s + v t + a t²/2 = target
+        const A = a / 2, B = v, C = s - st.target;
+        if (Math.abs(A) < 1e-12) dur = -C / B;
+        else {
+          const disc = B * B - 4 * A * C;
+          const r = [(-B + Math.sqrt(disc)) / (2 * A), (-B - Math.sqrt(disc)) / (2 * A)].filter(x => x > 1e-9);
+          dur = Math.min(...r);
+        }
+      }
+      if (!(dur > 0) || !isFinite(dur)) throw new Error("bad step " + JSON.stringify(st));
+      const m = { t0: t, t1: t + dur, s0: s, v0: v, a, label: st.label || "", endLabel: st.endLabel };
+      // a turning point strictly inside this move
+      const tt = -v / a;
+      if (a !== 0 && tt > 1e-9 && tt < dur - 1e-9) turns.push({ t: t + tt, s: s + v * tt + a * tt * tt / 2, label: st.turnLabel || "turns around" });
+      s = s + v * dur + a * dur * dur / 2; v = v + a * dur; t += dur;
+      m.s1 = s; m.v1 = v;
+      moves.push(m);
+    } else if (st.impact !== undefined || st.stop) {
+      const pre = v, post = st.stop ? 0 : -st.impact * v;
+      impacts.push({ t, s, pre, post, label: st.label, stop: !!st.stop });
+      v = post;
+    }
+  });
+  // acceleration changes between consecutive moves not separated by an impact
+  for (let i = 1; i < moves.length; i++) {
+    const hit = impacts.some(im => Math.abs(im.t - moves[i].t0) < 1e-9);
+    if (!hit) bounds.push({ t: moves[i].t0, label: moves[i - 1].endLabel || story.boundLabel || "change" });
+  }
+  return { T: t, moves, impacts, turns, bounds, s1: s, v1: v };
+}
+
+// the move in progress at time t (at a boundary, the one that starts there)
+function moveAt(sim, t) {
+  for (const m of sim.moves) if (t >= m.t0 - 1e-12 && t < m.t1 - 1e-12) return m;
+  return sim.moves[sim.moves.length - 1];
+}
+function stateAt(sim, t) {
+  const m = moveAt(sim, t), d = t - m.t0;
+  return { s: m.s0 + m.v0 * d + m.a * d * d / 2, v: m.v0 + m.a * d, a: m.a };
+}
+
+// ---------------------------------------------------------------- answer key
+// Key points per graph (true values + normalized display values) and the
+// segments between them, each with the shape it must have.
+function buildKey(story) {
+  const sim = simulate(story);
+  const T = sim.T;
+  const nt = t => t / T;
+  const events = []; // {t, label, kind}
+  events.push({ t: 0, label: story.startLabel || "start", kind: "start" });
+  sim.bounds.forEach(b => events.push({ t: b.t, label: story.releaseLabel || b.label, kind: "bound" }));
+  sim.turns.forEach(tp => events.push({ t: tp.t, label: tp.label, kind: "turn" }));
+  sim.impacts.forEach(im => events.push({ t: im.t, label: im.label, kind: "impact", stop: im.stop }));
+  const lastTurnAtEnd = Math.abs(sim.v1) < 1e-9 && sim.moves[sim.moves.length - 1].a !== 0;
+  events.push({ t: T, label: story.endLabel || "end", kind: "end", turnEnd: lastTurnAtEnd });
+  events.sort((a, b) => a.t - b.t);
+  // merge events at the same time (e.g. a stop impact followed by rest has one time)
+  const ev = [];
+  for (const e of events) {
+    const last = ev[ev.length - 1];
+    if (last && Math.abs(last.t - e.t) < 1e-9 && e.kind === "end" && last.kind !== "start") { last.alsoEnd = true; continue; }
+    ev.push(e);
+  }
+  ev.forEach((e, i) => { e.id = "e" + i; e.nt = nt(e.t); });
+
+  const K = { s: [], v: [], a: [] }, spikes = [];
+  const push = (g, e, val, extra) => K[g].push(Object.assign({ g, t: e.t, nt: e.nt, ev: e.id, label: e.label, val }, extra || {}));
+  for (const e of ev) {
+    const st = stateAt(sim, e.t);
+    if (e.kind === "impact") {
+      const im = sim.impacts.find(x => Math.abs(x.t - e.t) < 1e-9);
+      push("s", e, im.s);
+      push("v", e, im.pre, { jump: "pre" });
+      push("v", e, im.post, { jump: "post" });
+      spikes.push({ g: "a", t: e.t, nt: e.nt, ev: e.id, label: e.label, sign: Math.sign(im.post - im.pre) });
+    } else if (e.kind === "turn") {
+      push("s", e, st.s, { turn: true });
+      push("v", e, 0, { turn: true });
+    } else if (e.kind === "start") {
+      push("s", e, story.s0); push("v", e, story.v0);
+    } else if (e.kind === "end") {
+      push("s", e, sim.s1, { turn: e.turnEnd }); push("v", e, sim.v1, { turn: e.turnEnd });
+    } else if (e.kind === "bound") {
+      push("s", e, st.s); push("v", e, st.v);
+    }
+  }
+  // acceleration: runs of equal a, not broken by impacts (the −g line runs
+  // straight through a bounce, with the spike on top), broken where a changes
+  const runs = [];
+  for (const m of sim.moves) {
+    const last = runs[runs.length - 1];
+    if (last && last.a === m.a) last.t1 = m.t1; else runs.push({ a: m.a, t0: m.t0, t1: m.t1 });
+  }
+  const evAt = t => ev.find(e => Math.abs(e.t - t) < 1e-9);
+  runs.forEach((r, i) => {
+    const e0 = evAt(r.t0), e1 = evAt(r.t1);
+    push("a", e0, r.a, { run: i, jump: i > 0 ? "post" : undefined });
+    push("a", e1, r.a, { run: i, jump: i < runs.length - 1 ? "pre" : undefined });
+  });
+  // order: time, then pre before post
+  const ord = k => (k.jump === "pre" ? 0 : k.jump === "post" ? 2 : 1);
+  for (const g of GRAPHS) {
+    K[g].sort((p, q) => p.t - q.t || ord(p) - ord(q));
+    K[g].forEach((k, i) => { k.id = g + i; k.cls = cls(k.val, 1e-9); });
+  }
+
+  // display scale for each graph (used for the model answer and the tests)
+  const maxAbs = g => Math.max(...K[g].map(k => Math.abs(k.val)), 1e-9);
+  const scale = { s: 0.85 / maxAbs("s"), v: 0.85 / maxAbs("v"), a: 0.4 / maxAbs("a") };
+  for (const g of GRAPHS) K[g].forEach(k => { k.ny = k.val * scale[g]; });
+  spikes.forEach(sp => { sp.ny = 0.85 * sp.sign; });
+
+  // segments between consecutive key points (not across a jump, not spikes)
+  const segs = { s: [], v: [], a: [] };
+  for (const g of GRAPHS) {
+    const L = K[g];
+    for (let i = 0; i + 1 < L.length; i++) {
+      const p = L[i], q = L[i + 1];
+      if (Math.abs(p.t - q.t) < 1e-9) continue;            // a jump (or a step in a)
+      const mid = (p.t + q.t) / 2, st = stateAt(sim, mid);
+      const seg = { g, from: p.id, to: q.id, t0: p.t, t1: q.t, a: st.a, v: st.v };
+      if (g === "s") {
+        seg.dir = Math.sign(q.val - p.val); seg.conc = Math.sign(st.a);
+        seg.va = stateAt(sim, p.t + 1e-9 * T).v;
+      }
+      if (g === "v") { seg.dir = Math.sign(st.a); }
+      if (g === "a") { seg.flat = true; }
+      segs[g].push(seg);
+    }
+  }
+
+  // how curved each true position segment is, relative to its rise: a fast
+  // throw is only slightly curved, and a straight line there is acceptable
+  for (const sg of segs.s) {
+    const kp = K.s.find(k => k.id === sg.from), kq = K.s.find(k => k.id === sg.to);
+    const ya = kp.ny, yb = kq.ny, dt = sg.t1 - sg.t0;
+    const bend0 = ya + sg.va * scale.s * dt / 2 - (ya + yb) / 2;
+    sg.curveRatio = Math.abs(bend0) / Math.max(Math.abs(yb - ya), 1e-9);
+  }
+
+  // ---- relations the stage-1 check looks for
+  const rel = [];
+  const clearDiff = (x, y) => Math.abs(x - y) > 0.12 * Math.max(Math.abs(x), Math.abs(y), 1e-9);
+  for (const g of ["s", "v"]) {
+    const L = K[g];
+    for (let i = 0; i + 1 < L.length; i++) {
+      const p = L[i], q = L[i + 1];
+      if (p.cls === "0" && q.cls === "0") continue;
+      if (p.jump === "pre" && q.jump === "post") {
+        // the bounce itself: how big the speed is after compared to before
+        // only when the difference is big enough to see (a 10% loss is not)
+        if (q.val !== 0 && clearDiff(Math.abs(p.val), Math.abs(q.val) * 1.0) && Math.abs(Math.abs(p.val) - Math.abs(q.val)) > 0.2 * Math.abs(p.val))
+          rel.push({ type: "mag", g, a: p.id, b: q.id, want: Math.abs(q.val) < Math.abs(p.val) ? "less" : "more", why: "bounce" });
+        continue;
+      }
+      if (clearDiff(p.val, q.val)) rel.push({ type: "order", g, a: p.id, b: q.id, want: q.val > p.val ? "higher" : "lower" });
+    }
+  }
+  // peaks of position: each turning point compared with the previous high point
+  const highs = K.s.filter(k => k.turn || (k.ev === "e0" && k.val > 0 && story.dropStart));
+  for (let i = 1; i < highs.length; i++) {
+    const p = highs[i - 1], q = highs[i];
+    if (clearDiff(p.val, q.val)) rel.push({ type: "order", g: "s", a: p.id, b: q.id, want: q.val > p.val ? "higher" : "lower", why: "peak" });
+  }
+  // velocity on either side of a turning point in one flight: same size or not
+  for (let i = 0; i < K.v.length; i++) {
+    const z = K.v[i];
+    if (!z.turn || i === 0 || i === K.v.length - 1) continue;
+    const p = K.v[i - 1], q = K.v[i + 1];
+    if (p.val === 0 || q.val === 0) continue;
+    const want = Math.abs(Math.abs(p.val) - Math.abs(q.val)) < 0.02 * Math.abs(p.val) ? "equal" : Math.abs(q.val) > Math.abs(p.val) ? "more" : "less";
+    if (want !== "equal" && !clearDiff(Math.abs(p.val), Math.abs(q.val))) continue;
+    rel.push({ type: "mag", g: "v", a: p.id, b: q.id, want, why: "flight" });
+  }
+  // equal acceleration levels in separate runs with the same a
+  const runStarts = K.a.filter(k => k.jump !== "pre" && (k.jump === "post" || k.ev === "e0"));
+  for (let i = 0; i < runStarts.length; i++) for (let j = i + 1; j < runStarts.length; j++) {
+    if (runStarts[i].val === runStarts[j].val && runStarts[i].val !== 0) rel.push({ type: "same", g: "a", a: runStarts[i].id, b: runStarts[j].id });
+  }
+  // parallel velocity lines: every velocity segment with the same nonzero a
+  const par = [];
+  const groups = {};
+  segs.v.forEach((sg, i) => { if (sg.a !== 0) (groups[sg.a] = groups[sg.a] || []).push(i); });
+  for (const a in groups) if (groups[a].length > 1) par.push({ a: Number(a), segs: groups[a] });
+
+  return { story, sim, T, events: ev, K, spikes, segs, rel, par, scale };
+}
+function cls(y, z) { return Math.abs(y) <= z ? "0" : y > 0 ? "+" : "-"; }
+
+// ---------------------------------------------------------------- stories
+// Every story says exactly when the graphs start and stop, which way is
+// positive, and where position is measured from.
+const SCEN = [];
+function S(kind, id, fn, w) { SCEN.push({ kind, id, fn, w: w || 1 }); }
+
+// ---- vertical: + up, floor is position zero
+const VERT = "Up is positive, and position is measured from the floor.";
+S("vertical", "V-toss-hand", r => ({
+  title: "Tossing a ball upward from the shoulder",
+  text: `You hold a ball at rest at shoulder height, then push it upward and let go. It rises, falls past your shoulder, and heads for the floor. The graphs start while the ball is still at rest in your hand, so they include the push. They stop just before the ball touches the floor. ${VERT}`,
+  s0: 1.5, v0: 0, releaseLabel: "leaves your hand", startLabel: "at rest in hand", endLabel: "just before the floor",
+  steps: [{ move: 22, dur: 0.25, endLabel: "leaves your hand" }, { move: -G, until: "s", target: 0, turnLabel: "top of the flight" }],
+  scene: "floor", person: "shoulder", holdStart: true,
+}));
+S("vertical", "V-toss-bounce", r => {
+  const e = pick(r, [0.5, 0.6]);
+  return {
+    title: "A tossed ball that bounces once",
+    text: `You toss a ball straight up from shoulder height. The graphs start the instant it leaves your hand. It rises, falls to the floor, bounces once (it comes back up slower than it hit), and the graphs stop when it reaches the top of that bounce. ${VERT}`,
+    s0: 1.5, v0: 5, startLabel: "leaves your hand", endLabel: "top of the bounce",
+    steps: [{ move: -G, until: "s", target: 0, turnLabel: "top of the flight" }, { impact: e, label: "hits the floor" }, { move: -G, until: "v0" }],
+    scene: "floor", person: "shoulder",
+  };
+});
+S("vertical", "V-toss-catch", r => ({
+  title: "Tossing and catching a ball",
+  text: `You toss a ball straight up from shoulder height. The graphs start the instant it leaves your hand. It rises, comes back down, and you catch it at the same height it left your hand. Your hand stops it quickly, and you hold it still for a moment before the graphs stop. ${VERT}`,
+  s0: 1.5, v0: 5, startLabel: "leaves your hand", endLabel: "held still",
+  steps: [{ move: -G, until: "s", target: 1.5 - 1e-9, turnLabel: "top of the flight" }, { stop: true, label: "is caught" }, { move: 0, dur: 0.35 }],
+  scene: "floor", person: "shoulder",
+}));
+S("vertical", "V-throw-down", r => ({
+  title: "Throwing a ball down from the waist",
+  text: `You throw a ball straight down from waist height. The graphs start the instant it leaves your hand. It hits the floor, bounces, and rises higher than your waist. The graphs stop at the top of that bounce. ${VERT}`,
+  s0: 1, v0: -4, startLabel: "leaves your hand", endLabel: "top of the bounce", dropStart: true,
+  steps: [{ move: -G, until: "s", target: 0 }, { impact: 0.9, label: "hits the floor" }, { move: -G, until: "v0" }],
+  scene: "floor", person: "waist",
+}));
+S("vertical", "V-drop-bounces", r => {
+  const endBefore = r() < 0.5;
+  return {
+    title: "Dropping a bouncy ball",
+    text: endBefore
+      ? `You drop a ball from waist height. The graphs start the instant you let go. It bounces twice, rising a little less each time, and the graphs stop just before it touches the floor for the third time. ${VERT}`
+      : `You drop a ball from waist height. The graphs start the instant you let go. It bounces twice, rising a little less each time, and the graphs stop at the top of the second bounce. ${VERT}`,
+    s0: 1, v0: 0, startLabel: "you let go", endLabel: endBefore ? "just before the third hit" : "top of the second bounce", dropStart: true,
+    steps: endBefore
+      ? [{ move: -G, until: "s", target: 0 }, { impact: 0.75, label: "bounces the first time" }, { move: -G, until: "s", target: 0, turnLabel: "top of bounce 1" }, { impact: 0.75, label: "bounces the second time" }, { move: -G, until: "s", target: 0, turnLabel: "top of bounce 2" }]
+      : [{ move: -G, until: "s", target: 0 }, { impact: 0.75, label: "bounces the first time" }, { move: -G, until: "s", target: 0, turnLabel: "top of bounce 1" }, { impact: 0.75, label: "bounces the second time" }, { move: -G, until: "v0" }],
+    scene: "floor", person: "waist",
+  };
+});
+S("vertical", "V-drop-clay", r => ({
+  title: "Dropping a lump of clay",
+  text: `You drop a lump of clay from waist height. The graphs start the instant you let go. It hits the floor and sticks without bouncing, and it sits there for a moment before the graphs stop. Include the landing. ${VERT}`,
+  s0: 1, v0: 0, startLabel: "you let go", endLabel: "sitting on the floor", dropStart: true,
+  steps: [{ move: -G, until: "s", target: 0 }, { stop: true, label: "lands and sticks" }, { move: 0, dur: 0.3 }],
+  scene: "floor", person: "waist", clay: true,
+}), 0.7);
+
+// ---- horizontal: bumper cars, + right, position from the center of the rink
+const HORIZ = "Right is positive, and position is measured from the center line of the rink.";
+S("horizontal", "H-const", r => {
+  const right = r() < 0.5;
+  return {
+    title: `A bumper car cruising ${right ? "right" : "left"}`,
+    text: `A bumper car starts on the ${right ? "left" : "right"} side of the rink and cruises ${right ? "right" : "left"} at a steady speed, crossing the center line. The graphs start as the stopwatch starts and stop before the car reaches the far wall. ${HORIZ}`,
+    s0: right ? -3 : 3, v0: right ? 2 : -2, endLabel: "before the wall",
+    steps: [{ move: 0, dur: 2.5 }], scene: "rink",
+  };
+}, 0.7);
+S("horizontal", "H-speedup", r => {
+  const right = r() < 0.5;
+  return {
+    title: `A bumper car speeding up to the ${right ? "right" : "left"}`,
+    text: `A bumper car sits at rest on the ${right ? "left" : "right"} side of the rink. The driver presses the pedal and it speeds up steadily toward the ${right ? "right" : "left"}, crossing the center line. The graphs start while the car is at rest and stop before it reaches the far wall. ${HORIZ}`,
+    s0: right ? -3 : 3, v0: 0, startLabel: "at rest", endLabel: "before the wall",
+    steps: [{ move: right ? 1.4 : -1.4, dur: 2.8 }], scene: "rink",
+  };
+});
+S("horizontal", "H-coast", r => {
+  const right = r() < 0.5;
+  return {
+    title: `A bumper car coasting to a stop`,
+    text: `A bumper car is moving ${right ? "right" : "left"} on the ${right ? "left" : "right"} side of the rink when the driver lets off the pedal. It slows steadily and comes to a stop before it reaches the center line. The graphs start as the driver lets off the pedal and stop the instant the car stops. ${HORIZ}`,
+    s0: right ? -4 : 4, v0: right ? 3 : -3, startLabel: "lets off the pedal", endLabel: "stops",
+    steps: [{ move: right ? -1.5 : 1.5, until: "v0" }], scene: "rink",
+  };
+});
+S("horizontal", "H-wall", r => {
+  const right = r() < 0.5;
+  return {
+    title: `A bumper car bouncing off the ${right ? "right" : "left"} wall`,
+    text: `A bumper car cruises ${right ? "right" : "left"} at a steady speed from the ${right ? "left" : "right"} side of the rink, crosses the center line and hits the ${right ? "right" : "left"} wall. It bounces straight back at a slower steady speed. The graphs start as the stopwatch starts and stop before it gets back to the center line. ${HORIZ}`,
+    s0: right ? -2 : 2, v0: right ? 2 : -2, endLabel: "before the center line",
+    steps: [{ move: 0, until: "s", target: right ? 4 : -4 }, { impact: 0.55, label: "hits the wall" }, { move: 0, dur: 1.6 }], scene: "rink", wall: right ? "right" : "left",
+  };
+});
+S("horizontal", "H-speedup-wall", r => {
+  const right = r() < 0.5;
+  return {
+    title: `Speeding into the ${right ? "right" : "left"} wall`,
+    text: `A bumper car starts at rest at the center line. The driver floors it toward the ${right ? "right" : "left"} wall, speeding up steadily. It hits the wall and bounces back slower, and the driver lets go of the pedal so it rolls back at a steady speed. The graphs start while the car is at rest and stop before it gets back to the center line. ${HORIZ}`,
+    s0: 0, v0: 0, startLabel: "at rest", endLabel: "before the center line",
+    steps: [{ move: right ? 1.5 : -1.5, until: "s", target: right ? 4 : -4 }, { impact: 0.5, label: "hits the wall" }, { move: 0, dur: 1.2 }], scene: "rink", wall: right ? "right" : "left",
+  };
+});
+
+// ---- ramps: + downhill, position measured along the ramp
+const A_R = 4; // g sinθ, hidden
+function rampOrigin(r) {
+  return r() < 0.5 ? { at: "top", s0top: 0, spring: 5, note: "Downhill is positive, and position is measured along the ramp from the top." }
+                   : { at: "bottom", s0top: -5, spring: 0, note: "Downhill is positive, and position is measured along the ramp from the spring at the bottom, so points up the ramp have negative positions." };
+}
+S("ramp", "R-release", r => {
+  const o = rampOrigin(r);
+  return {
+    title: "A car rolling down a ramp",
+    text: `A little car is released from rest at the top of a ramp and rolls down. The graphs start the instant it is released and stop just before it reaches the spring at the bottom. ${o.note}`,
+    s0: o.s0top, v0: 0, startLabel: "released", endLabel: "just before the spring", dropStart: true,
+    steps: [{ move: A_R, until: "s", target: o.spring }], scene: "ramp", origin: o.at,
+  };
+}, 0.7);
+S("ramp", "R-spring-up", r => {
+  const o = rampOrigin(r);
+  return {
+    title: "A car bouncing off the ramp spring",
+    text: `A little car is released from rest at the top of a ramp. It rolls down, bounces off the spring at the bottom, and rolls back up the ramp more slowly than it hit. The graphs start the instant it is released and stop when it stops for an instant partway back up. ${o.note}`,
+    s0: o.s0top, v0: 0, startLabel: "released", endLabel: "stops for an instant", dropStart: true,
+    steps: [{ move: A_R, until: "s", target: o.spring }, { impact: 0.7, label: "hits the spring" }, { move: A_R, until: "v0" }], scene: "ramp", origin: o.at,
+  };
+});
+S("ramp", "R-push-up", r => {
+  const o = rampOrigin(r);
+  const bounce = r() < 0.5;
+  return {
+    title: "A car pushed up a ramp",
+    text: bounce
+      ? `A little car is given a push up the ramp from right at the spring. The graphs start the instant it leaves your hand. It slows down, stops for an instant, rolls back down, bounces off the spring, and the graphs stop when it stops for an instant on its way back up. ${o.note}`
+      : `A little car is given a push up the ramp from right at the spring. The graphs start the instant it leaves your hand. It slows down, stops for an instant, rolls back down, and the graphs stop just before it reaches the spring. ${o.note}`,
+    s0: o.spring, v0: -5.5, startLabel: "leaves your hand", endLabel: bounce ? "stops again" : "just before the spring",
+    steps: bounce
+      ? [{ move: A_R, until: "s", target: o.spring, turnLabel: "stops for an instant" }, { impact: 0.7, label: "hits the spring" }, { move: A_R, until: "v0" }]
+      : [{ move: A_R, until: "s", target: o.spring, turnLabel: "stops for an instant" }],
+    scene: "ramp", origin: o.at,
+  };
+});
+S("ramp", "R-two-bounces", r => {
+  const o = rampOrigin(r);
+  return {
+    title: "A car bouncing twice off the ramp spring",
+    text: `A little car is released from rest at the top of a ramp. It rolls down, bounces off the spring, rolls partway back up, stops for an instant, rolls down again and bounces a second time. Each bounce sends it back up more slowly than it hit. The graphs stop when it stops for an instant after the second bounce. ${o.note}`,
+    s0: o.s0top, v0: 0, startLabel: "released", endLabel: "stops for an instant", dropStart: true,
+    steps: [{ move: A_R, until: "s", target: o.spring }, { impact: 0.7, label: "bounces the first time" }, { move: A_R, until: "s", target: o.spring, turnLabel: "stops for an instant" }, { impact: 0.7, label: "bounces the second time" }, { move: A_R, until: "v0" }],
+    scene: "ramp", origin: o.at,
+  };
+}, 0.7);
+
+function makeProblem(opts) {
+  opts = opts || {};
+  const rng = opts.rng || Math.random;
+  const kind = opts.kind || pick(rng, ["horizontal", "vertical", "ramp"]);
+  const pool = SCEN.filter(s => s.kind === kind && (!opts.id || s.id === opts.id));
+  const tot = pool.reduce((s, x) => s + x.w, 0);
+  let t = rng() * tot, sc = pool[0];
+  for (const s of pool) { t -= s.w; if (t <= 0) { sc = s; break; } }
+  const story = sc.fn(rng);
+  story.kind = kind; story.id = sc.id;
+  const key = buildKey(story);
+  return { id: sc.id, kind, story, key, arrows: arrowsFor(key) };
+}
+
+// velocity vectors for the cartoon: one arrow per moment the object is moving
+function arrowsFor(key) {
+  const out = [];
+  const vmax = Math.max(...key.K.v.map(k => Math.abs(k.val)), 1e-9);
+  for (const k of key.K.v) {
+    if (k.val === 0) continue;
+    const last = out[out.length - 1];
+    if (last && Math.abs(last.v - k.val) < 1e-9) continue;
+    out.push({ v: k.val, len: Math.abs(k.val) / vmax, label: k.label + (k.jump === "pre" ? " (before)" : k.jump === "post" ? " (after)" : "") });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- grading
+// Student work: { points: [{id, g, t, y, spike}], edges: [{id, g, a, b, bend}] }
+// (t in 0…1, y in −1…1, bend = how far the curve's control point sits above
+// the straight line's midpoint, in y units; control stays at the middle time).
+const CLSWORD = { "+": "above the axis (positive)", "-": "below the axis (negative)", "0": "on the axis (zero)" };
+
+function matchGraph(key, work, g, mode) {
+  const K = key.K[g];
+  const P = work.points.filter(p => p.g === g && !p.spike).slice().sort((a, b) => a.t - b.t);
+  // try both orders of near-simultaneous student points (a jump is two dots
+  // at one time; which one the student meant as "before" is not knowable
+  // from time alone)
+  const variants = [P];
+  for (let i = 0; i + 1 < P.length; i++) if (Math.abs(P[i].t - P[i + 1].t) < 0.012) {
+    const n = variants.length;
+    for (let j = 0; j < n; j++) { const c = variants[j].slice(); [c[i], c[i + 1]] = [c[i + 1], c[i]]; variants.push(c); }
+    if (variants.length > 16) break;
+  }
+  let best = null;
+  for (const Pv of variants) {
+    const r = align(K, Pv, mode);
+    if (!best || r.score > best.score) best = r;
+  }
+  return best.map; // kId -> point
+}
+function align(K, P, mode) {
+  const n = K.length, m = P.length;
+  const D = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  const B = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  const reward = (k, p) => {
+    if (mode === "easy" && Math.abs(k.nt - p.t) > TOL.eventT) return -Infinity;
+    const c = cls(p.y, TOL.zero) === k.cls ? 2 : 0.4;
+    return c - 0.5 * Math.abs(k.nt - p.t);
+  };
+  for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
+    let bestv = D[i - 1][j], b = 1;
+    if (D[i][j - 1] > bestv) { bestv = D[i][j - 1]; b = 2; }
+    const r = reward(K[i - 1], P[j - 1]);
+    if (r > -Infinity && D[i - 1][j - 1] + r > bestv) { bestv = D[i - 1][j - 1] + r; b = 3; }
+    D[i][j] = bestv; B[i][j] = b;
+  }
+  const map = {};
+  let i = n, j = m;
+  while (i > 0 && j > 0) {
+    if (B[i][j] === 3) { map[K[i - 1].id] = P[j - 1]; i--; j--; }
+    else if (B[i][j] === 1) i--; else j--;
+  }
+  return { score: D[n][m], map };
+}
+function matchSpikes(key, work, mode) {
+  const Sx = work.points.filter(p => p.g === "a" && p.spike).slice().sort((a, b) => a.t - b.t);
+  const Ks = key.spikes;
+  const map = {};
+  if (mode === "easy") {
+    const used = new Set();
+    for (const k of Ks) {
+      let bi = -1, bd = 1e9;
+      Sx.forEach((p, i) => { const d = Math.abs(p.t - k.nt); if (!used.has(i) && d <= TOL.eventT && d < bd) { bd = d; bi = i; } });
+      if (bi >= 0) { used.add(bi); map[k.ev] = Sx[bi]; }
+    }
+  } else {
+    // in order
+    Ks.forEach((k, i) => { if (Sx[i]) map[k.ev] = Sx[i]; });
+  }
+  return { map, extra: Sx.length - Object.keys(map).length };
+}
+
+function levelAt(work, t) {
+  // y of the student's acceleration line at time t (baseline for a spike)
+  for (const e of work.edges.filter(e => e.g === "a")) {
+    const A = work.points.find(p => p.id === e.a), Bp = work.points.find(p => p.id === e.b);
+    if (!A || !Bp) continue;
+    const [p, q] = A.t <= Bp.t ? [A, Bp] : [Bp, A];
+    if (t >= p.t && t <= q.t && q.t > p.t) return p.y + (q.y - p.y) * (t - p.t) / (q.t - p.t);
+  }
+  return null;
+}
+
+function checkPoints(prob, work, mode) {
+  const key = prob.key, items = [];
+  const maps = {};
+  for (const g of GRAPHS) maps[g] = matchGraph(key, work, g, mode);
+  const P = (g, id) => maps[g][id];
+  const kById = {};
+  for (const g of GRAPHS) key.K[g].forEach(k => { kById[k.id] = k; });
+  // 1. every key point present, on the right side of the axis
+  for (const g of GRAPHS) for (const k of key.K[g]) {
+    const p = P(g, k.id);
+    const where = describeWhen(k);
+    if (!p) items.push({ ok: false, g, msg: `${GNAME[g]}: add a point ${where}. It should be ${CLSWORD[k.cls]}.` });
+    else if (cls(p.y, TOL.zero) !== k.cls) items.push({ ok: false, g, msg: `${GNAME[g]}: the point ${where} should be ${CLSWORD[k.cls]}.` });
+    else items.push({ ok: true, g, msg: `${GNAME[g]} ${where}` });
+  }
+  // 2. relative size and order
+  for (const r of key.rel) {
+    const ka = kById[r.a], kb = kById[r.b], pa = P(r.g, r.a), pb = P(r.g, r.b);
+    if (!pa || !pb) { items.push({ ok: false, g: r.g, quiet: true, msg: "" }); continue; }
+    let ok, msg;
+    if (r.type === "order") {
+      ok = r.want === "higher" ? pb.y - pa.y > TOL.clear : pa.y - pb.y > TOL.clear;
+      msg = `${GNAME[r.g]}: ${describeWhen(kb)} should be ${r.want} than ${describeWhen(ka)}.`;
+      if (r.why === "peak") msg = `${GNAME[r.g]}: the peak ${describeWhen(kb)} should be ${r.want === "higher" ? "higher" : "lower"} than the one ${describeWhen(ka)}.`;
+    } else if (r.type === "mag") {
+      const A = Math.abs(pa.y), Bm = Math.abs(pb.y);
+      const eq = Math.abs(A - Bm) <= TOL.equalAbs + TOL.equalRel * Math.max(A, Bm);
+      ok = r.want === "equal" ? eq : r.want === "less" ? Bm < A - TOL.clear : Bm > A + TOL.clear;
+      const size = r.want === "equal" ? "the same size as" : r.want === "less" ? "smaller than" : "bigger than";
+      msg = r.why === "bounce"
+        ? `Velocity: just after "${ka.label}", the speed should be ${size} the speed just before.`
+        : `Velocity: the speed ${describeWhen(kb)} should be ${size} the speed ${describeWhen(ka)}.`;
+    } else if (r.type === "same") {
+      ok = Math.abs(pa.y - pb.y) <= TOL.flat;
+      msg = `Acceleration: every part of the motion with the same acceleration should sit at the same level.`;
+    }
+    items.push({ ok, g: r.g, msg: ok ? "" : msg });
+  }
+  // 3. spikes
+  const sp = matchSpikes(key, work, mode);
+  for (const k of key.spikes) {
+    const p = sp.map[k.ev];
+    const dir = k.sign > 0 ? "up" : "down";
+    if (!p) { items.push({ ok: false, g: "a", msg: `Acceleration: add a spike ${describeWhen(k)}.` }); items.push({ ok: false, g: "a", quiet: true, msg: "" }); continue; }
+    const s = Math.sign(p.y);
+    const pusher = prob.kind === "horizontal" ? "wall" : prob.kind === "ramp" ? "spring" : /caught/.test(k.label) ? "hand" : "floor";
+    items.push({ ok: s === k.sign, g: "a", msg: s === k.sign ? "" : `Acceleration: the spike ${describeWhen(k)} should point ${dir}. Which way does the ${pusher} push?` });
+    // a collision is a huge acceleration: taller than any other level on the graph
+    const levels = key.K.a.map(k2 => P("a", k2.id)).filter(Boolean).map(q => Math.abs(q.y));
+    const big = Math.abs(p.y) > Math.max(0.15, ...levels) + TOL.clear;
+    items.push({ ok: big, g: "a", msg: big ? "" : `Acceleration: a collision is very quick, so its spike ${describeWhen(k)} should be much taller than the other acceleration levels.` });
+  }
+  items.push({ ok: sp.extra <= 0, g: "a", msg: sp.extra > 0 ? `Acceleration: there ${sp.extra === 1 ? "is a spike" : "are spikes"} where nothing collides.` : "" });
+  // 4. Hard: the same moment lines up in every graph
+  if (mode === "hard") {
+    for (const e of key.events) {
+      const ts = [];
+      for (const g of GRAPHS) for (const k of key.K[g]) if (k.ev === e.id && P(g, k.id)) ts.push(P(g, k.id).t);
+      if (key.spikes.some(s => s.ev === e.id) && sp.map[e.id]) ts.push(sp.map[e.id].t);
+      if (ts.length < 2) continue;
+      const ok = Math.max(...ts) - Math.min(...ts) <= TOL.alignT;
+      items.push({ ok, g: "all", msg: ok ? "" : `Line up the moment it ${e.label.replace(/^the /, "")} at the same time in every graph.` });
+    }
+  }
+  return summarize(items, { maps, spikes: sp });
+}
+
+function describeWhen(k) {
+  const L = k.label;
+  if (k.jump === "pre") return `just before "${L}"`;
+  if (k.jump === "post") return `just after "${L}"`;
+  if (/^(start|end)$/.test(L)) return `at the ${L}`;
+  return `at "${L}"`;
+}
+
+// ---- stage 2: the lines between the points
+// how far a quadratic curve bulges past the higher (or lower) of its two ends
+function overshoot(ya, yb, bend) {
+  const yc = (ya + yb) / 2 + bend, den = ya - 2 * yc + yb;
+  if (Math.abs(den) < 1e-12) return 0;
+  const u = (ya - yc) / den;
+  if (u <= 0 || u >= 1) return 0;
+  const y = (1 - u) * (1 - u) * ya + 2 * u * (1 - u) * yc + u * u * yb;
+  return Math.max(0, y - Math.max(ya, yb), Math.min(ya, yb) - y);
+}
+function bezierY(A, Bp, bend) { return { cy: (A.y + Bp.y) / 2 + bend }; }
+function checkLines(prob, work, mode) {
+  const key = prob.key, items = [];
+  const maps = {};
+  for (const g of GRAPHS) maps[g] = matchGraph(key, work, g, mode);
+  const byId = {}; work.points.forEach(p => { byId[p.id] = p; });
+  const kById = {}; for (const g of GRAPHS) key.K[g].forEach(k => { kById[k.id] = k; });
+  const edgesOf = g => work.edges.filter(e => e.g === g && byId[e.a] && byId[e.b]).map(e => {
+    const A = byId[e.a], Bp = byId[e.b];
+    return A.t <= Bp.t ? { e, p: A, q: Bp, bend: e.bend || 0 } : { e, p: Bp, q: A, bend: e.bend || 0 };
+  });
+  const findPath = (g, from, to) => {
+    // chain of edges moving forward in time from point `from` to point `to`
+    const E = edgesOf(g);
+    const prev = new Map([[from.id, null]]);
+    const queue = [from];
+    while (queue.length) {
+      const cur = queue.shift();
+      if (cur.id === to.id) break;
+      for (const x of E) if (x.p.id === cur.id && x.q.t > cur.t - 1e-9 && !prev.has(x.q.id) && x.q.t <= to.t + 1e-9) { prev.set(x.q.id, x); queue.push(x.q); }
+    }
+    if (!prev.has(to.id)) return null;
+    const path = []; let c = to.id;
+    while (c !== from.id) { const x = prev.get(c); path.unshift(x); c = x.p.id; }
+    return path;
+  };
+  const why = { s: "", v: "", a: "" };
+  for (const g of GRAPHS) for (const sg of key.segs[g]) {
+    const ka = kById[sg.from], kb = kById[sg.to];
+    const pa = maps[g][sg.from], pb = maps[g][sg.to];
+    const span = `between ${describeWhen(ka).replace(/^at /, "")} and ${describeWhen(kb).replace(/^at /, "")}`;
+    if (!pa || !pb) { items.push({ ok: false, g, msg: `${GNAME[g]}: the key points ${span} are missing. Go back to your points first.` }); continue; }
+    const path = findPath(g, pa, pb);
+    if (!path) { items.push({ ok: false, g, msg: `${GNAME[g]}: connect the points ${span}.` }); continue; }
+    let ok = true, msg = "";
+    for (const x of path) {
+      const dy = x.q.y - x.p.y, bend = x.bend;
+      if (g === "s") {
+        if (sg.dir !== 0 && Math.sign(dy) !== sg.dir && Math.abs(dy) > TOL.clear / 2) { ok = false; msg = `Position ${span} should go ${sg.dir > 0 ? "up" : "down"}, because velocity there is ${sg.dir > 0 ? "positive" : "negative"}.`; break; }
+        const flatish = Math.abs(bend) <= Math.max(0.02, 0.15 * Math.abs(dy)); // straight, for this segment's size
+        if (sg.conc === 0 && !flatish) { ok = false; msg = `Position ${span} should be a straight line: the acceleration there is zero, so the velocity doesn't change.`; break; }
+        if (sg.conc !== 0) {
+          // concave down ⇔ the curve bulges above its chord (bend > 0)
+          const want = sg.conc < 0 ? 1 : -1;
+          if (flatish && sg.curveRatio >= 0.25) { ok = false; msg = `Position ${span} should curve: the acceleration there isn't zero. Pull the line ${want > 0 ? "up (concave down)" : "down (concave up)"}.`; break; }
+          if (!flatish && Math.sign(bend) !== want) { ok = false; msg = `Position ${span} should be concave ${sg.conc < 0 ? "down" : "up"}, because acceleration there is ${sg.conc < 0 ? "negative" : "positive"}.`; break; }
+          // a curve bent so far that it doubles back isn't a single-direction segment
+          if (overshoot(x.p.y, x.q.y, bend) > TOL.overshoot) { ok = false; msg = `Position ${span} is bent so far it turns around. Ease the curve so it keeps going ${sg.dir > 0 ? "up" : "down"}.`; break; }
+        }
+      } else if (g === "v") {
+        if (Math.abs(bend) > TOL.straight) { ok = false; msg = `Velocity ${span} should be a straight line: the acceleration there is constant.`; break; }
+        if (sg.dir === 0 ? Math.abs(dy) > TOL.flat : Math.sign(dy) !== sg.dir || Math.abs(dy) <= TOL.clear / 2) {
+          ok = false; msg = sg.dir === 0 ? `Velocity ${span} should be flat: the acceleration there is zero.` : `Velocity ${span} should slope ${sg.dir > 0 ? "up" : "down"}, because acceleration there is ${sg.dir > 0 ? "positive" : "negative"}.`; break;
+        }
+      } else {
+        if (Math.abs(bend) > TOL.straight || Math.abs(dy) > TOL.flat) { ok = false; msg = `Acceleration ${span} should be a flat line: the acceleration there doesn't change.`; break; }
+      }
+    }
+    items.push({ ok, g, msg });
+  }
+  // jumps must not be bridged by a line
+  for (const g of ["v", "a"]) {
+    const L = key.K[g];
+    for (let i = 0; i + 1 < L.length; i++) {
+      const p = L[i], q = L[i + 1];
+      if (!(p.jump === "pre" && q.jump === "post")) continue;
+      if (g === "a" && p.val === q.val) continue;
+      const pa = maps[g][p.id], pb = maps[g][q.id];
+      if (!pa || !pb) { items.push({ ok: false, g, quiet: true, msg: "" }); continue; }
+      const bridged = edgesOf(g).some(x => (x.p.id === pa.id && x.q.id === pb.id) || (x.p.id === pb.id && x.q.id === pa.id));
+      const what = g === "v" ? `Velocity changes instantly ${describeWhen(p).replace("just before ", "")}, so don't draw a line joining the before and after points.` : `Acceleration changes instantly ${describeWhen(p).replace("just before ", "")}. Leave a gap instead of a line between the two levels.`;
+      items.push({ ok: !bridged, g, msg: bridged ? what : "" });
+    }
+  }
+  // the position curve is flat at every peak or valley (velocity is zero there)
+  for (const k of key.K.s) {
+    if (!k.turn) continue;
+    const pk = maps.s[k.id];
+    if (!pk) { items.push({ ok: false, g: "s", quiet: true, msg: "" }); continue; }
+    const E = edgesOf("s").filter(x => x.p.id === pk.id || x.q.id === pk.id);
+    if (!E.length) { items.push({ ok: false, g: "s", quiet: true, msg: "" }); continue; }
+    let ok = true;
+    for (const x of E) {
+      // slope of the curve where it meets the peak, as a fraction of the
+      // straight line's slope: 0 for a true parabola, 1 for a straight line
+      const rise = Math.abs(x.q.y - x.p.y);
+      if (rise < 0.02) continue;
+      const cy = (x.p.y + x.q.y) / 2 + x.bend;
+      const r = 2 * Math.abs(pk.y - cy) / rise;
+      if (r > TOL.apexFlat) ok = false;
+    }
+    items.push({ ok, g: "s", msg: ok ? "" : `Position should level off ${describeWhen(k)}: velocity is zero there, so the slope is zero. Round the curve so it's flat at that point.` });
+  }
+  // every flight piece of the velocity graph has the same slope
+  for (const grp of key.par) {
+    const slopes = [];
+    for (const i of grp.segs) {
+      const sg = key.segs.v[i], pa = maps.v[sg.from], pb = maps.v[sg.to];
+      if (pa && pb && pb.t > pa.t) slopes.push((pb.y - pa.y) / (pb.t - pa.t));
+    }
+    if (slopes.length < 2) { items.push({ ok: false, g: "v", quiet: true, msg: "" }); continue; }
+    const mx = Math.max(...slopes.map(Math.abs)), mn = Math.min(...slopes.map(Math.abs));
+    const ok = slopes.every(s => Math.sign(s) === Math.sign(slopes[0])) && (mx - mn) <= TOL.slopeRel * mx;
+    items.push({ ok, g: "v", msg: ok ? "" : `Velocity: the acceleration is the same in every ${prob.kind === "ramp" ? "rolling" : "flying"} part, so those velocity lines should all be parallel (same slope).` });
+  }
+  return summarize(items, { maps });
+}
+
+function summarize(items, extra) {
+  const total = items.length, passed = items.filter(i => i.ok).length;
+  const pct = total ? Math.round(100 * passed / total) : 0;
+  return Object.assign({ total, passed, pct, items, fixes: items.filter(i => !i.ok && i.msg).map(i => ({ g: i.g, msg: i.msg })) }, extra || {});
+}
+
+// ---------------------------------------------------------------- model answer
+// The correct stack, as points + edges in the same format as student work.
+// Used for the "show a model answer" overlay and for the tests.
+function modelAnswer(prob) {
+  const key = prob.key, points = [], edges = [];
+  let n = 0;
+  const idOf = {};
+  for (const g of GRAPHS) for (const k of key.K[g]) {
+    const id = "m" + (n++); idOf[k.id] = id;
+    points.push({ id, g, t: k.nt, y: Math.abs(k.ny) < 1e-9 ? 0 : k.ny });
+  }
+  for (const sp of key.spikes) points.push({ id: "m" + (n++), g: "a", t: sp.nt, y: sp.ny, spike: true });
+  for (const g of GRAPHS) for (const sg of key.segs[g]) {
+    const a = points.find(p => p.id === idOf[sg.from]), b = points.find(p => p.id === idOf[sg.to]);
+    let bend = 0;
+    if (g === "s" && sg.conc !== 0) {
+      // exact parabola: control point where the end tangents meet
+      const sc = key.scale.s, T = key.T;
+      const va = stateAt(key.sim, sg.t0 + 1e-9).v, dt = sg.t1 - sg.t0;
+      const cy = a.y + va * sc * dt / 2;  // tangent from a, reaching the middle time
+      bend = cy - (a.y + b.y) / 2;
+    }
+    edges.push({ id: "me" + edges.length, g, a: a.id, b: b.id, bend });
+  }
+  return { points, edges };
+}
+
+const api = { G, GRAPHS, GNAME, TOL, SCEN, mulberry32, simulate, stateAt, buildKey, makeProblem, checkPoints, checkLines, modelAnswer, cls };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.CG = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+"use strict";
+// ---------------------------------------------------------------- geometry
+const SVGNS = "http://www.w3.org/2000/svg";
+const stack = document.getElementById("stack");
+// On a narrow screen the stack is drawn in a narrower coordinate space, so
+// the same labels and dots come out larger instead of shrinking with the page.
+let W = 760, XR = W - 44;
+const GH = 200, GAP = 26, TOP = 30, X0 = 70;
+function fitWidth() {
+  const cw = stack.parentElement.clientWidth || 760;
+  W = Math.round(Math.max(440, Math.min(760, cw * 1.15))); XR = W - 44;
+}
+const GIDX = { s: 0, v: 1, a: 2 };
+const GLAB = { s: "position", v: "velocity", a: "acceleration" };
+const gTop = g => TOP + GIDX[g] * (GH + GAP);
+const gMid = g => gTop(g) + GH / 2;
+const tx = t => X0 + t * (XR - X0);
+const ty = (g, y) => gMid(g) - y * (GH / 2 - 12);
+const xt = x => (x - X0) / (XR - X0);
+const yv = (g, py) => (gMid(g) - py) / (GH / 2 - 12);
+const el = (tag, attrs, parent) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+// ---------------------------------------------------------------- state
+const state = {
+  difficulty: "easy", prob: null, stage: 1, tool: "point",
+  work: { points: [], edges: [] }, nextId: 1,
+  sel: null, drag: null, checkedPoints: false, showModel: false,
+  finished: 0, byKind: { horizontal: 0, vertical: 0, ramp: 0 }, complete: false,
+  lastResult: null, confirmClear: false,
+};
+const $ = id => document.getElementById(id);
+
+function newProblem(opts) {
+  state.prob = CG.makeProblem(opts || {});
+  state.work = { points: [], edges: [] }; state.nextId = 1;
+  state.stage = 1; state.tool = "point"; state.sel = null; state.drag = null;
+  state.checkedPoints = false; state.showModel = false; state.complete = false; state.lastResult = null; state.confirmClear = false;
+  renderStory(); renderAll();
+}
+
+// ---------------------------------------------------------------- story + cartoon
+function renderStory() {
+  const p = state.prob, st = p.story;
+  const conv = { vertical: "+ up", horizontal: "+ right", ramp: "+ downhill" }[p.kind];
+  const kindName = { vertical: "Vertical", horizontal: "Horizontal", ramp: "Ramp" }[p.kind];
+  $("tags").innerHTML = `<span class="tag">${kindName}</span><span class="tag sign">${conv}</span>`;
+  $("title").textContent = st.title;
+  $("narr").textContent = st.text;
+  drawCartoon();
+}
+function drawCartoon() {
+  const svg = $("cartoon"); svg.innerHTML = "";
+  const p = state.prob, st = p.story, arrows = p.arrows;
+  const ink = "var(--ink)", obj = "var(--critical)";
+  const arrowEl = (x1, y1, x2, y2, parent) => {
+    const g = el("g", {}, parent || svg);
+    const L = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / L, uy = (y2 - y1) / L, h = Math.min(11, L * 0.45);
+    el("line", { x1, y1, x2: x2 - ux * h * 0.8, y2: y2 - uy * h * 0.8, stroke: ink, "stroke-width": 3.2 }, g);
+    el("polygon", { points: `${x2},${y2} ${x2 - ux * h - uy * h * 0.55},${y2 - uy * h + ux * h * 0.55} ${x2 - ux * h + uy * h * 0.55},${y2 - uy * h - ux * h * 0.55}`, fill: ink }, g);
+    return g;
+  };
+  const txt = (x, y, s, size, anchor, parent, fill) => { const t = el("text", { x, y, "font-family": "IBM Plex Mono, monospace", "font-size": size || 10.5, fill: fill || "var(--ink-soft)", "text-anchor": anchor || "middle" }, parent || svg); t.textContent = s; return t; };
+  const short = s => s.replace(/^just before /, "before ").replace(/ \(before\)$/, " (before)").slice(0, 22);
+  if (p.kind === "vertical") {
+    el("rect", { x: 14, y: 238, width: 352, height: 14, rx: 2, fill: "var(--accent-warm)", opacity: .75 }, svg);
+    // stick figure
+    const fx = 70;
+    el("circle", { cx: fx, cy: 92, r: 17, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    el("circle", { cx: fx - 6, cy: 88, r: 1.8, fill: ink }, svg); el("circle", { cx: fx + 6, cy: 88, r: 1.8, fill: ink }, svg);
+    el("path", { d: `M${fx - 7} 97 Q${fx} 103 ${fx + 7} 97`, fill: "none", stroke: ink, "stroke-width": 1.6 }, svg);
+    el("rect", { x: fx - 12, y: 110, width: 24, height: 58, rx: 3, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    el("rect", { x: fx - 11, y: 168, width: 9, height: 70, rx: 2, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    el("rect", { x: fx + 2, y: 168, width: 9, height: 70, rx: 2, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    el("rect", { x: fx - 26, y: 114, width: 9, height: 46, rx: 2, transform: `rotate(12 ${fx - 22} 114)`, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    const shoulder = st.person === "shoulder";
+    const by = shoulder ? 128 : 150;
+    el("rect", { x: fx + 12, y: 116, width: 40, height: 9, rx: 2, transform: `rotate(${shoulder ? 18 : 40} ${fx + 12} 118)`, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    const bx = fx + (shoulder ? 50 : 42);
+    if (st.clay) el("path", { d: `M${bx - 12} ${by + 6} q2 -14 12 -13 q12 -1 12 11 q-2 8 -12 7 q-10 2 -12 -5z`, fill: "#8a5a3c", stroke: ink, "stroke-width": 1.5 }, svg);
+    else el("circle", { cx: bx, cy: by, r: 11, fill: obj, stroke: ink, "stroke-width": 1.5 }, svg);
+    // velocity arrows in time order
+    const n = arrows.length, x0 = 170, dx = Math.min(44, 190 / Math.max(n, 1)), maxL = 150, midY = 150;
+    arrows.forEach((a, i) => {
+      const x = x0 + i * dx, L = 18 + a.len * (maxL - 18);
+      const up = a.v > 0;
+      const y1 = up ? midY + L / 2 : midY - L / 2, y2 = up ? midY - L / 2 : midY + L / 2;
+      arrowEl(x, y1, x, y2);
+    });
+    // + direction key
+    arrowEl(356, 60, 356, 26); txt(346, 44, "+", 14, "end", svg, "var(--accent-warm)");
+    txt(356, 232, "0", 11, "middle"); 
+  } else if (p.kind === "horizontal") {
+    el("line", { x1: 14, y1: 212, x2: 366, y2: 212, stroke: ink, "stroke-width": 2 }, svg);
+    el("rect", { x: 10, y: 150, width: 10, height: 62, fill: "var(--ink-soft)" }, svg);
+    el("rect", { x: 360, y: 150, width: 10, height: 62, fill: "var(--ink-soft)" }, svg);
+    el("line", { x1: 190, y1: 150, x2: 190, y2: 222, stroke: "var(--accent-warm)", "stroke-width": 1.6, "stroke-dasharray": "4 4" }, svg);
+    txt(190, 236, "0", 11);
+    // car at its start position (rink half-width 4.6 hidden units → 170 px)
+    const cx = 190 + (st.s0 / 4.6) * 160;
+    el("rect", { x: cx - 26, y: 176, width: 52, height: 26, rx: 11, fill: obj, stroke: ink, "stroke-width": 1.8 }, svg);
+    el("rect", { x: cx - 30, y: 196, width: 60, height: 8, rx: 4, fill: "var(--ink-soft)" }, svg);
+    el("line", { x1: cx + 10, y1: 176, x2: cx + 10, y2: 150, stroke: ink, "stroke-width": 2 }, svg);
+    el("circle", { cx: cx - 6, cy: 172, r: 7, fill: "var(--surface)", stroke: ink, "stroke-width": 1.6 }, svg);
+    const n = arrows.length, dy = Math.min(28, 118 / Math.max(n, 1)), maxL = 130;
+    arrows.forEach((a, i) => {
+      const y = 22 + i * dy, L = 18 + a.len * (maxL - 18);
+      const x1 = a.v > 0 ? 190 - L / 2 : 190 + L / 2, x2 = a.v > 0 ? 190 + L / 2 : 190 - L / 2;
+      arrowEl(x1, y, x2, y);
+    });
+    arrowEl(300, 256, 340, 256); txt(296, 260, "+", 14, "end", svg, "var(--accent-warm)");
+  } else {
+    // ramp from top-left (40,60) down to bottom-right (330,220); spring at the bottom
+    const A = { x: 36, y: 64 }, Bq = { x: 318, y: 214 };
+    el("polygon", { points: `${A.x},${A.y} ${Bq.x + 24},${Bq.y} ${A.x},${Bq.y}`, fill: "var(--surface)", stroke: ink, "stroke-width": 2 }, svg);
+    el("line", { x1: 14, y1: Bq.y, x2: 366, y2: Bq.y, stroke: ink, "stroke-width": 2 }, svg);
+    const ux = (Bq.x - A.x), uy = (Bq.y - A.y), L = Math.hypot(ux, uy), nx = uy / L, ny = -ux / L; // n points away from the ramp surface, into the air above it
+    const along = f => ({ x: A.x + ux * f, y: A.y + uy * f });
+    // spring: zigzag along the ramp near the bottom, against a stop block
+    const s0p = along(0.86), s1p = along(0.98);
+    let d = `M${s0p.x + nx * 8} ${s0p.y + ny * 8}`;
+    for (let k = 1; k <= 8; k++) { const f = 0.86 + 0.12 * k / 8; const q = along(f); const o = (k % 2 ? 7 : -7); d += ` L${q.x + nx * (o + 8)} ${q.y + ny * (o + 8)}`; }
+    el("path", { d, fill: "none", stroke: ink, "stroke-width": 1.8 }, svg);
+    const blk = along(0.99);
+    el("rect", { x: blk.x - 4, y: blk.y - 30, width: 10, height: 30, fill: "var(--ink-soft)" }, svg);
+    // origin marker
+    const zero = st.origin === "top" ? along(0.02) : along(0.86);
+    el("circle", { cx: zero.x + nx * 3, cy: zero.y + ny * 3, r: 3, fill: "var(--accent-warm)" }, svg);
+    txt(zero.x + nx * 18, zero.y + ny * 18 + 4, "0", 11, "middle", svg, "var(--accent-warm)");
+    // car at start
+    const startF = p.story.v0 < 0 ? 0.84 : 0.06;
+    const c = along(startF);
+    const ang = Math.atan2(uy, ux) * 180 / Math.PI;
+    const car = el("g", { transform: `translate(${c.x + nx * 13} ${c.y + ny * 13}) rotate(${ang})` }, svg);
+    el("rect", { x: -18, y: -9, width: 36, height: 16, rx: 6, fill: obj, stroke: ink, "stroke-width": 1.6 }, car);
+    el("circle", { cx: -10, cy: 8, r: 4.5, fill: "var(--ink-soft)" }, car); el("circle", { cx: 10, cy: 8, r: 4.5, fill: "var(--ink-soft)" }, car);
+    // arrows parallel to the ramp, stacked above it
+    const n = arrows.length, maxL = 120;
+    arrows.forEach((a, i) => {
+      const mid = along(0.5), off = 52 + i * Math.min(24, 100 / Math.max(n, 1));
+      const cxm = mid.x + nx * off, cym = mid.y + ny * off, Lh = (16 + a.len * (maxL - 16)) / 2;
+      const dir = a.v > 0 ? 1 : -1;
+      arrowEl(cxm - dir * ux / L * Lh, cym - dir * uy / L * Lh, cxm + dir * ux / L * Lh, cym + dir * uy / L * Lh);
+    });
+    const kp = along(0.3);
+    arrowEl(kp.x + nx * 22 - ux / L * 18, kp.y + ny * 22 - uy / L * 18, kp.x + nx * 22 + ux / L * 18, kp.y + ny * 22 + uy / L * 18);
+    txt(kp.x + nx * 22 - ux / L * 24, kp.y + ny * 22 - uy / L * 24 + 4, "+", 14, "end", svg, "var(--accent-warm)");
+  }
+}
+
+// ---------------------------------------------------------------- graph stack
+function renderAll() { renderTools(); renderStack(); renderActions(); renderResult(); renderPills(); renderTally(); }
+
+function renderStack() {
+  fitWidth();
+  stack.innerHTML = "";
+  const H = TOP + 3 * GH + 2 * GAP + 30;
+  stack.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const p = state.prob;
+  for (const g of ["s", "v", "a"]) {
+    const top = gTop(g), mid = gMid(g);
+    el("rect", { class: "gframe", x: X0, y: top, width: XR - X0 + 30, height: GH, "data-g": g }, stack);
+    for (let i = 1; i < 10; i++) el("line", { class: "grid", x1: tx(i / 10), x2: tx(i / 10), y1: top + 6, y2: top + GH - 6 }, stack);
+    for (const f of [-0.5, 0.5]) el("line", { class: "grid", x1: X0, x2: XR + 20, y1: ty(g, f), y2: ty(g, f) }, stack);
+    el("line", { class: "axis", x1: X0, y1: top + 4, x2: X0, y2: top + GH - 4 }, stack);
+    el("line", { class: "axis", x1: X0, y1: mid, x2: XR + 18, y2: mid }, stack);
+    el("polygon", { class: "axhead", points: `${X0},${top - 2} ${X0 - 7},${top + 12} ${X0 + 7},${top + 12}` }, stack);
+    el("polygon", { class: "axhead", points: `${XR + 30},${mid} ${XR + 16},${mid - 7} ${XR + 16},${mid + 7}` }, stack);
+    const lab = el("text", { class: "glabel", x: 0, y: 0, transform: `translate(${X0 - 18} ${mid}) rotate(-90)`, "text-anchor": "middle" }, stack); lab.textContent = GLAB[g];
+    const t = el("text", { class: "tlabel", x: XR + 4, y: mid + 20, "text-anchor": "end" }, stack); t.textContent = "time";
+    const plus = el("text", { class: "tlabel", x: X0 - 6, y: top + 22, "text-anchor": "end" }, stack); plus.textContent = "+";
+    const minus = el("text", { class: "tlabel", x: X0 - 6, y: top + GH - 10, "text-anchor": "end" }, stack); minus.textContent = "−";
+  }
+  // Easy: event lines through all three graphs
+  if (state.difficulty === "easy") {
+    p.key.events.forEach((e, i) => {
+      el("line", { class: "evline", x1: tx(e.nt), x2: tx(e.nt), y1: TOP - 4, y2: gTop("a") + GH }, stack);
+      const n = el("text", { class: "evnum", x: tx(e.nt), y: TOP - 10, "text-anchor": "middle" }, stack); n.textContent = String(i + 1);
+    });
+    $("evlegend").innerHTML = p.key.events.map((e, i) => `<b>${i + 1}</b>${e.label}`).join(" &nbsp;·&nbsp; ");
+  } else $("evlegend").innerHTML = "";
+  // model answer overlay
+  if (state.showModel) drawWork(CG.modelAnswer(p), el("g", { class: "model" }, stack), true);
+  drawWork(state.work, el("g", {}, stack), false);
+  $("modelKey").hidden = !state.showModel;
+}
+
+function curvePath(A, B, bend, g) {
+  const x1 = tx(A.t), y1 = ty(g, A.y), x2 = tx(B.t), y2 = ty(g, B.y);
+  const cx = (x1 + x2) / 2, cy = ty(g, (A.y + B.y) / 2 + bend);
+  return { d: `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`, hx: cx, hy: (y1 + 2 * cy + y2) / 4 };
+}
+function baselineAt(work, t) {
+  for (const e of work.edges.filter(e => e.g === "a")) {
+    const A = work.points.find(p => p.id === e.a), B = work.points.find(p => p.id === e.b);
+    if (!A || !B) continue;
+    const [p, q] = A.t <= B.t ? [A, B] : [B, A];
+    if (t >= p.t - 1e-9 && t <= q.t + 1e-9 && q.t > p.t) return p.y + (q.y - p.y) * (t - p.t) / (q.t - p.t);
+  }
+  return null;
+}
+function drawWork(work, layer, isModel) {
+  const byId = {}; work.points.forEach(p => { byId[p.id] = p; });
+  for (const e of work.edges) {
+    const A = byId[e.a], B = byId[e.b]; if (!A || !B) continue;
+    const [P, Q] = A.t <= B.t ? [A, B] : [B, A];
+    const c = curvePath(P, Q, e.bend || 0, e.g);
+    el("path", { class: "seg", d: c.d }, layer);
+    if (!isModel && state.stage === 2) {
+      el("path", { class: "seg hit", d: c.d, "data-edge": e.id }, layer);
+      el("circle", { class: "handle", cx: c.hx, cy: c.hy, r: 7, "data-handle": e.id }, layer);
+    }
+  }
+  for (const p of work.points) {
+    if (p.spike) {
+      const base = state.stage === 2 || isModel ? baselineAt(work, p.t) : null;
+      const b = base === null ? 0 : base;
+      const x = tx(p.t), yb = ty("a", b), yt = ty("a", p.y);
+      if (state.stage === 2 || isModel) el("path", { class: "spike", d: `M${x - 6} ${yb} Q${x - 2} ${yt} ${x} ${yt} Q${x + 2} ${yt} ${x + 6} ${yb}` }, layer);
+      else el("line", { class: "spikeguide", x1: x, x2: x, y1: yb, y2: yt }, layer);
+    }
+    el("circle", { class: "pt" + (p.spike ? " spk" : "") + (state.sel === p.id ? " sel" : ""), cx: tx(p.t), cy: ty(p.g, p.y), r: isModel ? 5 : 7, "data-pt": isModel ? "" : p.id }, layer);
+  }
+}
+
+// ---------------------------------------------------------------- tools + input
+const TOOLS1 = [["point", "Point"], ["spike", "Spike"], ["erase", "Erase"]];
+const TOOLS2 = [["connect", "Connect"], ["erase", "Erase line"]];
+function renderTools() {
+  const list = state.stage === 1 ? TOOLS1 : TOOLS2;
+  $("tools").innerHTML = list.map(([k, n]) => `<button class="tool${state.tool === k ? " on" : ""}" data-tool="${k}" id="tool-${k}">${n}</button>`).join("");
+  $("hint").innerHTML = state.stage === 1
+    ? ({ point: "Click a graph to place a point you're sure of: starts, ends, bounces, tops, known zeros, acceleration levels. Drag a point to move it.",
+         spike: "Click the acceleration graph at a collision to place the tip of a spike.",
+         erase: "Click a point to remove it." })[state.tool]
+    : ({ connect: "Click one point, then the next, to join them with a line. Drag the round handle in the middle of a line to bend it into a curve.",
+         erase: "Click a line to remove it." })[state.tool];
+}
+$("tools").addEventListener("click", e => { const b = e.target.closest("button[data-tool]"); if (!b) return; state.tool = b.dataset.tool; state.sel = null; renderTools(); renderStack(); });
+
+function svgPoint(evt) {
+  const r = stack.getBoundingClientRect(), vb = stack.viewBox.baseVal;
+  return { x: (evt.clientX - r.left) * vb.width / r.width, y: (evt.clientY - r.top) * vb.height / r.height };
+}
+function graphAt(y) { for (const g of ["s", "v", "a"]) if (y >= gTop(g) - 4 && y <= gTop(g) + GH + 4) return g; return null; }
+function snap(g, x, y, selfId) {
+  let t = Math.min(1, Math.max(0, xt(x))), v = Math.max(-1, Math.min(1, yv(g, y)));
+  // snap to a level already used on this graph, so "the same" really is the same
+  for (const q of state.work.points) if (q.g === g && q.id !== selfId && !q.spike && q.y !== 0 && Math.abs(ty(g, q.y) - y) < 5) { v = q.y; break; }
+  if (Math.abs(y - gMid(g)) < 9) v = 0;
+  if (tx(t) - X0 < 9) t = 0;
+  if (XR - tx(t) < 9) t = 1;
+  if (state.difficulty === "easy") for (const e of state.prob.key.events) if (Math.abs(tx(e.nt) - x) < 11) { t = e.nt; break; }
+  return { t, y: v };
+}
+function pointNear(x, y) {
+  let best = null, bd = 14;
+  for (const p of state.work.points) { const d = Math.hypot(tx(p.t) - x, ty(p.g, p.y) - y); if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+stack.addEventListener("pointerdown", evt => {
+  const { x, y } = svgPoint(evt);
+  const g = graphAt(y);
+  const tgt = evt.target;
+  if (state.stage === 1) {
+    const near = pointNear(x, y);
+    if (state.tool === "erase") { if (near) { state.work.points = state.work.points.filter(p => p !== near); state.work.edges = state.work.edges.filter(e => e.a !== near.id && e.b !== near.id); changed(); } return; }
+    if (near && (state.tool === "point" || (state.tool === "spike" && near.spike))) { state.drag = { kind: "pt", id: near.id }; stack.setPointerCapture(evt.pointerId); return; }
+    if (!g) return;
+    if (state.tool === "spike" && g !== "a") { flash("Spikes go on the acceleration graph."); return; }
+    const s = snap(g, x, y);
+    const p = { id: "p" + state.nextId++, g, t: s.t, y: s.y, spike: state.tool === "spike" };
+    state.work.points.push(p);
+    state.drag = { kind: "pt", id: p.id }; stack.setPointerCapture(evt.pointerId);
+    changed();
+  } else {
+    const hid = tgt.getAttribute && tgt.getAttribute("data-handle");
+    if (hid && state.tool === "connect") { state.drag = { kind: "bend", id: hid }; stack.setPointerCapture(evt.pointerId); return; }
+    const eid = tgt.getAttribute && (tgt.getAttribute("data-edge") || hid);
+    if (state.tool === "erase") { if (eid) { state.work.edges = state.work.edges.filter(e => e.id !== eid); changed(); } return; }
+    const near = pointNear(x, y);
+    if (!near) { state.sel = null; renderStack(); return; }
+    if (near.spike) { flash("Spikes are drawn for you. Connect the acceleration levels and the spike sits on top."); return; }
+    if (!state.sel) { state.sel = near.id; renderStack(); state.drag = { kind: "link", from: near.id }; stack.setPointerCapture(evt.pointerId); return; }
+    tryLink(state.sel, near.id);
+  }
+});
+stack.addEventListener("pointermove", evt => {
+  if (!state.drag) return;
+  const { x, y } = svgPoint(evt);
+  if (state.drag.kind === "pt") {
+    const p = state.work.points.find(q => q.id === state.drag.id); if (!p) return;
+    const s = snap(p.g, x, Math.max(gTop(p.g), Math.min(gTop(p.g) + GH, y)), p.id);
+    p.t = s.t; p.y = s.y; renderStack();
+  } else if (state.drag.kind === "bend") {
+    const e = state.work.edges.find(q => q.id === state.drag.id); if (!e) return;
+    const A = state.work.points.find(q => q.id === e.a), B = state.work.points.find(q => q.id === e.b);
+    // the handle sits halfway between chord and control point: bend = 2 × handle offset
+    const yh = yv(e.g, y), chord = (A.y + B.y) / 2;
+    e.bend = Math.max(-1.6, Math.min(1.6, 2 * (yh - chord)));
+    if (Math.abs(e.bend) < 0.03) e.bend = 0;
+    renderStack();
+  }
+});
+stack.addEventListener("pointerup", evt => {
+  const d = state.drag; state.drag = null;
+  if (!d) return;
+  if (d.kind === "link") {
+    const { x, y } = svgPoint(evt);
+    const near = pointNear(x, y);
+    if (near && near.id !== d.from) tryLink(d.from, near.id);
+    return;
+  }
+  changed();
+});
+function tryLink(aId, bId) {
+  const A = state.work.points.find(p => p.id === aId), B = state.work.points.find(p => p.id === bId);
+  if (!A || !B || A === B) { state.sel = null; renderStack(); return; }
+  if (A.g !== B.g) { flash("Connect points on the same graph."); state.sel = null; renderStack(); return; }
+  if (B.spike || A.spike) { state.sel = null; renderStack(); return; }
+  if (!state.work.edges.some(e => (e.a === aId && e.b === bId) || (e.a === bId && e.b === aId)))
+    state.work.edges.push({ id: "e" + state.nextId++, g: A.g, a: aId, b: bId, bend: 0 });
+  state.sel = null; changed();
+}
+function changed() { state.confirmClear = false; renderStack(); renderActions(); }
+let flashTimer = null;
+function flash(msg) { const h = $("hint"); h.textContent = msg; clearTimeout(flashTimer); flashTimer = setTimeout(renderTools, 2600); }
+
+// ---------------------------------------------------------------- checks
+function renderActions() {
+  const a = $("actions");
+  if (state.stage === 1) {
+    a.innerHTML = `<button class="btn primary" id="checkPts">Check my points</button>
+      <button class="btn" id="toStage2" ${state.checkedPoints ? "" : "disabled"}>Connect the points →</button>
+      <button class="btn ghost" id="clearBtn">${state.confirmClear ? "Tap again to clear" : "Clear points"}</button>`;
+    $("checkPts").onclick = () => { state.lastResult = { stage: 1, r: CG.checkPoints(state.prob, state.work, state.difficulty) }; state.checkedPoints = true; renderActions(); renderResult(); };
+    $("toStage2").onclick = () => { state.stage = 2; state.tool = "connect"; state.sel = null; state.lastResult = null; renderAll(); };
+  } else {
+    a.innerHTML = `<button class="btn primary" id="checkLines">Check my graphs</button>
+      <button class="btn" id="toStage1">← Back to points</button>
+      <button class="btn" id="modelBtn" ${state.lastResult && state.lastResult.stage === 2 ? "" : "disabled"}>${state.showModel ? "Hide model answer" : "Show a model answer"}</button>
+      <button class="btn ghost" id="clearBtn">${state.confirmClear ? "Tap again to clear" : "Clear lines"}</button>`;
+    $("checkLines").onclick = () => {
+      const r = CG.checkLines(state.prob, state.work, state.difficulty);
+      state.lastResult = { stage: 2, r };
+      if (r.pct === 100 && !state.complete) { state.complete = true; state.finished++; state.byKind[state.prob.kind]++; renderTally(); }
+      renderActions(); renderResult(); renderPills();
+    };
+    $("toStage1").onclick = () => { state.stage = 1; state.tool = "point"; state.sel = null; state.lastResult = null; state.showModel = false; renderAll(); };
+    $("modelBtn").onclick = () => { state.showModel = !state.showModel; renderActions(); renderStack(); };
+  }
+  $("clearBtn").onclick = () => {
+    if (!state.confirmClear) { state.confirmClear = true; renderActions(); return; }
+    if (state.stage === 1) { state.work = { points: [], edges: [] }; state.checkedPoints = false; } else state.work.edges = [];
+    state.lastResult = null; state.confirmClear = false; renderAll();
+  };
+}
+function renderResult() {
+  const box = $("result"), lr = state.lastResult;
+  if (!lr) { box.hidden = true; box.innerHTML = ""; return; }
+  const r = lr.r, full = r.pct === 100;
+  const what = lr.stage === 1 ? "Key points" : "Graphs";
+  const head = full
+    ? (lr.stage === 1 ? "Every key point checks out. Connect them next." : "All three graphs check out. The shapes match the story and each other.")
+    : `${r.passed} of ${r.total} checks match. Fix these and check again:`;
+  const G = { s: "position", v: "velocity", a: "accel", all: "timing" };
+  const shown = r.fixes.slice(0, 8);
+  box.hidden = false;
+  box.innerHTML = `<div class="score"><span class="pct${full ? " full" : ""}" id="pct">${r.pct}%</span><span class="sub">${what} match</span></div>
+    <div class="meter"><i class="${full ? "full" : ""}" style="width:${r.pct}%"></i></div>
+    <div class="sub" style="margin-bottom:8px">${head}</div>
+    <ul class="fixes">${shown.map(f => `<li><span class="gt">${G[f.g] || f.g}</span><span>${escapeHTML(f.msg.replace(/^(Position|Velocity|Acceleration): /, ""))}</span></li>`).join("")}</ul>
+    ${r.fixes.length > shown.length ? `<div class="more">and ${r.fixes.length - shown.length} more once these are fixed.</div>` : ""}`;
+}
+const escapeHTML = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+function renderPills() {
+  $("pill1").className = "stagepill " + (state.stage === 1 ? "on" : "done");
+  $("pill2").className = "stagepill " + (state.stage === 2 ? (state.complete ? "done" : "on") : "");
+}
+function renderTally() {
+  const b = state.byKind;
+  $("tally").innerHTML = `<b>${state.finished}</b> stack${state.finished === 1 ? "" : "s"} finished <span style="opacity:.8">· H ${b.horizontal} · V ${b.vertical} · R ${b.ramp}</span>`;
+}
+function setDifficulty(d) {
+  state.difficulty = d;
+  document.querySelectorAll("#diffSeg button").forEach(b => b.classList.toggle("active", b.dataset.diff === d));
+  state.lastResult = null; renderAll();
+}
+$("diffSeg").addEventListener("click", e => { const b = e.target.closest("button[data-diff]"); if (b) setDifficulty(b.dataset.diff); });
+$("newBtn").addEventListener("click", () => newProblem());
+newProblem();
+let resizeT = null;
+window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(renderStack, 120); });
+
+// ---------------------------------------------------------------- test hook
+window.__cg = {
+  state: () => state, CG, newProblem, setDifficulty,
+  // client-pixel position of a graph coordinate, for driving real pointer events
+  client(g, t, y) { const r = stack.getBoundingClientRect(), vb = stack.viewBox.baseVal; return { x: r.left + tx(t) * r.width / vb.width, y: r.top + ty(g, y) * r.height / vb.height }; },
+  handleClient(eid) { const h = stack.querySelector(`[data-handle="${eid}"]`); const b = h.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; },
+  bendToClient(eid, bend) { const e = state.work.edges.find(q => q.id === eid); const A = state.work.points.find(q => q.id === e.a), B = state.work.points.find(q => q.id === e.b); return this.client(e.g, (A.t + B.t) / 2, (A.y + B.y) / 2 + bend / 2); },
+};
+</script>
+</body>
+</html>

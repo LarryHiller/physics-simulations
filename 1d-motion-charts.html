@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1D Motion Charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:4px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:70ch; margin:0;}
+
+.toolbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:16px 0 14px;
+}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{
+  font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent;
+  color:var(--ink-soft); cursor:pointer;
+}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{
+  font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.tally{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft);}
+.tally b{color:var(--ink); font-size:17px;}
+
+.work{display:grid; grid-template-columns:290px minmax(0,1fr); gap:14px; align-items:start;}
+.work.hard{grid-template-columns:minmax(0,1fr);}
+.work.hard .eqs{display:none;}
+.main{display:flex; flex-direction:column; gap:14px; min-width:0;}
+
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow); padding:18px 20px;
+}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-muted); margin:0 0 12px;
+}
+
+/* ---- equations */
+.eqs h3{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted); margin:16px 0 8px; font-weight:600;}
+.eqs h3:first-of-type{margin-top:0;}
+.eq{font-family:"Fraunces",Georgia,serif; font-size:21px; color:var(--ink); margin:8px 0 12px; white-space:nowrap; line-height:1.3;}
+.eq .op{margin:0 .22em;}
+.frac{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:.92em; line-height:1.15;}
+.frac > span:first-child{border-bottom:1.5px solid var(--ink); padding:0 .2em .08em;}
+.frac > span:last-child{padding:.08em .2em 0;}
+.eqs .note{font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:4px 0;}
+.eqs .note b{color:var(--ink);}
+
+/* math symbols */
+.v{font-family:"Fraunces",Georgia,serif; font-style:italic;}
+.v.vec{font-weight:700;}
+.v sub{font-size:.62em; font-style:italic; font-weight:600; vertical-align:-.25em; margin-left:.02em;}
+.v sup, .eq sup{font-size:.7em; vertical-align:.45em; line-height:0;}
+.bar{text-decoration:overline; text-decoration-thickness:1.5px; text-decoration-skip-ink:none;}
+.d{font-style:normal; font-weight:inherit;}
+
+/* ---- problem */
+.tags{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; letter-spacing:.03em; padding:4px 10px; border-radius:14px; background:var(--surface-alt); color:var(--ink-soft); border:1px solid var(--line-strong);}
+.tag.sf{background:var(--accent-warm); border-color:var(--accent-warm); color:#fff;}
+.prompt{font-family:"Fraunces",Georgia,serif; font-size:22px; line-height:1.45; margin:0; color:var(--ink);}
+
+/* ---- the chart */
+.chart{display:grid; grid-template-columns:repeat(var(--cols,7), minmax(0,1fr)); border:1.5px solid var(--line-strong); border-radius:12px; overflow:hidden;}
+.cell{display:flex; flex-direction:column; border-right:1px solid var(--line-strong); min-width:0;}
+.cell:last-child{border-right:none;}
+.cell .head{background:var(--surface-alt); text-align:center; padding:10px 4px 6px; border-bottom:1px solid var(--line-strong);}
+.cell .sym{font-size:27px; line-height:1.1; color:var(--ink);}
+.cell .unit{font-family:"IBM Plex Mono",monospace; font-size:13.5px; color:var(--ink-soft); margin-top:3px;}
+.cell .unit sup{font-size:.72em; vertical-align:.45em; line-height:0;}
+.cell .box{padding:10px 8px;}
+.cell input{
+  width:100%; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:20px; text-align:center;
+  height:50px; line-height:1; padding:0 4px; border-radius:9px; border:2px solid var(--line-strong); background:var(--surface); color:var(--ink);
+  display:block; margin:0;
+}
+.cell input:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:1px;}
+.cell input:disabled{opacity:1; -webkit-text-fill-color:var(--ink);}
+.cell.given input{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 16%, var(--surface));}
+.cell.correct input{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface));}
+.cell.wrong input{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 13%, var(--surface));}
+.cell .mark{font-family:"IBM Plex Mono",monospace; font-size:12px; text-align:center; min-height:16px; margin-top:5px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em;}
+.cell.given .mark{color:var(--accent);}
+.cell.correct .mark{color:var(--good);}
+.cell.wrong .mark{color:var(--critical);}
+
+.status{margin-top:14px; display:flex; gap:14px; align-items:baseline; flex-wrap:wrap;}
+.step{font-size:16px; color:var(--ink); line-height:1.5; flex:1 1 360px;}
+.step b{font-family:"IBM Plex Mono",monospace; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent-warm); margin-right:6px;}
+.step.done b{color:var(--good);}
+.counter{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); white-space:nowrap;}
+.counter b{color:var(--ink);}
+.work.hard .counter{display:none;}
+.feedback{margin-top:10px; min-height:24px; font-size:15.5px; color:var(--ink-soft);}
+.feedback.bad{color:var(--critical);}
+.feedback .who{font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:20px; margin-right:8px;}
+
+.legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; color:var(--ink-soft);}
+.legend span{display:inline-flex; align-items:center; gap:7px;}
+.sw{width:22px; height:16px; border-radius:5px; border:2px solid; display:inline-block;}
+.sw.given{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 16%, var(--surface));}
+.sw.correct{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface));}
+.sw.wrong{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 13%, var(--surface));}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+
+@media (max-width:900px){
+  .work{grid-template-columns:minmax(0,1fr);}
+  .eqs{order:2;}
+  .eq-cols{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:0 22px;}
+}
+@media (max-width:640px){
+  .chart{grid-template-columns:repeat(4, minmax(0,1fr));}
+  .cell{border-bottom:1px solid var(--line-strong);}
+  .cell:nth-child(4n){border-right:none;}
+  .cell:last-child{border-right:1px solid var(--line-strong);}
+  .cell:nth-child(4n):last-child{border-right:none;}
+  .cell .sym{font-size:24px;}
+  .cell input{font-size:18px; height:46px; padding:0 2px;}
+  .prompt{font-size:19px;}
+  h1{font-size:26px;}
+}
+@media (max-width:430px){
+  .frame{padding:18px 16px 48px;}
+  .panel{padding:14px 12px;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .cell .box{padding:8px 4px;}
+  .cell input{font-size:17px;}
+  .eq{font-size:19px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 1 · Kinematics</div>
+    <h1>1D Motion Charts</h1>
+    <p class="desc">Read the problem and put what it gives you into the Really Good Chart. Then use the kinematics equations and your calculator to fill in the rest.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="btn primary" id="newBtn">New problem</button>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="work" id="work">
+    <aside class="panel eqs" id="eqs">
+      <h2>Kinematics equations</h2>
+      <div class="eq-cols">
+        <div>
+          <h3>Galileo's definitions</h3>
+          <div class="eq"><span class="v vec bar">v</span><span class="op">=</span><span class="frac"><span><span class="v vec"><span class="d">Δ</span>s</span></span><span><span class="v"><span class="d">Δ</span>t</span></span></span></div>
+          <div class="eq"><span class="v vec bar">v</span><span class="op">=</span><span class="frac"><span><span class="v vec">v<sub>i</sub></span> + <span class="v vec">v<sub>f</sub></span></span><span>2</span></span></div>
+          <div class="eq"><span class="v vec"><span class="d">Δ</span>v</span><span class="op">=</span><span class="v vec">v<sub>f</sub></span><span class="op">−</span><span class="v vec">v<sub>i</sub></span></div>
+          <div class="eq"><span class="v vec">a</span><span class="op">=</span><span class="frac"><span><span class="v vec"><span class="d">Δ</span>v</span></span><span><span class="v"><span class="d">Δ</span>t</span></span></span></div>
+          <h3>Ramps</h3>
+          <div class="eq"><span class="v vec">a</span><span class="op">=</span><span class="v">g</span> sin<span class="v" style="margin-left:.2em">θ</span></div>
+        </div>
+        <div>
+          <h3>The two big equations</h3>
+          <div class="eq"><span class="v vec"><span class="d">Δ</span>s</span><span class="op">=</span><span class="v vec">v<sub>i</sub></span><span class="v"><span class="d">Δ</span>t</span><span class="op">+</span><span class="frac"><span><span class="v vec">a</span><span class="v"><span class="d">Δ</span>t</span><sup>2</sup></span><span>2</span></span></div>
+          <div class="eq"><span class="v vec">v<sub>f</sub></span><sup>2</sup><span class="op">=</span><span class="v vec">v<sub>i</sub></span><sup>2</sup><span class="op">+</span>2<span class="v vec">a</span><span class="v vec"><span class="d">Δ</span>s</span></div>
+          <h3>Signs</h3>
+          <p class="note"><b>Horizontal:</b> forward is +.<br><b>Vertical:</b> up is +.<br><b>Ramps:</b> downhill is +.<br>Every value except Δt and θ gets a sign: write <b>+</b> on positive values too, like +4.2.</p>
+          <h3>Gravity on Earth</h3>
+          <p class="note"><b>g = 10 m/s²</b> in 1-sig-fig problems.<br><b>g = 9.8 m/s²</b> in 2-sig-fig problems.</p>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <section class="panel" id="problemPanel">
+        <div class="tags" id="tags"></div>
+        <p class="prompt" id="prompt"></p>
+      </section>
+
+      <section class="panel" id="chartPanel">
+        <h2>The Really Good Chart</h2>
+        <div class="chart" id="chart"></div>
+        <div class="status">
+          <div class="step" id="step"></div>
+          <div class="counter" id="counter"></div>
+        </div>
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div class="legend">
+          <span><i class="sw given"></i>Given in the problem</span>
+          <span><i class="sw correct"></i>Calculated correctly</span>
+          <span><i class="sw wrong"></i>Not right yet — fix it and press Enter</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="body">
+      <p>1. What is the difference between <span class="v vec">Δv</span> and <span class="v vec bar">v</span>? Find a problem where one of them is zero and the other isn't.</p>
+      <p>2. A dropped rock speeds up the whole way down, yet its acceleration in the chart is negative. Explain why that isn't a contradiction.</p>
+      <p>3. When a ball is thrown straight up and caught at the same height, <span class="v vec">Δs</span> is zero. What does that make <span class="v vec bar">v</span>? What does it say about <span class="v vec">v<sub>f</sub></span> compared to <span class="v vec">v<sub>i</sub></span>?</p>
+      <p>4. On a ramp, why is the acceleration smaller than <span class="v">g</span>? What would θ = 0° and θ = 90° mean for the object?</p>
+      <p>5. Which equation did you reach for when the problem never mentioned time? Which one when it never mentioned the final speed? Why those?</p>
+      <p>6. In a 1-sig-fig problem, fill in the chart two different ways (for example, find <span class="v vec bar">v</span> from <span class="v vec">Δs</span>/<span class="v">Δt</span> and then from the average of the speeds). Do you get the same number? Why might you not?</p>
+      <p>7. Filling out the chart is an organizing tool, not your work. For one problem, write out the calculation for every box you solved, and box your final answer outside the chart with units.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// 1D Motion Charts — problem model.
+// Pure functions only: generator, solver, sig-fig handling and grading.
+// This file is inlined verbatim into the HTML by build.js, and required by the
+// Node tests, so the page and the tests always run the same math.
+(function (root) {
+"use strict";
+
+// ---------------------------------------------------------------- variables
+const BASE_VARS = ["vi", "vf", "vbar", "dv", "a", "dt", "ds"];
+const RAMP_VARS = ["theta", ...BASE_VARS];
+const DEG = Math.PI / 180;
+
+// ---------------------------------------------------------------- rng
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pick(rng, list) { return list[Math.floor(rng() * list.length)]; }
+
+// ---------------------------------------------------------------- sig figs
+// Round to n significant figures, returning a Number.
+function roundSig(x, n) {
+  if (x === 0 || !isFinite(x)) return x;
+  const p = Math.floor(Math.log10(Math.abs(x))) - n + 1;
+  const f = Math.pow(10, p);
+  // work in integers to dodge 0.1+0.2 style noise, half away from zero
+  const m = Math.abs(x) / f;
+  let r = Math.floor(m + 0.5 + 1e-9);
+  const out = Math.sign(x) * r * f;
+  return Number(out.toPrecision(Math.max(n, 1) + 1));
+}
+// Plain-decimal display with exactly n significant figures (keeps trailing
+// zeros after a decimal point, never switches to e-notation).
+function fmtSig(x, n) {
+  if (x === 0) return "0";
+  const r = roundSig(x, n);
+  const e = Math.floor(Math.log10(Math.abs(r)));
+  const decimals = Math.max(0, n - 1 - e);
+  let s = Math.abs(r).toFixed(decimals);
+  return (r < 0 ? "−" : "") + s;
+}
+// Display with a leading + for positive vector quantities.
+function fmtSigned(x, n) {
+  const s = fmtSig(x, n);
+  if (x > 0) return "+" + s;
+  return s;
+}
+
+// Tolerant parser for anything a student might type: unicode minus, leading
+// +, commas, 1e3, 1x10^3, 1×10³, trailing units are NOT accepted.
+const SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+function parseEntry(raw) {
+  if (raw == null) return null;
+  let s = String(raw).trim();
+  if (s === "") return null;
+  s = s.replace(/[−–—]/g, "-").replace(/,/g, "").replace(/\s+/g, "");
+  s = s.replace(/°$/, "");
+  s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, m => "^" + m.split("").map(c => SUP[c]).join(""));
+  let mant = s, exp = 0;
+  let m = s.match(/^([+-]?[0-9]*\.?[0-9]*)(?:[x×*]10\^?([+-]?[0-9]+))$/i);
+  if (m) { mant = m[1]; exp = Number(m[2]); }
+  else {
+    m = s.match(/^([+-]?[0-9]*\.?[0-9]*)e([+-]?[0-9]+)$/i);
+    if (m) { mant = m[1]; exp = Number(m[2]); }
+  }
+  if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(mant)) return null;
+  const value = Number(mant) * Math.pow(10, exp);
+  if (!isFinite(value)) return null;
+  // significant-figure range of the mantissa as typed
+  let digits = mant.replace(/^[+-]/, "");
+  const hasPoint = digits.includes(".");
+  let d = digits.replace(".", "").replace(/^0+/, "");
+  let sfMin, sfMax;
+  if (d === "") { sfMin = 0; sfMax = Infinity; }            // a zero: no sig-fig claim
+  else if (hasPoint) { sfMin = sfMax = d.length; }
+  else {
+    const trimmed = d.replace(/0+$/, "");
+    sfMin = trimmed.length; sfMax = d.length;             // "300" could be 1–3
+  }
+  return { value, sfMin, sfMax };
+}
+
+// Does the typed value x (claimed at n sig figs) represent a correct rounding
+// of c? i.e. is c inside x's rounding interval at n sig figs.
+const REL_SLOP = 0.002; // float noise + the "small tolerance" asked for; see derive-tolerance.js
+function roundsTo(x, c, n) {
+  if (x === 0) return Math.abs(c) < 1e-9;
+  const u = Math.pow(10, Math.floor(Math.log10(Math.abs(x))) - n + 1);
+  return Math.abs(x - c) <= u / 2 + REL_SLOP * Math.abs(c) + 1e-12;
+}
+
+// ---------------------------------------------------------------- equations
+// Each equation lists its variables and, for each variable, how to solve for
+// it from the others. Solvers return an array of candidate values ([] when the
+// equation can't be used, e.g. division by zero). Square roots return both
+// branches; callers choose the physically right sign.
+const sq = x => x * x;
+function sqrtBoth(x) { if (x < 0) { if (x > -1e-6) x = 0; else return []; } const r = Math.sqrt(x); return r === 0 ? [0] : [r, -r]; }
+function div(a, b) { return Math.abs(b) < 1e-12 ? [] : [a / b]; }
+
+const EQUATIONS = [
+  { id: "E1", label: "v̄ = Δs/Δt", vars: ["vbar", "ds", "dt"],
+    solve: {
+      vbar: v => div(v.ds, v.dt),
+      ds: v => [v.vbar * v.dt],
+      dt: v => div(v.ds, v.vbar).filter(t => t > 0),
+    } },
+  { id: "E2", label: "v̄ = (vᵢ+v_f)/2", vars: ["vbar", "vi", "vf"],
+    solve: {
+      vbar: v => [(v.vi + v.vf) / 2],
+      vi: v => [2 * v.vbar - v.vf],
+      vf: v => [2 * v.vbar - v.vi],
+    } },
+  { id: "E3", label: "Δv = v_f − vᵢ", vars: ["dv", "vf", "vi"],
+    solve: {
+      dv: v => [v.vf - v.vi],
+      vf: v => [v.vi + v.dv],
+      vi: v => [v.vf - v.dv],
+    } },
+  { id: "E4", label: "a = Δv/Δt", vars: ["a", "dv", "dt"],
+    solve: {
+      a: v => div(v.dv, v.dt),
+      dv: v => [v.a * v.dt],
+      dt: v => div(v.dv, v.a).filter(t => t > 0),
+    } },
+  { id: "E5", label: "Δs = vᵢΔt + ½aΔt²", vars: ["ds", "vi", "dt", "a"],
+    solve: {
+      ds: v => [v.vi * v.dt + 0.5 * v.a * v.dt * v.dt],
+      vi: v => div(v.ds - 0.5 * v.a * v.dt * v.dt, v.dt),
+      a: v => div(2 * (v.ds - v.vi * v.dt), v.dt * v.dt),
+      dt: v => { // quadratic: ½a t² + vi t − ds = 0
+        if (Math.abs(v.a) < 1e-12) return div(v.ds, v.vi).filter(t => t > 0);
+        const A = 0.5 * v.a, B = v.vi, C = -v.ds;
+        const disc = B * B - 4 * A * C;
+        const roots = sqrtBoth(disc).map(r => (-B + r) / (2 * A));
+        return roots.filter(t => t > 1e-9);
+      },
+    }, quadraticFor: "dt" },
+  { id: "E6", label: "v_f² = vᵢ² + 2aΔs", vars: ["vf", "vi", "a", "ds"],
+    solve: {
+      vf: v => sqrtBoth(sq(v.vi) + 2 * v.a * v.ds),
+      vi: v => sqrtBoth(sq(v.vf) - 2 * v.a * v.ds),
+      a: v => div(sq(v.vf) - sq(v.vi), 2 * v.ds),
+      ds: v => div(sq(v.vf) - sq(v.vi), 2 * v.a),
+    }, sqrtFor: ["vf", "vi"] },
+  { id: "E7", label: "a = g sinθ", vars: ["a", "theta"], ramp: true,
+    solve: {
+      a: (v, ctx) => [ctx.g * Math.sin(v.theta * DEG)],
+      theta: (v, ctx) => { const s = v.a / ctx.g; if (s <= 0 || s > 1) return []; return [Math.asin(s) / DEG]; },
+    } },
+];
+function equationsFor(problem) { return EQUATIONS.filter(e => !e.ramp || problem.kind === "ramp"); }
+
+// Exact solve from the givens. hints: {var: +1|-1} picks square-root branches.
+// Never uses the quadratic-in-Δt route (a student never needs it either: every
+// problem can be finished with linear steps once v_f² gives the missing speed).
+function solveExact(givens, ctx, eqs, hints) {
+  const v = Object.assign({}, givens);
+  const vars = ctx.vars;
+  for (let pass = 0; pass < 12; pass++) {
+    let progress = false;
+    for (const eq of eqs) {
+      const unknown = eq.vars.filter(x => !(x in v));
+      if (unknown.length !== 1) continue;
+      const x = unknown[0];
+      if (eq.quadraticFor === x) continue;
+      let c = eq.solve[x](v, ctx);
+      if (eq.sqrtFor && eq.sqrtFor.includes(x) && c.length === 2) {
+        const h = hints && hints[x];
+        if (!h) continue; // wait for a linear route
+        c = c.filter(y => Math.sign(y) === h);
+      }
+      if (c.length !== 1 || !isFinite(c[0])) continue;
+      v[x] = c[0]; progress = true;
+    }
+    if (vars.every(x => x in v)) return v;
+    if (!progress) break;
+  }
+  return vars.every(x => x in v) ? v : null;
+}
+
+// ---------------------------------------------------------------- scenarios
+const OBJ_H = ["car", "wagon", "skateboard", "ball"];
+// fastest believable speed for each horizontal object, m/s
+const SPEED_CAP = { car: 35, wagon: 8, skateboard: 12, ball: 15 };
+const OBJ_R = ["toy car", "wagon", "skateboard"]; // see build notes: no balls on ramps
+const OBJ_V = ["ball", "rock", "water balloon", "acorn"];
+const PLANETS = ["Planet Vesk", "Planet Oru", "Planet Talos", "an unexplored moon", "Planet Nadir", "a newly discovered planet"];
+const PERSON = ["A student", "A child", "Your lab partner", "A teacher", "A kid"];
+
+function an(word) { return /^[aeiou]/i.test(word) ? "an " + word : "a " + word; }
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+// "a 6 m ramp" but "an 8 m ramp", "an 11 m ramp", "an 18° ramp"
+function aNum(str) { return /^(8|1[18](\.|$))/.test(String(str)) ? "an " + str : "a " + str; }
+
+// A random given with the requested sig figs inside [lo, hi].
+// 1 sf: a single nonzero digit times a power of ten (e.g. 3, 40, 0.5).
+// 2 sf: two digits, never ending in zero, so "30" style ambiguity never
+// appears in a 2-sig-fig problem (e.g. 2.5, 17, 0.35).
+function sigVal(rng, sf, lo, hi) {
+  const out = [];
+  for (let p = -3; p <= 4; p++) {
+    if (sf === 1) {
+      for (let m = 1; m <= 9; m++) { const x = Number((m * Math.pow(10, p)).toPrecision(3)); if (x >= lo && x <= hi) out.push(x); }
+    } else {
+      for (let m = 11; m <= 99; m++) {
+        if (m % 10 === 0) continue;
+        const x = Number((m * Math.pow(10, p - 1)).toPrecision(4)); if (x >= lo && x <= hi) out.push(x);
+      }
+    }
+  }
+  const uniq = [...new Set(out)];
+  return pick(rng, uniq);
+}
+function angleVal(rng, sf) {
+  if (sf === 1) return pick(rng, [10, 20, 30, 40, 50, 60]);
+  let a; do { a = 12 + Math.floor(rng() * 54); } while (a % 10 === 0); return a;
+}
+const G_EARTH = { 1: 10, 2: 9.8 };
+const MOON = { name: "the Moon", g: 1.6 }, MARS = { name: "Mars", g: 3.7 };
+
+// Each scenario returns { text, givens, hints, extra } or null to reject.
+// text is built from display strings F(x) so the prompt shows exactly the
+// sig figs the chart will be graded against.
+const SCEN = [];
+function S(kind, id, fn, weight) { SCEN.push({ kind, id, fn, weight: weight || 1 }); }
+
+// ---- horizontal (forward is +)
+S("horizontal", "H-rest-a-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), a = sigVal(r, sf, 0.5, 6), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} starts from rest and speeds up at ${F(a)} m/s² for ${F(dt)} s. How fast is it going at the end?`, givens: { vi: 0, a, dt } };
+});
+S("horizontal", "H-rest-a-ds", (r, sf, F) => {
+  const o = pick(r, OBJ_H), a = sigVal(r, sf, 0.5, 6), ds = sigVal(r, sf, 2, 200);
+  return { obj: o, text: `${cap(an(o))} starts from rest and speeds up at ${F(a)} m/s² over a distance of ${F(ds)} m. How long does that take?`, givens: { vi: 0, a, ds }, hints: { vf: 1 } };
+});
+S("horizontal", "H-rest-vf-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vf = sigVal(r, sf, 1, 30), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `Starting from rest, ${an(o)} reaches a speed of ${F(vf)} m/s in ${F(dt)} s. What is its acceleration?`, givens: { vi: 0, vf, dt } };
+});
+S("horizontal", "H-rest-vf-ds", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vf = sigVal(r, sf, 1, 30), ds = sigVal(r, sf, 2, 200);
+  return { obj: o, text: `Starting from rest, ${an(o)} reaches ${F(vf)} m/s after traveling ${F(ds)} m. What is its acceleration?`, givens: { vi: 0, vf, ds } };
+});
+S("horizontal", "H-rest-ds-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), ds = sigVal(r, sf, 2, 200), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} starts from rest and speeds up steadily, covering ${F(ds)} m in ${F(dt)} s. How fast is it going at the end?`, givens: { vi: 0, ds, dt } };
+});
+S("horizontal", "H-vi-vf-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), vf = sigVal(r, sf, 1, 30), dt = sigVal(r, sf, 1, 12);
+  if (vi === vf) return null;
+  const verb = vf > vi ? "speeds up" : "slows down";
+  return { obj: o, text: `${cap(an(o))} moving forward at ${F(vi)} m/s ${verb} to ${F(vf)} m/s in ${F(dt)} s. How far does it travel during that time?`, givens: { vi, vf, dt } };
+});
+S("horizontal", "H-vi-a-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), am = sigVal(r, sf, 0.5, 6), dt = sigVal(r, sf, 1, 12);
+  const slow = r() < 0.5, a = slow ? -am : am;
+  const phrase = slow ? `slows down at ${F(am)} m/s²` : `speeds up at ${F(am)} m/s²`;
+  return { obj: o, text: `${cap(an(o))} moving forward at ${F(vi)} m/s ${phrase} for ${F(dt)} s. What is its final velocity?`, givens: { vi, a, dt }, check: v => v.vf > 0 };
+});
+S("horizontal", "H-vi-vf-ds", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), vf = sigVal(r, sf, 1, 30), ds = sigVal(r, sf, 2, 200);
+  if (vi === vf) return null;
+  const verb = vf > vi ? "speeds up" : "slows down";
+  return { obj: o, text: `${cap(an(o))} ${verb} from ${F(vi)} m/s to ${F(vf)} m/s over ${F(ds)} m. How long does that take?`, givens: { vi, vf, ds } };
+});
+S("horizontal", "H-stop-ds", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), ds = sigVal(r, sf, 2, 200);
+  return { obj: o, text: `${cap(an(o))} moving at ${F(vi)} m/s slows steadily and comes to a stop in ${F(ds)} m. What is its acceleration?`, givens: { vi, vf: 0, ds } };
+});
+S("horizontal", "H-stop-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} moving at ${F(vi)} m/s slows steadily and comes to a stop in ${F(dt)} s. How far does it go while stopping?`, givens: { vi, vf: 0, dt } };
+});
+S("horizontal", "H-stop-a", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 30), am = sigVal(r, sf, 0.5, 8);
+  return { obj: o, text: `${cap(an(o))} moving at ${F(vi)} m/s slows down at ${F(am)} m/s² until it stops. How far does it travel before stopping?`, givens: { vi, vf: 0, a: -am } };
+});
+S("horizontal", "H-steady", (r, sf, F) => {
+  const o = pick(r, OBJ_H), v = sigVal(r, sf, 1, 30), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} rolls forward at a steady ${F(v)} m/s for ${F(dt)} s. How far does it go?`, givens: { vi: v, vf: v, a: 0, dt } };
+}, 0.6);
+S("horizontal", "H-dv", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 20), dv = sigVal(r, sf, 1, 20), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} moving forward at ${F(vi)} m/s steadily picks up another ${F(dv)} m/s of speed over ${F(dt)} s. How far does it travel?`, givens: { vi, dv, dt } };
+}, 0.6);
+S("horizontal", "H-vbar", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vbar = sigVal(r, sf, 1, 20), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} starts from rest and speeds up steadily. Its average velocity over the first ${F(dt)} s is ${F(vbar)} m/s. What is its acceleration?`, givens: { vi: 0, vbar, dt } };
+}, 0.6);
+S("horizontal", "H-backward", (r, sf, F) => {
+  const o = pick(r, ["car", "wagon", "skateboard"]), am = sigVal(r, sf, 0.5, 5), dt = sigVal(r, sf, 1, 9);
+  return { obj: o, text: `Forward is positive. ${cap(an(o))} starts from rest and speeds up backward at ${F(am)} m/s² for ${F(dt)} s. Where does it end up relative to where it started?`, givens: { vi: 0, a: -am, dt } };
+}, 0.6);
+S("horizontal", "H-vi-ds-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_H), vi = sigVal(r, sf, 1, 20), ds = sigVal(r, sf, 2, 200), dt = sigVal(r, sf, 1, 12);
+  return { obj: o, text: `${cap(an(o))} moving forward at ${F(vi)} m/s speeds up steadily and covers ${F(ds)} m in the next ${F(dt)} s. What is its acceleration?`, givens: { vi, ds, dt }, check: v => v.a > 0 };
+});
+
+// ---- vertical (up is +). env: {g, where, label}
+function vEnv(r, sf) {
+  if (sf === 2 && r() < 0.3) { const p = pick(r, [MOON, MARS]); return { g: p.g, label: p.name, intro: `On ${p.name}, where g = ${p.g} m/s², an astronaut`, earth: false }; }
+  return { g: G_EARTH[sf], label: "Earth", earth: true };
+}
+function who(r, env) { return env.earth ? pick(r, PERSON) : env.intro; }
+function vObj(r, env) { return env.earth ? pick(r, OBJ_V) : pick(r, ["rock", "ball"]); }
+function sayWho(r, env, rest) { return env.earth ? `${pick(r, PERSON)} ${rest}` : `${env.intro} ${rest}`; }
+
+S("vertical", "V-drop-h", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env), h = sigVal(r, sf, 1, 90);
+  let text;
+  if (env.earth && o === "acorn") text = `An acorn falls from a branch ${F(h)} m above the ground. How fast is it moving when it hits the ground?`;
+  else if (env.earth && o === "water balloon") text = `${pick(r, PERSON)} drops a water balloon from a balcony ${F(h)} m above the sidewalk. How fast is it moving when it hits?`;
+  else text = sayWho(r, env, `drops ${an(o)} from a height of ${F(h)} m. How fast is it moving when it hits the ground?`);
+  return { text, givens: { vi: 0, a: -env.g, ds: -h }, hints: { vf: -1 }, env };
+});
+S("vertical", "V-drop-dt", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env), dt = sigVal(r, sf, 0.5, 5);
+  let text;
+  if (env.earth && o === "acorn") text = `An acorn falls from a branch and hits the ground ${F(dt)} s later. How high was the branch?`;
+  else text = sayWho(r, env, `drops ${an(o)} over a railing and sees it hit the ground ${F(dt)} s later. How far did it fall?`);
+  return { text, givens: { vi: 0, a: -env.g, dt }, env };
+});
+S("vertical", "V-drop-vf", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env), v = sigVal(r, sf, 2, 40);
+  let text;
+  if (env.earth && o === "acorn") text = `An acorn falls from a branch and hits the ground at ${F(v)} m/s. How high was the branch?`;
+  else text = sayWho(r, env, `drops ${an(o)}, and it hits the ground at ${F(v)} m/s. How high was it dropped from?`);
+  return { text, givens: { vi: 0, a: -env.g, vf: -v }, env };
+});
+S("vertical", "V-up-top", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "ball"), v = sigVal(r, sf, 2, 30);
+  return { text: sayWho(r, env, `throws ${an(o)} straight up at ${F(v)} m/s. How high above the release point does it rise?`), givens: { vi: v, vf: 0, a: -env.g }, env };
+});
+S("vertical", "V-maxh", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "ball"), h = sigVal(r, sf, 1, 50);
+  return { text: env.earth ? `${cap(an(o))} thrown straight up rises ${F(h)} m above the point where it was released. How fast was it thrown?`
+                          : `${env.intro} throws ${an(o)} straight up, and it rises ${F(h)} m above the release point. How fast was it thrown?`,
+           givens: { vf: 0, a: -env.g, ds: h }, hints: { vi: 1 }, env };
+});
+S("vertical", "V-up-catch", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "ball"), v = sigVal(r, sf, 2, 30);
+  return { text: sayWho(r, env, `throws ${an(o)} straight up at ${F(v)} m/s and catches it at the same height it left their hand. How long is it in the air?`), givens: { vi: v, a: -env.g, ds: 0 }, hints: { vf: -1 }, env };
+});
+S("vertical", "V-down-h", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "rock"), v = sigVal(r, sf, 1, 20), h = sigVal(r, sf, 2, 90);
+  return { text: sayWho(r, env, `throws ${an(o)} straight down at ${F(v)} m/s from the top of ${aNum(F(h))} m tall ${env.earth ? "building" : "cliff"}. How fast is it moving when it hits the ground?`), givens: { vi: -v, a: -env.g, ds: -h }, hints: { vf: -1 }, env };
+});
+S("vertical", "V-up-cliff", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "rock").replace("water balloon", "rock"), v = sigVal(r, sf, 2, 20), h = sigVal(r, sf, 5, 90);
+  return { text: sayWho(r, env, `throws ${an(o)} straight up at ${F(v)} m/s from the edge of a cliff. It misses the edge on the way down and lands ${F(h)} m below where it was thrown. How fast is it moving when it lands?`), givens: { vi: v, a: -env.g, ds: -h }, hints: { vf: -1 }, env };
+});
+S("vertical", "V-catch-dt", (r, sf, F) => {
+  const env = vEnv(r, sf), o = vObj(r, env).replace("acorn", "ball"), dt = sigVal(r, sf, 0.5, 6);
+  return { text: sayWho(r, env, `throws ${an(o)} straight up and catches it at the same height ${F(dt)} s later. How fast was it thrown?`), givens: { ds: 0, a: -env.g, dt }, env };
+});
+// unknown planet: solve for g (either sig-fig level)
+S("vertical", "P-drop-h-dt", (r, sf, F) => {
+  const pl = pick(r, PLANETS), h = sigVal(r, sf, 2, 90), dt = sigVal(r, sf, 1, 9);
+  return { text: `An astronaut on ${pl} drops a rock off ${aNum(F(h))} m tall cliff and sees it reach the bottom ${F(dt)} s later. What is the acceleration due to gravity there?`, givens: { vi: 0, ds: -h, dt }, env: { label: "Unknown planet", unknownG: true }, check: v => v.a < -0.5 && v.a > -30 };
+}, 0.8);
+S("vertical", "P-toss-dt", (r, sf, F) => {
+  const pl = pick(r, PLANETS), v = sigVal(r, sf, 2, 20), dt = sigVal(r, sf, 1, 9);
+  return { text: `An astronaut on ${pl} tosses a rock straight up at ${F(v)} m/s and catches it at the same height ${F(dt)} s later. What is the acceleration due to gravity there?`, givens: { vi: v, ds: 0, dt }, env: { label: "Unknown planet", unknownG: true }, check: v => v.a < -0.5 && v.a > -30 };
+}, 0.8);
+S("vertical", "P-drop-vf-dt", (r, sf, F) => {
+  const pl = pick(r, PLANETS), v = sigVal(r, sf, 2, 40), dt = sigVal(r, sf, 1, 9);
+  return { text: `An astronaut on ${pl} drops a ball. After falling for ${F(dt)} s, it is moving at ${F(v)} m/s. What is the acceleration due to gravity there?`, givens: { vi: 0, vf: -v, dt }, env: { label: "Unknown planet", unknownG: true }, check: v => v.a < -0.5 && v.a > -30 };
+}, 0.8);
+
+// ---- ramps (downhill is +; a = g sinθ with Earth's g)
+S("ramp", "R-rest-L", (r, sf, F) => {
+  const o = pick(r, OBJ_R), th = angleVal(r, sf), L = sigVal(r, sf, 1, 60);
+  return { text: `${cap(an(o))} is released from rest at the top of ${aNum(F(L))} m long ramp tilted at ${th}°. How fast is it going at the bottom?`, givens: { vi: 0, theta: th, ds: L }, hints: { vf: 1 } };
+});
+S("ramp", "R-rest-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_R), th = angleVal(r, sf), dt = sigVal(r, sf, 0.5, 6);
+  return { text: `${cap(an(o))} starts from rest on a ramp tilted at ${th}° and rolls downhill for ${F(dt)} s. How far down the ramp does it go?`, givens: { vi: 0, theta: th, dt } };
+});
+S("ramp", "R-push-down", (r, sf, F) => {
+  const o = pick(r, OBJ_R), th = angleVal(r, sf), vi = sigVal(r, sf, 1, 8), L = sigVal(r, sf, 1, 40);
+  return { text: `${cap(an(o))} is given a push and starts down ${aNum(th)}° ramp at ${F(vi)} m/s. The ramp is ${F(L)} m long. How fast is it going at the bottom?`, givens: { vi, theta: th, ds: L }, hints: { vf: 1 } };
+});
+S("ramp", "R-push-up", (r, sf, F) => {
+  const o = pick(r, OBJ_R), th = angleVal(r, sf), v = sigVal(r, sf, 1, 9);
+  return { text: `${cap(an(o))} is pushed up a ramp tilted at ${th}° with a speed of ${F(v)} m/s. How far up the ramp does it go before it stops for an instant?`, givens: { vi: -v, vf: 0, theta: th } };
+});
+S("ramp", "R-find-L-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_R), L = sigVal(r, sf, 1, 40), dt = sigVal(r, sf, 0.5, 6);
+  return { text: `${cap(an(o))} starts from rest and rolls ${F(L)} m down a ramp in ${F(dt)} s. What is the angle of the ramp?`, givens: { vi: 0, ds: L, dt } };
+});
+S("ramp", "R-find-vf-L", (r, sf, F) => {
+  const o = pick(r, OBJ_R), vf = sigVal(r, sf, 1, 15), L = sigVal(r, sf, 1, 40);
+  return { text: `${cap(an(o))} starts from rest at the top of ${aNum(F(L))} m ramp and reaches the bottom at ${F(vf)} m/s. What is the angle of the ramp?`, givens: { vi: 0, vf, ds: L } };
+});
+S("ramp", "R-find-vf-dt", (r, sf, F) => {
+  const o = pick(r, OBJ_R), vf = sigVal(r, sf, 1, 15), dt = sigVal(r, sf, 0.5, 6);
+  return { text: `${cap(an(o))} starts from rest on a ramp and is moving at ${F(vf)} m/s after rolling downhill for ${F(dt)} s. What is the angle of the ramp?`, givens: { vi: 0, vf, dt } };
+});
+S("ramp", "R-find-return", (r, sf, F) => {
+  const o = pick(r, OBJ_R), v = sigVal(r, sf, 1, 8), dt = sigVal(r, sf, 0.5, 6);
+  return { text: `${cap(an(o))} is pushed up a ramp at ${F(v)} m/s. It rolls back down and passes its starting point ${F(dt)} s later. What is the angle of the ramp?`, givens: { vi: -v, ds: 0, dt } };
+}, 0.7);
+
+// ---------------------------------------------------------------- limits
+// Keep every generated chart physically ordinary and readable.
+function plausible(p) {
+  const v = p.truth;
+  for (const k of p.vars) {
+    const x = v[k];
+    if (!isFinite(x)) return false;
+    if (x !== 0 && Math.abs(x) < 0.1) return false;          // no 0.0x surprises
+  }
+  if (!(v.dt > 0.2 && v.dt <= 30)) return false;
+  for (const k of ["vi", "vf", "vbar", "dv"]) if (Math.abs(v[k]) > 60) return false;
+  if (Math.abs(v.ds) > 500) return false;
+  if (Math.abs(v.a) > 30) return false;
+  if (p.kind === "ramp") {
+    if (!(v.theta >= 5 && v.theta <= 70)) return false;
+    if (Math.abs(v.ds) > 100) return false;
+    if (Math.abs(v.vi) > 15 || Math.abs(v.vf) > 25) return false;
+  }
+  if (p.kind === "horizontal" && (Math.abs(v.a) > 10)) return false;
+  // At 1 sig fig, an answer whose rounding moves it more than 20% (e.g. 14 → 10)
+  // makes the chart contradict itself (vᵢ = 10, v_f = 10, Δv = 4). Skip those.
+  if (p.sf === 1) for (const k of p.vars) {
+    const x = v[k];
+    if (k in p.givens || x === 0) continue;
+    if (Math.abs(roundSig(x, 1) - x) > 0.2 * Math.abs(x)) return false;
+  }
+  // a value that is exactly zero must be one the story implies (rest, top of
+  // flight, steady, same height) — never an accident of the numbers
+  for (const k of p.vars) if (v[k] === 0 && !(k in p.givens) && !p.allowedZeros.includes(k)) return false;
+  return true;
+}
+// Zeros that follow directly from an implied zero and are fine to ask for.
+function allowedZeros(givens) {
+  const z = [];
+  if (givens.ds === 0) z.push("vbar");                      // same height → v̄ = 0
+  if (givens.a === 0) z.push("dv");                         // steady → Δv = 0
+  return z;
+}
+
+// ---------------------------------------------------------------- generator
+function makeProblem(opts) {
+  opts = opts || {};
+  const rng = opts.rng || Math.random;
+  for (let tries = 0; tries < 400; tries++) {
+    const kind = opts.kind || pick(rng, ["horizontal", "vertical", "ramp"]);
+    const sf = opts.sf || (rng() < 0.5 ? 1 : 2);
+    const pool = SCEN.filter(s => s.kind === kind && (!opts.id || s.id === opts.id));
+    const tot = pool.reduce((s, x) => s + x.weight, 0);
+    let t = rng() * tot, sc = pool[0];
+    for (const s of pool) { t -= s.weight; if (t <= 0) { sc = s; break; } }
+    const F = x => fmtSig(x, sf);
+    const b = sc.fn(rng, sf, F);
+    if (!b) continue;
+    const vars = kind === "ramp" ? RAMP_VARS : BASE_VARS;
+    const g = kind === "ramp" ? G_EARTH[sf] : (b.env && b.env.g);
+    const ctx = { g, vars };
+    const eqs = EQUATIONS.filter(e => !e.ramp || kind === "ramp");
+    const truth = solveExact(b.givens, ctx, eqs, b.hints || {});
+    if (!truth) continue;
+    const p = {
+      id: sc.id, kind, sf, text: b.text, givens: b.givens, hints: b.hints || {}, vars, g,
+      env: b.env || (kind === "ramp" ? { label: "Earth", earth: true, g } : { label: "Earth", earth: true }),
+      truth, allowedZeros: allowedZeros(b.givens),
+    };
+    if (b.check && !b.check(truth)) continue;
+    if (b.obj && SPEED_CAP[b.obj] && Math.max(Math.abs(truth.vi), Math.abs(truth.vf)) > SPEED_CAP[b.obj]) continue;
+    if (!plausible(p)) continue;
+    return p;
+  }
+  throw new Error("could not generate a problem");
+}
+
+// ---------------------------------------------------------------- grading
+// The set of values a careful student could legitimately arrive at for each
+// box. We simulate the student: starting from the givens plus the boxes they
+// already have accepted, they fill one empty box at a time, using ONE of the
+// listed equations whose other quantities are all already in their chart, and
+// they write the result into the chart either rounded to the problem's sig
+// figs or kept at full calculator precision. Every order, every usable
+// equation and both rounding habits are explored (states are memoised, so
+// this stays small). The exact answer is always included too.
+// Square roots keep only the physically correct sign; the quadratic in Δt
+// keeps only the root nearest the true time.
+const MAX_STATES = 20000;
+let HYPOTHETICAL_ROUNDING = false;
+function candidates(problem, accepted) {
+  const n = problem.sf, T = problem.truth;
+  const ctx = { g: problem.g, vars: problem.vars };
+  const eqs = equationsFor(problem);
+  const start = Object.assign({}, problem.givens, accepted || {});
+  const sets = {};
+  for (const k of problem.vars) sets[k] = k in problem.givens ? [start[k]] : [];
+  const record = (k, x) => {
+    // a legitimate route never flips the direction of the true answer
+    if (T[k] !== 0 && x !== 0 && Math.sign(x) !== Math.sign(T[k])) return;
+    if (!sets[k].some(z => Math.abs(z - x) <= 1e-7 * Math.max(1e-3, Math.abs(x)))) sets[k].push(x);
+  };
+  const pickRoots = (eq, x, vals) => {
+    let c = vals.filter(isFinite);
+    if (eq.sqrtFor && eq.sqrtFor.includes(x)) c = c.filter(y => T[x] === 0 || y === 0 || Math.sign(y) === Math.sign(T[x]));
+    if (eq.quadraticFor === x && c.length > 1) c = [c.reduce((b, y) => Math.abs(y - T[x]) < Math.abs(b - T[x]) ? y : b)];
+    return c;
+  };
+  const seen = new Set();
+  const key = st => problem.vars.map(k => k in st ? k + ":" + st[k].toPrecision(7) : "").join("|");
+  // Two starting points: the chart as typed (the student reuses their own
+  // rounded entries) and the givens alone (the student kept full calculator
+  // precision for the boxes they already wrote down).
+  // Starting points: the givens plus every subset of the boxes already
+  // accepted. A student may reuse a box as typed (rounded) or recompute it at
+  // calculator precision, independently for each box.
+  const acc = Object.keys(accepted || {}).filter(k => !(k in problem.givens));
+  const stack = [];
+  for (let mask = 0; mask < (1 << acc.length); mask++) {
+    const st = Object.assign({}, problem.givens);
+    acc.forEach((k, i) => { if (mask & (1 << i)) st[k] = accepted[k]; });
+    stack.push(st);
+  }
+  while (stack.length && seen.size < MAX_STATES) {
+    const st = stack.pop();
+    const sk = key(st);
+    if (seen.has(sk)) continue;
+    seen.add(sk);
+    for (const eq of eqs) {
+      const unknown = eq.vars.filter(x => !(x in st));
+      if (unknown.length !== 1) continue;
+      const x = unknown[0];
+      for (const val of pickRoots(eq, x, eq.solve[x](st, ctx))) {
+        record(x, val);
+        // A box the student hasn't typed yet is carried at calculator
+        // precision (full, or 3 sig figs); rounding to the problem's sig figs
+        // only enters through boxes they have actually typed into the chart.
+        // (Letting hypothetical 1-sig-fig roundings of untyped boxes chain
+        // widened the 1-sig-fig acceptance window roughly fourfold for real
+        // mistakes — see derive-tolerance.js.)
+        for (const w of new Set(HYPOTHETICAL_ROUNDING ? [roundSig(val, n), roundSig(val, 3), val] : [roundSig(val, 3), val])) {
+          record(x, w);
+          stack.push(Object.assign({}, st, { [x]: w }));
+        }
+      }
+    }
+  }
+  for (const k of problem.vars) if (!(k in problem.givens)) record(k, T[k]);
+  return sets;
+}
+
+const NAMES = { vi: "vᵢ", vf: "v_f", vbar: "v̄", dv: "Δv", a: "a", dt: "Δt", ds: "Δs", theta: "θ" };
+
+// Grade one box. Returns {status: "given"|"correct"|"wrong"|"empty", msg}.
+// accepted: {var: value} of boxes already accepted (blue or green).
+// Vector boxes need an explicit sign: a positive value must be typed with a
+// leading "+" (teacher's rule, for consistency with the required "−").
+// Δt, θ and the 2D launch speed are scalars and are exempt; zero needs no sign.
+function isVector(k) { return k !== "dt" && k !== "theta"; }
+const PLUS_MSG = "Right value, but this is a vector. Put a + in front of positive values.";
+function gradeBox(problem, key, raw, accepted, extra) {
+  const r = gradeValue(problem, key, raw, accepted, extra);
+  if ((r.status === "given" || r.status === "correct") && isVector(key)) {
+    const s = String(raw).trim();
+    const e = parseEntry(s);
+    if (e && e.value > 0 && !s.startsWith("+")) return { status: "wrong", msg: PLUS_MSG };
+  }
+  return r;
+}
+function signed(k, str, x) { return isVector(k) && x > 0 ? "+" + str : str; }
+function gradeValue(problem, key, raw, accepted, cands) {
+  const e = parseEntry(raw);
+  if (raw == null || String(raw).trim() === "") return { status: "empty" };
+  if (!e) return { status: "wrong", msg: "That isn't a number the chart can read. Type just the number, like −9.8 or 2.5." };
+  const n = problem.sf, x = e.value;
+  const isGiven = key in problem.givens;
+  const G = problem.givens;
+  const same = (p, q) => Math.abs(p - q) <= 1e-9 * Math.max(1, Math.abs(q));
+
+  if (isGiven) {
+    const gv = G[key];
+    if (same(x, gv)) return { status: "given" };
+    if (gv !== 0 && same(-x, gv)) return { status: "wrong", msg: signMsg(problem, key) };
+    if (key === "a" && problem.kind === "vertical" && problem.env.earth) {
+      if (same(Math.abs(x), 9.8) || same(Math.abs(x), 9.81) || same(Math.abs(x), 10)) {
+        return { status: "wrong", msg: n === 1 ? "This problem uses 1 significant figure, so Earth's g is 10 m/s²." : "This problem uses 2 significant figures, so Earth's g is 9.8 m/s²." };
+      }
+    }
+    return { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite(problem, key) };
+  }
+
+  const set = (cands || candidates(problem, accepted))[key] || [];
+  const T = problem.truth[key];
+  const ok = y => set.some(c => roundsTo(y, c, n));
+  const sfOk = x === 0 || (e.sfMin <= n && n <= e.sfMax);
+  if (x === 0) {
+    if (T === 0) return { status: "correct" };
+    return { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite(problem, key) };
+  }
+  if (ok(x) && sfOk) return { status: "correct" };
+  if (ok(x) && !sfOk) return { status: "wrong", msg: sfMsg(e, n) };
+  // right size, wrong sign (at the right sig figs or not)
+  if (T !== 0 && (ok(-x) || ok(roundSig(-x, n)))) return { status: "wrong", msg: signMsg(problem, key) };
+  // right value, wrong sig figs (typed with too many or too few)
+  if (!sfOk && ok(roundSig(x, n))) return { status: "wrong", msg: sfMsg(e, n) };
+  if (key === "theta" && ok(roundSig(x * 180 / Math.PI, n))) return { status: "wrong", msg: "That looks like radians. Put your calculator in degree mode." };
+  return { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite(problem, key) };
+}
+function sfCount(e) { return e.sfMin === e.sfMax ? String(e.sfMin) : (e.sfMin + "–" + e.sfMax); }
+function sfMsg(e, n) {
+  const k = e.sfMin === e.sfMax ? e.sfMin : e.sfMax;
+  return `The value is right, but that's ${k} significant figure${k === 1 ? "" : "s"} and this problem uses ${n}.`;
+}
+function signMsg(problem, key) {
+  const conv = problem.kind === "vertical" ? "Up is positive." : problem.kind === "ramp" ? "Downhill is positive." : "Forward is positive.";
+  return `Right size, wrong sign. ${conv}`;
+}
+function notQuite(problem, key) {
+  return "Not quite. Check which equation you used for this box and redo the arithmetic.";
+}
+function wrongColumnMsg(problem, key, x) {
+  for (const [k, v] of Object.entries(problem.givens)) {
+    if (k === key || v === 0) continue;
+    if (Math.abs(Math.abs(x) - Math.abs(v)) <= 1e-9 * Math.abs(v)) return "That number is given in the problem, but it belongs in a different column.";
+  }
+  return null;
+}
+
+// The value a model student would write in a box (correctly rounded truth).
+function answerString(problem, key) {
+  const x = problem.truth[key];
+  if (key in problem.givens) return signed(key, fmtPlain(problem.givens[key]), problem.givens[key]);
+  if (x === 0) return "0";
+  return signed(key, fmtSig(x, problem.sf).replace("−", "-"), x);
+}
+function fmtPlain(x) { return String(Number(x.toPrecision(6))); }
+
+const api = {
+  setHypothetical: b => { HYPOTHETICAL_ROUNDING = b; },
+  BASE_VARS, RAMP_VARS, EQUATIONS, SCEN, NAMES, REL_SLOP,
+  mulberry32, roundSig, fmtSig, fmtSigned, parseEntry, roundsTo,
+  solveExact, makeProblem, candidates, gradeBox, isVector, answerString, equationsFor, G_EARTH,
+};
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.KM = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+"use strict";
+const DISPLAY = ["vi", "vf", "vbar", "dv", "a", "dt", "ds", "theta"];
+const HEAD = {
+  vi:   { sym: '<span class="v vec">v<sub>i</sub></span>', unit: "m/s" },
+  vf:   { sym: '<span class="v vec">v<sub>f</sub></span>', unit: "m/s" },
+  vbar: { sym: '<span class="v vec bar">v</span>', unit: "m/s" },
+  dv:   { sym: '<span class="v vec"><span class="d">Δ</span>v</span>', unit: "m/s" },
+  a:    { sym: '<span class="v vec">a</span>', unit: "m/s<sup>2</sup>" },
+  dt:   { sym: '<span class="v"><span class="d">Δ</span>t</span>', unit: "s" },
+  ds:   { sym: '<span class="v vec"><span class="d">Δ</span>s</span>', unit: "m" },
+  theta:{ sym: '<span class="v">θ</span>', unit: "degrees" },
+};
+const MARK = { given: "given", correct: "correct", wrong: "check", empty: "" };
+
+const state = {
+  difficulty: "easy",
+  problem: null,
+  status: {},       // key -> "empty" | "given" | "correct" | "wrong"
+  accepted: {},     // key -> numeric value the student typed, once accepted
+  msgs: {},         // key -> feedback message for a red box
+  finished: 0,
+  byKind: { horizontal: 0, vertical: 0, ramp: 0 },
+  complete: false,
+  stage: 1,
+};
+
+const $ = id => document.getElementById(id);
+const chartEl = $("chart"), stepEl = $("step"), counterEl = $("counter"), feedbackEl = $("feedback");
+
+function keysOf(p) { return DISPLAY.filter(k => p.vars.includes(k)); }
+
+function newProblem(opts) {
+  state.problem = KM.makeProblem(opts || {});
+  state.status = {}; state.accepted = {}; state.msgs = {}; state.complete = false; state.stage = 1;
+  for (const k of state.problem.vars) state.status[k] = "empty";
+  renderProblem();
+  renderChart();
+  renderStatus();
+  setFeedback("");
+  const first = chartEl.querySelector("input");
+  if (first && !opts?.noFocus) first.focus({ preventScroll: true });
+}
+
+function renderProblem() {
+  const p = state.problem;
+  const kindLabel = { horizontal: "Horizontal", vertical: "Vertical", ramp: "Ramp" }[p.kind];
+  const where = p.kind === "horizontal" ? "" : `<span class="tag">${p.env.label}</span>`;
+  $("tags").innerHTML = `<span class="tag">${kindLabel}</span>${where}<span class="tag sf" id="sfTag">${p.sf} significant figure${p.sf === 1 ? "" : "s"}</span>`;
+  $("prompt").textContent = p.text;
+}
+
+function renderChart() {
+  const keys = keysOf(state.problem);
+  chartEl.style.setProperty("--cols", keys.length);
+  chartEl.innerHTML = keys.map(k => `
+    <div class="cell" data-cell="${k}">
+      <div class="head"><div class="sym">${HEAD[k].sym}</div><div class="unit">${HEAD[k].unit}</div></div>
+      <div class="box">
+        <input type="text" inputmode="text" autocomplete="off" spellcheck="false" data-k="${k}" aria-label="${KM.NAMES[k]}">
+        <div class="mark"></div>
+      </div>
+    </div>`).join("");
+  chartEl.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("change", () => grade(inp.dataset.k));
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); grade(inp.dataset.k); focusNext(inp.dataset.k); }
+    });
+    inp.addEventListener("input", () => {
+      const k = inp.dataset.k;
+      if (state.status[k] === "wrong") { state.status[k] = "empty"; delete state.msgs[k]; paintCell(k); setFeedback(""); }
+    });
+    inp.addEventListener("focus", () => {
+      const k = inp.dataset.k;
+      if (state.status[k] === "wrong" && state.msgs[k]) setFeedback(state.msgs[k], k);
+    });
+  });
+}
+
+function focusNext(k) {
+  const keys = keysOf(state.problem);
+  const i = keys.indexOf(k);
+  for (let j = 1; j <= keys.length; j++) {
+    const kk = keys[(i + j) % keys.length];
+    if (state.status[k] === "wrong") return;              // stay on a box that needs fixing
+    if (state.status[kk] === "empty") {
+      chartEl.querySelector(`input[data-k="${kk}"]`).focus(); return;
+    }
+  }
+}
+
+function paintCell(k) {
+  const cell = chartEl.querySelector(`[data-cell="${k}"]`);
+  if (!cell) return;
+  const s = state.status[k];
+  cell.classList.remove("given", "correct", "wrong");
+  if (s !== "empty") cell.classList.add(s);
+  cell.querySelector(".mark").textContent = MARK[s];
+  const inp = cell.querySelector("input");
+  // lock a box the moment it is right, so a later click can't undo it
+  inp.disabled = (s === "given" || s === "correct");
+}
+
+function grade(k) {
+  const p = state.problem;
+  if (state.complete) return;
+  const s0 = state.status[k];
+  if (s0 === "given" || s0 === "correct") return;
+  const inp = chartEl.querySelector(`input[data-k="${k}"]`);
+  const r = KM.gradeBox(p, k, inp.value, state.accepted);
+  if (r.status === "empty") { state.status[k] = "empty"; paintCell(k); return; }
+  state.status[k] = r.status;
+  if (r.status === "given" || r.status === "correct") {
+    state.accepted[k] = KM.parseEntry(inp.value).value;
+    inp.value = inp.value.trim();
+    delete state.msgs[k];
+    setFeedback("");
+  } else {
+    state.msgs[k] = r.msg;
+    setFeedback(r.msg, k);
+  }
+  paintCell(k);
+  renderStatus();
+}
+
+function givensDone() {
+  return Object.keys(state.problem.givens).every(k => state.status[k] === "given");
+}
+
+function renderStatus() {
+  const p = state.problem;
+  const gk = Object.keys(p.givens);
+  const placed = gk.filter(k => state.status[k] === "given").length;
+  counterEl.innerHTML = `Givens placed: <b>${placed} of ${gk.length}</b>`;
+  const all = p.vars.every(k => state.status[k] === "given" || state.status[k] === "correct");
+  if (all && !state.complete) {
+    state.complete = true;
+    state.finished++; state.byKind[p.kind]++;
+    renderTally();
+  }
+  stepEl.classList.toggle("done", state.complete);
+  if (state.complete) {
+    state.stage = 3;
+    stepEl.innerHTML = `<b>Done</b>Chart complete. Every box checks out. Press <i>New problem</i> for another one.`;
+  } else if (givensDone()) {
+    state.stage = 2;
+    stepEl.innerHTML = `<b>Step 2</b>All of the given information is in. Use your calculator and the kinematics equations to fill in the rest of the chart. Any order works.`;
+  } else {
+    state.stage = 1;
+    stepEl.innerHTML = `<b>Step 1</b>Put the information the problem gives you into the chart, including anything it implies (like a starting velocity of zero for something that is dropped). Press Enter to check a box.`;
+  }
+}
+
+function setFeedback(msg, k) {
+  if (!msg) { feedbackEl.textContent = ""; feedbackEl.className = "feedback"; return; }
+  feedbackEl.className = "feedback bad";
+  feedbackEl.innerHTML = `<span class="who">${HEAD[k].sym}</span>`;
+  feedbackEl.appendChild(document.createTextNode(msg));
+}
+
+function renderTally() {
+  const b = state.byKind;
+  $("tally").innerHTML = `<b>${state.finished}</b> chart${state.finished === 1 ? "" : "s"} finished <span style="opacity:.8">· H ${b.horizontal} · V ${b.vertical} · R ${b.ramp}</span>`;
+}
+
+function setDifficulty(d) {
+  state.difficulty = d;
+  document.querySelectorAll("#diffSeg button").forEach(b => b.classList.toggle("active", b.dataset.diff === d));
+  $("work").classList.toggle("hard", d === "hard");
+}
+$("diffSeg").addEventListener("click", e => { const b = e.target.closest("button[data-diff]"); if (b) setDifficulty(b.dataset.diff); });
+$("newBtn").addEventListener("click", () => newProblem());
+
+renderTally();
+newProblem({ noFocus: true });
+
+// ---- test hook ----------------------------------------------------------
+window.__mc = {
+  state: () => JSON.parse(JSON.stringify(state)),
+  problem: () => state.problem,
+  newProblem, setDifficulty, grade,
+  type(k, v) { const inp = chartEl.querySelector(`input[data-k="${k}"]`); inp.value = v; grade(k); return state.status[k]; },
+  answer: k => KM.answerString(state.problem, k),
+  KM,
+};
+</script>
+</body>
+</html>

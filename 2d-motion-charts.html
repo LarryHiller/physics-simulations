@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2D Motion Charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:4px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:70ch; margin:0;}
+
+.toolbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:16px 0 14px;
+}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{
+  font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent;
+  color:var(--ink-soft); cursor:pointer;
+}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{
+  font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.tally{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft);}
+.tally b{color:var(--ink); font-size:17px;}
+
+.work{display:grid; grid-template-columns:290px minmax(0,1fr); gap:14px; align-items:start;}
+.work.hard{grid-template-columns:minmax(0,1fr);}
+.work.hard .eqs{display:none;}
+.main{display:flex; flex-direction:column; gap:14px; min-width:0;}
+
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow); padding:18px 20px;
+}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-muted); margin:0 0 12px;
+}
+
+/* ---- equations */
+.eqs h3{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted); margin:16px 0 8px; font-weight:600;}
+.eqs h3:first-of-type{margin-top:0;}
+.eq{font-family:"Fraunces",Georgia,serif; font-size:21px; color:var(--ink); margin:8px 0 12px; white-space:nowrap; line-height:1.3;}
+.eq .op{margin:0 .22em;}
+.frac{display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:.92em; line-height:1.15;}
+.frac > span:first-child{border-bottom:1.5px solid var(--ink); padding:0 .2em .08em;}
+.frac > span:last-child{padding:.08em .2em 0;}
+.eqs .note{font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:4px 0;}
+.eqs .note b{color:var(--ink);}
+
+/* math symbols */
+.v{font-family:"Fraunces",Georgia,serif; font-style:italic;}
+.v.vec{font-weight:700;}
+.v sub{font-size:.62em; font-style:italic; font-weight:600; vertical-align:-.25em; margin-left:.02em;}
+.v sup, .eq sup{font-size:.7em; vertical-align:.45em; line-height:0;}
+.bar{text-decoration:overline; text-decoration-thickness:1.5px; text-decoration-skip-ink:none;}
+.d{font-style:normal; font-weight:inherit;}
+
+/* ---- problem */
+.tags{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; letter-spacing:.03em; padding:4px 10px; border-radius:14px; background:var(--surface-alt); color:var(--ink-soft); border:1px solid var(--line-strong);}
+.tag.sf{background:var(--accent-warm); border-color:var(--accent-warm); color:#fff;}
+.prompt{font-family:"Fraunces",Georgia,serif; font-size:22px; line-height:1.45; margin:0; color:var(--ink);}
+
+/* ---- launch row */
+.launch{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.launch .lbox{display:flex; align-items:center; gap:12px; background:var(--surface-alt); border:1.5px solid var(--line-strong); border-radius:12px; padding:8px 14px;}
+.launch .lname{font-size:14px; color:var(--ink-soft); line-height:1.25;}
+.launch .lname .sym{font-size:24px; color:var(--ink); margin-right:6px;}
+.launch .lname .unit{font-family:"IBM Plex Mono",monospace; font-size:13px;}
+.launch .cell{border:none; min-width:0;}
+.launch .cell .box{padding:0;}
+.launch .cell input{width:110px;}
+.launch .cell .mark{margin-top:3px;}
+
+/* ---- the chart: a label column + seven quantity columns, one row per motion */
+.chart-scroll{overflow-x:auto; border:1.5px solid var(--line-strong); border-radius:12px;}
+.chart{display:grid; grid-template-columns:78px repeat(7, minmax(78px,1fr)); min-width:640px;}
+.hcell{background:var(--surface-alt); text-align:center; padding:10px 4px 6px; border-bottom:1px solid var(--line-strong); border-right:1px solid var(--line-strong);}
+.hcell:nth-child(8n){border-right:none;}
+.hcell .sym{font-size:26px; line-height:1.1; color:var(--ink);}
+.hcell .unit{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink-soft); margin-top:3px;}
+.hcell .unit sup, .lname .unit sup{font-size:.72em; vertical-align:.45em; line-height:0;}
+.rowlab{display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--surface-alt); border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:22px; color:var(--ink); text-align:center; line-height:1.1;}
+.rowlab small{font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:11.5px; color:var(--ink-soft); letter-spacing:.04em; text-transform:uppercase; margin-top:3px;}
+.cell{display:flex; flex-direction:column; border-right:1px solid var(--line-strong); border-bottom:1px solid var(--line-strong); min-width:0;}
+.chart .cell:nth-child(8n){border-right:none;}
+.chart > :nth-last-child(-n+8){border-bottom:none;}
+.cell .box{padding:9px 6px;}
+.cell input{
+  width:100%; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:19px; text-align:center;
+  height:48px; line-height:1; padding:0 3px; border-radius:9px; border:2px solid var(--line-strong); background:var(--surface); color:var(--ink);
+  display:block; margin:0;
+}
+.cell input:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:1px;}
+.cell input:disabled{opacity:1; -webkit-text-fill-color:var(--ink);}
+.cell.given input{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 16%, var(--surface));}
+.cell.correct input{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface));}
+.cell.wrong input{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 13%, var(--surface));}
+.cell .mark{font-family:"IBM Plex Mono",monospace; font-size:11.5px; text-align:center; min-height:15px; margin-top:4px; color:var(--ink-muted); text-transform:uppercase; letter-spacing:.06em;}
+.cell.given .mark{color:var(--accent);}
+.cell.correct .mark{color:var(--good);}
+.cell.wrong .mark{color:var(--critical);}
+.chart > .hcell:first-child, .rowlab{position:sticky; left:0; z-index:1;}
+.scroll-hint{display:none; font-size:12.5px; color:var(--ink-muted); margin-top:6px;}
+
+.status{margin-top:14px; display:flex; gap:14px; align-items:baseline; flex-wrap:wrap;}
+.step{font-size:16px; color:var(--ink); line-height:1.5; flex:1 1 360px;}
+.step b{font-family:"IBM Plex Mono",monospace; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent-warm); margin-right:6px;}
+.step.done b{color:var(--good);}
+.counter{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); white-space:nowrap;}
+.counter b{color:var(--ink);}
+.work.hard .counter{display:none;}
+.feedback{margin-top:10px; min-height:24px; font-size:15.5px; color:var(--ink-soft);}
+.feedback.bad{color:var(--critical);}
+.feedback .who{font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:19px; margin-right:8px;}
+
+.legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; color:var(--ink-soft);}
+.legend span{display:inline-flex; align-items:center; gap:7px;}
+.sw{width:22px; height:16px; border-radius:5px; border:2px solid; display:inline-block;}
+.sw.given{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 16%, var(--surface));}
+.sw.correct{border-color:var(--good); background:color-mix(in srgb, var(--good) 16%, var(--surface));}
+.sw.wrong{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 13%, var(--surface));}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+
+@media (max-width:900px){
+  .work{grid-template-columns:minmax(0,1fr);}
+  .eqs{order:2;}
+  .eq-cols{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:0 22px;}
+}
+@media (max-width:700px){
+  .scroll-hint{display:block;}
+  .prompt{font-size:19px;}
+  h1{font-size:26px;}
+}
+@media (max-width:430px){
+  .frame{padding:18px 16px 48px;}
+  .panel{padding:14px 12px;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .eq{font-size:19px;}
+  .launch .cell input{width:96px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 1 · Kinematics</div>
+    <h1>2D Motion Charts</h1>
+    <p class="desc">Read the projectile problem and put what it gives you into the Really Good Chart, one row for each direction. Then use the kinematics equations and your calculator to fill in the rest.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="btn primary" id="newBtn">New problem</button>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <div class="work" id="work">
+    <aside class="panel eqs" id="eqs">
+      <h2>Kinematics equations</h2>
+      <div class="eq-cols">
+        <div>
+          <h3>Galileo's definitions</h3>
+          <div class="eq"><span class="v vec bar">v</span><span class="op">=</span><span class="frac"><span><span class="v vec"><span class="d">Δ</span>s</span></span><span><span class="v"><span class="d">Δ</span>t</span></span></span></div>
+          <div class="eq"><span class="v vec bar">v</span><span class="op">=</span><span class="frac"><span><span class="v vec">v<sub>i</sub></span> + <span class="v vec">v<sub>f</sub></span></span><span>2</span></span></div>
+          <div class="eq"><span class="v vec"><span class="d">Δ</span>v</span><span class="op">=</span><span class="v vec">v<sub>f</sub></span><span class="op">−</span><span class="v vec">v<sub>i</sub></span></div>
+          <div class="eq"><span class="v vec">a</span><span class="op">=</span><span class="frac"><span><span class="v vec"><span class="d">Δ</span>v</span></span><span><span class="v"><span class="d">Δ</span>t</span></span></span></div>
+          <h3>The two big equations</h3>
+          <div class="eq"><span class="v vec"><span class="d">Δ</span>s</span><span class="op">=</span><span class="v vec">v<sub>i</sub></span><span class="v"><span class="d">Δ</span>t</span><span class="op">+</span><span class="frac"><span><span class="v vec">a</span><span class="v"><span class="d">Δ</span>t</span><sup>2</sup></span><span>2</span></span></div>
+          <div class="eq"><span class="v vec">v<sub>f</sub></span><sup>2</sup><span class="op">=</span><span class="v vec">v<sub>i</sub></span><sup>2</sup><span class="op">+</span>2<span class="v vec">a</span><span class="v vec"><span class="d">Δ</span>s</span></div>
+        </div>
+        <div>
+          <h3>Launch components</h3>
+          <div class="eq"><span class="v vec">v<sub>ix</sub></span><span class="op">=</span><span class="v">v</span> cos<span class="v" style="margin-left:.2em">θ</span></div>
+          <div class="eq"><span class="v vec">v<sub>iy</sub></span><span class="op">=</span><span class="v">v</span> sin<span class="v" style="margin-left:.2em">θ</span></div>
+          <h3>Range (symmetric only)</h3>
+          <div class="eq"><span class="v">R</span><span class="op">=</span><span class="frac"><span><span class="v">v</span><sup>2</sup> sin 2<span class="v">θ</span></span><span><span class="v">g</span></span></span></div>
+          <h3>Signs</h3>
+          <p class="note"><b>X:</b> forward is +. <b>Y:</b> up is +.<br>Every chart value except Δt gets a sign: write <b>+</b> on positive values too, like +4.2. Launch speed and angle have no sign.</p>
+          <h3>Asymmetric charts</h3>
+          <p class="note"><b>Y up</b> ends at the apex, so its <span class="v">v<sub>f</sub></span> is 0. <b>Y down</b> starts at the apex, so its <span class="v">v<sub>i</sub></span> is 0. The two Y times add up to the X time.</p>
+          <h3>Gravity</h3>
+          <p class="note"><b>Earth:</b> g = 10 m/s² in 1-sig-fig problems, 9.8 m/s² in 2-sig-fig problems.<br><b>Moon and Mars:</b> g is given in the problem.</p>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <section class="panel" id="problemPanel">
+        <div class="tags" id="tags"></div>
+        <p class="prompt" id="prompt"></p>
+      </section>
+
+      <section class="panel" id="chartPanel">
+        <h2>The Really Good Chart</h2>
+        <div class="launch" id="launch"></div>
+        <div class="chart-scroll"><div class="chart" id="chart"></div></div>
+        <div class="scroll-hint">Swipe the chart sideways to see every column.</div>
+        <div class="status">
+          <div class="step" id="step"></div>
+          <div class="counter" id="counter"></div>
+        </div>
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+        <div class="legend">
+          <span><i class="sw given"></i>Given in the problem</span>
+          <span><i class="sw correct"></i>Calculated correctly</span>
+          <span><i class="sw wrong"></i>Not right yet — fix it and press Enter</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="body">
+      <p>1. In every chart, the X row has the same pattern. What is it, and why does nothing ever change it?</p>
+      <p>2. A marble rolled off a table and a marble dropped from the same table land at the same time. Which boxes in the chart show you that?</p>
+      <p>3. For a symmetric flight, how does the time to reach the apex compare to the whole flight time? Where do you see that in the chart?</p>
+      <p>4. Why does an asymmetric parabola need two Y rows? What do the two rows share, and what is different between them?</p>
+      <p>5. Why is the best launch angle for an asymmetric parabola not 45°?</p>
+      <p>6. Describe how the velocity of a projectile changes as it goes up and comes back down. What happens to each component?</p>
+      <p>7. A catapult on Earth has a maximum range of 300 m. What would its maximum range be on the Moon? Use the range equation to explain.</p>
+      <p>8. Filling out the chart is an organizing tool, not your work. For one problem, write out the calculation for every box you solved, and box your final answer outside the chart with units.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// 2D Motion Charts — problem model.
+// Pure functions only: generator, solver, sig-fig handling and grading.
+// Inlined verbatim into the HTML by build.js and required by the Node tests.
+// Box names are "<row>.<quantity>" (x.vi, y.dt, yu.ds, yd.vf …) plus the
+// launch row's "v" and "theta".
+(function (root) {
+"use strict";
+
+const Q = ["vi", "vf", "vbar", "dv", "a", "dt", "ds"];
+const DEG = Math.PI / 180;
+
+// ---------------------------------------------------------------- rng
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pick(rng, list) { return list[Math.floor(rng() * list.length)]; }
+
+// ---------------------------------------------------------------- sig figs
+function roundSig(x, n) {
+  if (x === 0 || !isFinite(x)) return x;
+  const p = Math.floor(Math.log10(Math.abs(x))) - n + 1;
+  const f = Math.pow(10, p);
+  const r = Math.floor(Math.abs(x) / f + 0.5 + 1e-9);
+  return Number((Math.sign(x) * r * f).toPrecision(n + 1));
+}
+function fmtSig(x, n) {
+  if (x === 0) return "0";
+  const r = roundSig(x, n);
+  const e = Math.floor(Math.log10(Math.abs(r)));
+  const s = Math.abs(r).toFixed(Math.max(0, n - 1 - e));
+  return (r < 0 ? "−" : "") + s;
+}
+const SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+function parseEntry(raw) {
+  if (raw == null) return null;
+  let s = String(raw).trim();
+  if (s === "") return null;
+  s = s.replace(/[−–—]/g, "-").replace(/,/g, "").replace(/\s+/g, "").replace(/°$/, "");
+  s = s.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+/g, m => "^" + m.split("").map(c => SUP[c]).join(""));
+  let mant = s, exp = 0;
+  let m = s.match(/^([+-]?[0-9]*\.?[0-9]*)(?:[x×*]10\^?([+-]?[0-9]+))$/i);
+  if (m) { mant = m[1]; exp = Number(m[2]); }
+  else { m = s.match(/^([+-]?[0-9]*\.?[0-9]*)e([+-]?[0-9]+)$/i); if (m) { mant = m[1]; exp = Number(m[2]); } }
+  if (!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(mant)) return null;
+  const value = Number(mant) * Math.pow(10, exp);
+  if (!isFinite(value)) return null;
+  const digits = mant.replace(/^[+-]/, "");
+  const hasPoint = digits.includes(".");
+  const d = digits.replace(".", "").replace(/^0+/, "");
+  let sfMin, sfMax;
+  if (d === "") { sfMin = 0; sfMax = Infinity; }
+  else if (hasPoint) { sfMin = sfMax = d.length; }
+  else { sfMin = d.replace(/0+$/, "").length; sfMax = d.length; }
+  return { value, sfMin, sfMax };
+}
+const REL_SLOP = 0.002;
+function roundsTo(x, c, n) {
+  if (x === 0) return Math.abs(c) < 1e-9;
+  const u = Math.pow(10, Math.floor(Math.log10(Math.abs(x))) - n + 1);
+  return Math.abs(x - c) <= u / 2 + REL_SLOP * Math.abs(c) + 1e-12;
+}
+
+// ---------------------------------------------------------------- equations
+const sq = x => x * x;
+function sqrtBoth(x) { if (x < 0) { if (x > -1e-6) x = 0; else return []; } const r = Math.sqrt(x); return r === 0 ? [0] : [r, -r]; }
+function div(a, b) { return Math.abs(b) < 1e-12 ? [] : [a / b]; }
+
+// The 1D Really Good Chart equations, instantiated for one row.
+function rowEquations(r) {
+  const k = q => r + "." + q;
+  const [vi, vf, vbar, dv, a, dt, ds] = Q.map(k);
+  return [
+    { id: r + ":E1", vars: [vbar, ds, dt], solve: {
+      [vbar]: v => div(v[ds], v[dt]), [ds]: v => [v[vbar] * v[dt]], [dt]: v => div(v[ds], v[vbar]).filter(t => t > 0) } },
+    { id: r + ":E2", vars: [vbar, vi, vf], solve: {
+      [vbar]: v => [(v[vi] + v[vf]) / 2], [vi]: v => [2 * v[vbar] - v[vf]], [vf]: v => [2 * v[vbar] - v[vi]] } },
+    { id: r + ":E3", vars: [dv, vf, vi], solve: {
+      [dv]: v => [v[vf] - v[vi]], [vf]: v => [v[vi] + v[dv]], [vi]: v => [v[vf] - v[dv]] } },
+    { id: r + ":E4", vars: [a, dv, dt], solve: {
+      [a]: v => div(v[dv], v[dt]), [dv]: v => [v[a] * v[dt]], [dt]: v => div(v[dv], v[a]).filter(t => t > 0) } },
+    { id: r + ":E5", vars: [ds, vi, dt, a], quadraticFor: dt, solve: {
+      [ds]: v => [v[vi] * v[dt] + 0.5 * v[a] * v[dt] * v[dt]],
+      [vi]: v => div(v[ds] - 0.5 * v[a] * v[dt] * v[dt], v[dt]),
+      [a]: v => div(2 * (v[ds] - v[vi] * v[dt]), v[dt] * v[dt]),
+      [dt]: v => {
+        if (Math.abs(v[a]) < 1e-12) return div(v[ds], v[vi]).filter(t => t > 0);
+        const A = 0.5 * v[a], B = v[vi], C = -v[ds];
+        return sqrtBoth(B * B - 4 * A * C).map(s => (-B + s) / (2 * A)).filter(t => t > 1e-9);
+      } } },
+    { id: r + ":E6", vars: [vf, vi, a, ds], sqrtFor: [vf, vi], solve: {
+      [vf]: v => sqrtBoth(sq(v[vi]) + 2 * v[a] * v[ds]),
+      [vi]: v => sqrtBoth(sq(v[vf]) - 2 * v[a] * v[ds]),
+      [a]: v => div(sq(v[vf]) - sq(v[vi]), 2 * v[ds]),
+      [ds]: v => div(sq(v[vf]) - sq(v[vi]), 2 * v[a]) } },
+  ];
+}
+// Launch-row equations. vyRow is "y" (symmetric) or "yu" (asymmetric).
+function launchEquations(vyRow) {
+  const vx = "x.vi", vy = vyRow + ".vi";
+  return [
+    { id: "L:cos", vars: ["v", "theta", vx], solve: {
+      [vx]: v => [v.v * Math.cos(v.theta * DEG)],
+      v: v => div(v[vx], Math.cos(v.theta * DEG)).filter(s => s > 0),
+      theta: v => { const c = v[vx] / v.v; return c > 0 && c <= 1 ? [Math.acos(c) / DEG] : []; } } },
+    { id: "L:sin", vars: ["v", "theta", vy], solve: {
+      [vy]: v => [v.v * Math.sin(v.theta * DEG)],
+      v: v => div(v[vy], Math.sin(v.theta * DEG)).filter(s => s > 0),
+      theta: v => { const s = v[vy] / v.v; return s > 0 && s <= 1 ? [Math.asin(s) / DEG] : []; } } },
+    // the two components rebuild the launch vector (Pythagoras and tan θ = vy/vx)
+    { id: "L:pyth", vars: ["v", vx, vy], solve: {
+      v: v => [Math.hypot(v[vx], v[vy])],
+      [vx]: v => sqrtBoth(sq(v.v) - sq(v[vy])).filter(s => s > 0),
+      [vy]: v => sqrtBoth(sq(v.v) - sq(v[vx])).filter(s => s > 0) } },
+    { id: "L:tan", vars: ["theta", vx, vy], solve: {
+      theta: v => v[vx] > 0 && v[vy] > 0 ? [Math.atan(v[vy] / v[vx]) / DEG] : [],
+      [vx]: v => div(v[vy], Math.tan(v.theta * DEG)),
+      [vy]: v => [v[vx] * Math.tan(v.theta * DEG)] } },
+  ];
+}
+function rangeEquation() {
+  return { id: "R:range", vars: ["x.ds", "v", "theta"], solve: {
+    "x.ds": (v, c) => [sq(v.v) * Math.sin(2 * v.theta * DEG) / c.g],
+    v: (v, c) => { const s = Math.sin(2 * v.theta * DEG); return s > 0 && v["x.ds"] > 0 ? [Math.sqrt(v["x.ds"] * c.g / s)] : []; },
+    theta: (v, c) => { const s = v["x.ds"] * c.g / sq(v.v); if (s <= 0 || s > 1) return []; const t = Math.asin(s) / DEG / 2; return [t, 90 - t]; },
+  }, twoRootsFor: "theta" };
+}
+function equationsFor(kind) {
+  if (kind === "half") return [...rowEquations("x"), ...rowEquations("y"),
+    { id: "T", vars: ["x.dt", "y.dt"], solve: { "x.dt": v => [v["y.dt"]], "y.dt": v => [v["x.dt"]] } }];
+  if (kind === "sym") return [...rowEquations("x"), ...rowEquations("y"),
+    { id: "T", vars: ["x.dt", "y.dt"], solve: { "x.dt": v => [v["y.dt"]], "y.dt": v => [v["x.dt"]] } },
+    ...launchEquations("y"), rangeEquation()];
+  return [...rowEquations("x"), ...rowEquations("yu"), ...rowEquations("yd"),
+    { id: "T3", vars: ["x.dt", "yu.dt", "yd.dt"], solve: {
+      "x.dt": v => [v["yu.dt"] + v["yd.dt"]],
+      "yu.dt": v => [v["x.dt"] - v["yd.dt"]].filter(t => t > 0),
+      "yd.dt": v => [v["x.dt"] - v["yu.dt"]].filter(t => t > 0) } },
+    // the fall below the apex = rise to the apex minus the net height change D
+    { id: "H", vars: ["yu.ds", "yd.ds"], solve: {
+      "yd.ds": (v, c) => [c.D - v["yu.ds"]], "yu.ds": (v, c) => [c.D - v["yd.ds"]] } },
+    ...launchEquations("yu")];
+}
+const ROWS = { half: ["x", "y"], sym: ["x", "y"], asym: ["x", "yu", "yd"] };
+function varsFor(kind) {
+  const v = [];
+  if (kind !== "half") v.push("v", "theta");
+  for (const r of ROWS[kind]) for (const q of Q) v.push(r + "." + q);
+  return v;
+}
+
+// Exact solve from the givens; square-root branches picked by hints or by
+// the default physical sign of each box.
+function solveExact(givens, ctx, eqs, signs) {
+  const v = Object.assign({}, givens);
+  for (let pass = 0; pass < 20; pass++) {
+    let progress = false;
+    for (const eq of eqs) {
+      const unknown = eq.vars.filter(x => !(x in v));
+      if (unknown.length !== 1) continue;
+      const x = unknown[0];
+      if (eq.quadraticFor === x || eq.twoRootsFor === x) continue;
+      let c = eq.solve[x](v, ctx).filter(isFinite);
+      if (eq.sqrtFor && eq.sqrtFor.includes(x) && c.length === 2) {
+        const h = signs[x];
+        if (!h) continue;
+        c = c.filter(y => Math.sign(y) === h);
+      }
+      if (c.length !== 1) continue;
+      v[x] = c[0]; progress = true;
+    }
+    if (ctx.vars.every(x => x in v)) return v;
+    if (!progress) break;
+  }
+  return ctx.vars.every(x => x in v) ? v : null;
+}
+
+// ---------------------------------------------------------------- scenarios
+const G_EARTH = { 1: 10, 2: 9.8 };
+const MOON = { name: "the Moon", g: 1.6 }, MARS = { name: "Mars", g: 3.7 };
+const PERSON = ["A student", "A kid", "Your lab partner", "A camper", "A teacher"];
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function aNum(str) { return /^(8|1[18](\.|$))/.test(String(str)) ? "an " + str : "a " + str; }
+
+function sigVal(rng, sf, lo, hi) {
+  const out = [];
+  for (let p = -3; p <= 4; p++) {
+    if (sf === 1) for (let m = 1; m <= 9; m++) { const x = Number((m * Math.pow(10, p)).toPrecision(3)); if (x >= lo && x <= hi) out.push(x); }
+    else for (let m = 11; m <= 99; m++) { if (m % 10 === 0) continue; const x = Number((m * Math.pow(10, p - 1)).toPrecision(4)); if (x >= lo && x <= hi) out.push(x); }
+  }
+  return pick(rng, [...new Set(out)]);
+}
+function angleVal(rng, sf, lo, hi) {
+  const c = [];
+  for (let a = lo; a <= hi; a++) if (sf === 1 ? a % 10 === 0 : a % 10 !== 0) c.push(a);
+  return pick(rng, c);
+}
+// Environment: Earth, or (2-sig-fig problems only, when the story allows it) the Moon or Mars.
+function envFor(rng, sf, allowSpace) {
+  if (allowSpace && sf === 2 && rng() < 0.45) { const p = pick(rng, [MOON, MARS]); return { g: p.g, label: p.name, earth: false, pre: `On ${p.name}, where g = ${p.g} m/s², ` }; }
+  return { g: G_EARTH[sf], label: "Earth", earth: true, pre: "" };
+}
+
+const SCEN = [];
+function S(kind, id, fn, weight) { SCEN.push({ kind, id, fn, weight: weight || 1 }); }
+const rover = env => env.earth ? "A car" : env.label === "Mars" ? "a Mars rover" : "a lunar rover";
+const both = (t, x) => ({ ["x.dt"]: t, [x + ".dt"]: t });
+
+// ---- half parabolas: x.a = 0, y.vi = 0, y.a = −g always given
+function halfBase(env) { return { "x.a": 0, "y.vi": 0, "y.a": -env.g }; }
+S("half", "H-cliff-v-h", (r, sf, F) => {
+  const env = envFor(r, sf, true), v = sigVal(r, sf, 5, 35), h = sigVal(r, sf, 5, 90);
+  return { env, obj: "car", text: `${env.pre}${rover(env)} drives straight off the edge of ${aNum(F(h))} m tall cliff at ${F(v)} m/s. How far from the base of the cliff does it land?`,
+    givens: { ...halfBase(env), "x.vi": v, "y.ds": -h } };
+});
+S("half", "H-cliff-t-R", (r, sf, F) => {
+  const env = envFor(r, sf, true), t = sigVal(r, sf, 1, 6), R = sigVal(r, sf, 10, 200);
+  return { env, obj: "car", text: `${env.pre}${rover(env)} drives off a cliff and hits the ground ${F(t)} s later, ${F(R)} m from the base of the cliff. How fast was it going when it left the edge?`,
+    givens: { ...halfBase(env), ...both(t, "y"), "x.ds": R } };
+});
+S("half", "H-marble-h-R", (r, sf, F) => {
+  const env = envFor(r, sf, true), h = sigVal(r, sf, 0.5, 1.2), R = sigVal(r, sf, 0.2, 2);
+  return { env, obj: "marble", text: `${env.pre}${env.earth ? "A marble" : "a marble"} rolls off a table that is ${F(h)} m tall and lands ${F(R)} m from the base of the table. How fast was it rolling?`,
+    givens: { ...halfBase(env), "y.ds": -h, "x.ds": R } };
+});
+S("half", "H-marble-v-t", (r, sf, F) => {
+  const env = envFor(r, sf, true), v = sigVal(r, sf, 0.5, 4), t = sigVal(r, sf, 0.3, 1.2);
+  return { env, obj: "marble", text: `${env.pre}${env.earth ? "A marble" : "a marble"} rolls off the edge of a table at ${F(v)} m/s and hits the floor ${F(t)} s later. How tall is the table?`,
+    givens: { ...halfBase(env), "x.vi": v, ...both(t, "y") }, check: T => -T["y.ds"] >= 0.4 && -T["y.ds"] <= 1.5 };
+});
+S("half", "H-cat-v-R", (r, sf, F) => {
+  const env = envFor(r, sf, false), v = sigVal(r, sf, 0.5, 3), R = sigVal(r, sf, 0.2, 2);
+  return { env, obj: "knickknack", text: `A cat pushes a knickknack off the mantle at ${F(v)} m/s. It lands ${F(R)} m from the base of the fireplace. How high is the mantle?`,
+    givens: { ...halfBase(env), "x.vi": v, "x.ds": R }, check: T => -T["y.ds"] >= 0.8 && -T["y.ds"] <= 2.5 };
+});
+S("half", "H-cat-v-vy", (r, sf, F) => {
+  const env = envFor(r, sf, false), v = sigVal(r, sf, 0.5, 3), vy = sigVal(r, sf, 3, 7);
+  return { env, obj: "knickknack", text: `A cat nudges a knickknack off the mantle at ${F(v)} m/s. It hits the floor moving downward at ${F(vy)} m/s. How far from the fireplace does it land?`,
+    givens: { ...halfBase(env), "x.vi": v, "y.vf": -vy }, check: T => -T["y.ds"] >= 0.8 && -T["y.ds"] <= 2.5 };
+});
+
+// ---- symmetric parabolas: x.a = 0, y.a = −g, y.ds = 0 always given
+function symBase(env) { return { "x.a": 0, "y.a": -env.g, "y.ds": 0 }; }
+const SYM_OBJ = {
+  catch: { lo: 5, hi: 25, space: true },
+  soccer: { lo: 8, hi: 30, space: true },
+  frog: { lo: 1, hi: 5, space: false },
+};
+function symLead(kind, env, r) {
+  const astro = !env.earth;
+  if (kind === "catch") return astro ? `${env.pre}two astronauts are playing catch.` : `Two kids are playing catch.`;
+  if (kind === "soccer") return astro ? `${env.pre}an astronaut kicks a soccer ball across a flat plain.` : `A soccer ball is kicked across a flat field.`;
+  return `A frog jumps across a flat patio.`;
+}
+S("sym", "S-v-th", (r, sf, F) => {
+  const k = pick(r, ["catch", "soccer", "frog"]), o = SYM_OBJ[k], env = envFor(r, sf, o.space);
+  const v = sigVal(r, sf, o.lo, o.hi), th = angleVal(r, sf, 15, 75);
+  const q = { catch: `One throws the ball at ${F(v)} m/s at ${th}° above horizontal, and the other catches it at the same height. How far apart are they standing?`,
+              soccer: ` It leaves the ground at ${F(v)} m/s at ${th}° above horizontal. How far away does it land?`,
+              frog: ` It leaps at ${F(v)} m/s at ${th}° above horizontal and lands on the same level. How far does it jump?` }[k];
+  return { env, obj: k, text: `${cap(symLead(k, env, r))} ${q}`.replace("  ", " "), givens: { ...symBase(env), v, theta: th } };
+});
+S("sym", "S-th-R", (r, sf, F) => {
+  const k = pick(r, ["soccer", "frog"]), o = SYM_OBJ[k], env = envFor(r, sf, o.space);
+  const th = angleVal(r, sf, 15, 75), R = k === "frog" ? sigVal(r, sf, 0.2, 2.5) : sigVal(r, sf, 5, 90);
+  const q = k === "frog" ? `A frog leaps at ${th}° above horizontal and lands ${F(R)} m away on the same level. How fast did it leave the ground?`
+    : `${cap(symLead(k, env, r))} It leaves the ground at ${th}° above horizontal and lands ${F(R)} m away. How fast was it kicked?`;
+  return { env, obj: k, text: q, givens: { ...symBase(env), theta: th, "x.ds": R } };
+});
+S("sym", "S-th-t", (r, sf, F) => {
+  const k = pick(r, ["catch", "soccer", "frog"]), o = SYM_OBJ[k], env = envFor(r, sf, o.space);
+  const th = angleVal(r, sf, 15, 75), t = k === "frog" ? sigVal(r, sf, 0.2, 0.9) : sigVal(r, sf, 1, 5);
+  const q = { catch: `One throws the ball at ${th}° above horizontal, and it is in the air for ${F(t)} s before the other catches it at the same height. How fast was it thrown?`,
+              soccer: ` It leaves the ground at ${th}° above horizontal and stays in the air for ${F(t)} s. How fast was it kicked?`,
+              frog: ` It leaps at ${th}° above horizontal and is in the air for ${F(t)} s. How fast did it leave the ground?` }[k];
+  return { env, obj: k, text: `${cap(symLead(k, env, r))} ${q}`.replace("  ", " "), givens: { ...symBase(env), theta: th, ...both(t, "y") } };
+});
+S("sym", "S-R-t", (r, sf, F) => {
+  const k = pick(r, ["frog", "soccer"]), o = SYM_OBJ[k], env = envFor(r, sf, o.space);
+  const R = k === "frog" ? sigVal(r, sf, 0.2, 2.5) : sigVal(r, sf, 5, 90), t = k === "frog" ? sigVal(r, sf, 0.2, 0.9) : sigVal(r, sf, 0.5, 5);
+  const q = k === "frog" ? `A frog jumps ${F(R)} m across a flat patio and is in the air for ${F(t)} s. At what angle did it jump?`
+    : `${cap(symLead(k, env, r))} It lands ${F(R)} m away after ${F(t)} s in the air. At what angle was it kicked?`;
+  return { env, obj: k, text: q, givens: { ...symBase(env), "x.ds": R, ...both(t, "y") }, check: T => T.theta >= 12 && T.theta <= 78 };
+});
+S("sym", "S-v-t", (r, sf, F) => {
+  const k = pick(r, ["catch", "soccer"]), o = SYM_OBJ[k], env = envFor(r, sf, o.space);
+  const v = sigVal(r, sf, o.lo, o.hi), t = sigVal(r, sf, 0.5, 5);
+  const q = k === "catch" ? `One throws the ball at ${F(v)} m/s, and it is in the air for ${F(t)} s before the other catches it at the same height. At what angle was it thrown?`
+    : ` It leaves the ground at ${F(v)} m/s and stays in the air for ${F(t)} s. At what angle was it kicked?`;
+  return { env, obj: k, text: `${cap(symLead(k, env, r))} ${q}`.replace("  ", " "), givens: { ...symBase(env), v, ...both(t, "y") }, check: T => T.theta >= 12 && T.theta <= 78 };
+}, 0.8);
+
+// ---- asymmetric parabolas: x.a = 0, both y accelerations, and the apex zeros
+function asymBase(env) { return { "x.a": 0, "yu.a": -env.g, "yd.a": -env.g, "yu.vf": 0, "yd.vi": 0 }; }
+S("asym", "A-bball", (r, sf, F) => {
+  const env = envFor(r, sf, false), v = sigVal(r, sf, 6, 12), th = angleVal(r, sf, 40, 65), D = sigVal(r, sf, 0.5, 1.5);
+  return { env, obj: "basketball", D, text: `A player shoots a basketball at ${F(v)} m/s at ${th}° above horizontal. It leaves her hands ${F(D)} m below the rim and drops through the hoop on the way down. How far from the hoop is she standing?`,
+    givens: { ...asymBase(env), v, theta: th }, check: T => T["yu.ds"] > D + 0.2 };
+});
+S("asym", "A-baseball", (r, sf, F) => {
+  const env = envFor(r, sf, true), v = sigVal(r, sf, 15, 45), th = angleVal(r, sf, 15, 45), hb = sigVal(r, sf, 0.5, 1.5);
+  const lead = env.earth ? "A batter hits a baseball" : `${env.pre}an astronaut hits a baseball`;
+  return { env, obj: "baseball", D: -hb, text: `${cap(lead)} ${F(hb)} m above the ground. It leaves the bat at ${F(v)} m/s at ${th}° above horizontal, sails over the outfield fence and lands on the grass. How far from home plate does it land?`,
+    givens: { ...asymBase(env), v, theta: th } };
+});
+S("asym", "A-diver", (r, sf, F) => {
+  const env = envFor(r, sf, false), v = sigVal(r, sf, 2, 6), th = angleVal(r, sf, 20, 70), H = sigVal(r, sf, 1, 10);
+  return { env, obj: "diver", D: -H, text: `A diver leaves the end of ${aNum(F(H))} m diving board at ${F(v)} m/s at ${th}° above horizontal. How far out from the end of the board does she enter the water?`,
+    givens: { ...asymBase(env), v, theta: th } };
+});
+S("asym", "A-diver-apex", (r, sf, F) => {
+  const env = envFor(r, sf, false), th = angleVal(r, sf, 30, 75), h = sigVal(r, sf, 0.2, 1.5), H = sigVal(r, sf, 1, 10);
+  return { env, obj: "diver", D: -H, text: `A diver springs off ${aNum(F(H))} m diving board at ${th}° above horizontal and rises ${F(h)} m above the board before falling to the water. How fast did she leave the board?`,
+    givens: { ...asymBase(env), theta: th, "yu.ds": h }, check: T => T.v >= 1.5 && T.v <= 8 };
+});
+S("asym", "A-bball-apex", (r, sf, F) => {
+  const env = envFor(r, sf, false), v = sigVal(r, sf, 6, 12), h = sigVal(r, sf, 1, 3.5), D = sigVal(r, sf, 0.5, 1.5);
+  return { env, obj: "basketball", D, text: `A basketball leaves a player's hands at ${F(v)} m/s and rises ${F(h)} m above the release point before dropping through a hoop ${F(D)} m above the release point. At what angle was it shot?`,
+    givens: { ...asymBase(env), v, "yu.ds": h }, check: T => h > D + 0.2 && T.theta >= 25 && T.theta <= 75 };
+}, 0.8);
+S("asym", "A-baseball-apex", (r, sf, F) => {
+  const env = envFor(r, sf, true), th = angleVal(r, sf, 20, 45), h = sigVal(r, sf, 3, 30), hb = sigVal(r, sf, 0.5, 1.5);
+  const lead = env.earth ? "A baseball is hit" : `${env.pre}an astronaut hits a baseball`;
+  return { env, obj: "baseball", D: -hb, text: `${cap(lead)} ${F(hb)} m above the ground at ${th}° above horizontal. It rises ${F(h)} m above the bat before coming down beyond the fence onto the grass. How fast did it leave the bat?`,
+    givens: { ...asymBase(env), theta: th, "yu.ds": h }, check: T => T.v >= 10 && T.v <= 50 };
+}, 0.8);
+
+const SPEED_CAP = { car: 40, marble: 5, knickknack: 3, catch: 25, soccer: 32, frog: 5, basketball: 13, baseball: 50, diver: 8 };
+// physically obvious signs, used to pick square-root branches when solving
+function defaultSigns(kind) {
+  const s = { "x.vi": 1, "x.vf": 1, v: 1 };
+  if (kind === "half") Object.assign(s, { "y.vf": -1 });
+  if (kind === "sym") Object.assign(s, { "y.vi": 1, "y.vf": -1 });
+  if (kind === "asym") Object.assign(s, { "yu.vi": 1, "yd.vf": -1 });
+  return s;
+}
+// zeros that follow from an implied zero and are fine to ask for
+function allowedZeros(kind) {
+  if (kind === "sym") return ["x.dv", "y.vbar"];
+  return ["x.dv"];
+}
+
+function plausible(p) {
+  const T = p.truth;
+  for (const k of p.vars) {
+    const x = T[k];
+    if (!isFinite(x)) return false;
+    if (x === 0 && !(k in p.givens) && !p.allowedZeros.includes(k)) return false;
+    if (x !== 0 && Math.abs(x) < 0.1) return false;
+  }
+  for (const r of ROWS[p.kind]) {
+    if (!(T[r + ".dt"] > 0.08 && T[r + ".dt"] <= 30)) return false;
+    for (const q of ["vi", "vf", "vbar", "dv"]) if (Math.abs(T[r + "." + q]) > 70) return false;
+    if (Math.abs(T[r + ".ds"]) > 700) return false;
+  }
+  if (p.kind !== "half" && !(T.theta > 5 && T.theta < 85)) return false;
+  if (p.obj && SPEED_CAP[p.obj]) {
+    const sp = p.kind === "half" ? T["x.vi"] : T.v;
+    if (sp > SPEED_CAP[p.obj]) return false;
+  }
+  if (p.kind === "asym" && !(T["yd.ds"] < 0)) return false;
+  // at 1 sig fig, reject charts whose rounding moves an answer more than 20%
+  if (p.sf === 1) for (const k of p.vars) {
+    const x = T[k];
+    if (k in p.givens || x === 0) continue;
+    if (Math.abs(roundSig(x, 1) - x) > 0.2 * Math.abs(x)) return false;
+    // a value sitting on a rounding half (25, 0.35) can round either way
+    // depending on the route, which makes the chart disagree with itself
+    const m = Math.abs(x) / Math.pow(10, Math.floor(Math.log10(Math.abs(x))));
+    if (Math.abs(m - Math.floor(m) - 0.5) < 0.04) return false;
+  }
+  return true;
+}
+
+function makeProblem(opts) {
+  opts = opts || {};
+  const rng = opts.rng || Math.random;
+  // Pick the type, sig figs and scenario first, then retry only the numbers,
+  // so scenarios that are harder to fill with good numbers still show up as
+  // often as the others.
+  let kind, sf, sc;
+  for (let tries = 0; tries < 3000; tries++) {
+    if (tries % 400 === 0) {
+      kind = opts.kind || pick(rng, ["half", "sym", "asym"]);
+      sf = opts.sf || (rng() < 0.5 ? 1 : 2);
+      const pool = SCEN.filter(s => s.kind === kind && (!opts.id || s.id === opts.id));
+      const tot = pool.reduce((s, x) => s + x.weight, 0);
+      let t = rng() * tot; sc = pool[0];
+      for (const s of pool) { t -= s.weight; if (t <= 0) { sc = s; break; } }
+    }
+    const F = x => fmtSig(x, sf);
+    const b = sc.fn(rng, sf, F);
+    if (!b) continue;
+    const vars = varsFor(kind);
+    const ctx = { g: b.env.g, D: b.D, vars };
+    const eqs = equationsFor(kind);
+    const truth = solveExact(b.givens, ctx, eqs, defaultSigns(kind));
+    if (!truth) continue;
+    const p = { id: sc.id, kind, sf, text: b.text, givens: b.givens, vars, g: b.env.g, D: b.D, env: b.env, obj: b.obj,
+      truth, allowedZeros: allowedZeros(kind) };
+    if (b.check && !b.check(truth)) continue;
+    if (!plausible(p)) continue;
+    p.tries = tries;
+    return p;
+  }
+  throw new Error("could not generate a problem " + JSON.stringify(opts));
+}
+
+// ---------------------------------------------------------------- grading
+// Values a careful student could legitimately reach for box X. Depth-limited:
+//   depth 0: the exact answer, and the typed value if the box is accepted
+//   depth d: any listed equation containing X, solved for X, with every other
+//            quantity taken from its own depth-(d−1) set (never from X itself)
+// Accepted boxes contribute their typed (rounded) value; everything else is
+// carried at calculator precision. Depth 2 was chosen by measurement
+// (derive-tolerance.js): depth 1 wrongly rejected 0.5% of honest entries,
+// depth 2 rejects 0.04%, and depth 3 only widened the window for mistakes.
+let DEPTH = 2;
+let KEEP3 = false;
+function candidateSet(problem, key, accepted) {
+  const T = problem.truth, ctx = { g: problem.g, D: problem.D, vars: problem.vars };
+  const eqs = equationsFor(problem.kind);
+  const byVar = {};
+  for (const e of eqs) for (const v of e.vars) (byVar[v] = byVar[v] || []).push(e);
+  const G = problem.givens;
+  const memo = new Map();
+  const keepSign = (k, x) => isFinite(x) && (T[k] === 0 ? Math.abs(x) < 1e-6 : x !== 0 && Math.sign(x) === Math.sign(T[k]) && Math.abs(x - T[k]) <= 0.7 * Math.abs(T[k]));
+  function pushU(arr, x) { if (!arr.some(z => Math.abs(z - x) <= 1e-7 * Math.max(1e-3, Math.abs(x)))) arr.push(x); }
+  function prune(k, arr) {
+    if (arr.length <= 5) return arr;
+    arr.sort((p, q) => p - q);
+    const near = arr.reduce((b, y) => Math.abs(y - T[k]) < Math.abs(b - T[k]) ? y : b);
+    const keep = [arr[0], arr[arr.length - 1], near];
+    for (const y of arr) if (accepted && accepted[k] === y) keep.push(y);
+    const out = []; keep.forEach(y => pushU(out, y)); return out;
+  }
+  function cands(k, depth, blocked) {
+    if (k in G) return [G[k]];
+    const mk = k + "|" + depth + "|" + blocked;
+    if (memo.has(mk)) return memo.get(mk);
+    const out = [];
+    pushU(out, T[k]);
+    if (accepted && k in accepted) pushU(out, accepted[k]);
+    if (depth > 0) {
+      const bl = blocked + "," + k;
+      for (const eq of byVar[k] || []) {
+        const others = eq.vars.filter(y => y !== k);
+        if (others.some(y => bl.split(",").includes(y))) continue;
+        let combos = [{}];
+        for (const y of others) {
+          const cs = cands(y, depth - 1, bl);
+          const next = [];
+          for (const c of combos) for (const val of cs) next.push(Object.assign({ [y]: val }, c));
+          combos = next;
+        }
+        for (const c of combos) {
+          let vals = eq.solve[k](c, ctx);
+          if ((eq.quadraticFor === k || eq.twoRootsFor === k) && vals.length > 1) vals = [vals.reduce((b, y) => Math.abs(y - T[k]) < Math.abs(b - T[k]) ? y : b)];
+          for (const val of vals) if (keepSign(k, val)) { pushU(out, val); if (KEEP3) pushU(out, roundSig(val, 3)); }
+        }
+      }
+    }
+    const res = prune(k, out);
+    memo.set(mk, res);
+    return res;
+  }
+  // the box being graded: keep everything (no pruning) at the top level
+  const top = [];
+  pushU(top, T[key]);
+  const bl = "," + key;
+  for (const eq of byVar[key] || []) {
+    const others = eq.vars.filter(y => y !== key);
+    let combos = [{}];
+    for (const y of others) {
+      const cs = cands(y, DEPTH - 1, bl);
+      const next = [];
+      for (const c of combos) for (const val of cs) next.push(Object.assign({ [y]: val }, c));
+      combos = next;
+    }
+    for (const c of combos) {
+      let vals = eq.solve[key](c, ctx);
+      if ((eq.quadraticFor === key || eq.twoRootsFor === key) && vals.length > 1) vals = [vals.reduce((b, y) => Math.abs(y - T[key]) < Math.abs(b - T[key]) ? y : b)];
+      for (const val of vals) if (keepSign(key, val)) pushU(top, val);
+    }
+  }
+  return top;
+}
+
+function label(k) {
+  if (k === "v") return "v"; if (k === "theta") return "θ";
+  const [r, q] = k.split(".");
+  return { vi: "vᵢ", vf: "v_f", vbar: "v̄", dv: "Δv", a: "a", dt: "Δt", ds: "Δs" }[q] + " (" + { x: "X", y: "Y", yu: "Y up", yd: "Y down" }[r] + ")";
+}
+
+// Vector boxes need an explicit sign: a positive value must be typed with a
+// leading "+" (teacher's rule, for consistency with the required "−").
+// Δt, θ and the 2D launch speed are scalars and are exempt; zero needs no sign.
+function isVector(k) { return k !== "v" && k !== "theta" && !k.endsWith(".dt"); }
+const PLUS_MSG = "Right value, but this is a vector. Put a + in front of positive values.";
+function gradeBox(problem, key, raw, accepted, extra) {
+  const r = gradeValue(problem, key, raw, accepted, extra);
+  if ((r.status === "given" || r.status === "correct") && isVector(key)) {
+    const s = String(raw).trim();
+    const e = parseEntry(s);
+    if (e && e.value > 0 && !s.startsWith("+")) return { status: "wrong", msg: PLUS_MSG };
+  }
+  return r;
+}
+function signed(k, str, x) { return isVector(k) && x > 0 ? "+" + str : str; }
+function gradeValue(problem, key, raw, accepted) {
+  if (raw == null || String(raw).trim() === "") return { status: "empty" };
+  const e = parseEntry(raw);
+  if (!e) return { status: "wrong", msg: "That isn't a number the chart can read. Type just the number, like −9.8 or 2.5." };
+  const n = problem.sf, x = e.value, G = problem.givens;
+  const same = (p, q) => Math.abs(p - q) <= 1e-9 * Math.max(1, Math.abs(q));
+  const row = key.includes(".") ? key.split(".")[0] : null;
+  if (key in G) {
+    const gv = G[key];
+    if (same(x, gv)) return { status: "given" };
+    if (gv !== 0 && same(-x, gv)) return { status: "wrong", msg: signMsg(key) };
+    if (key.endsWith(".a") && row !== "x" && problem.env.earth && [9.8, 9.81, 10].some(g => same(Math.abs(x), g)))
+      return { status: "wrong", msg: n === 1 ? "This problem uses 1 significant figure, so Earth's g is 10 m/s²." : "This problem uses 2 significant figures, so Earth's g is 9.8 m/s²." };
+    if (key.endsWith(".a") && row !== "x" && !problem.env.earth && same(Math.abs(x), 9.8)) return { status: "wrong", msg: `This problem is on ${problem.env.label}, so g is ${problem.g} m/s².` };
+    return { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite() };
+  }
+  const T = problem.truth[key];
+  const set = candidateSet(problem, key, accepted);
+  // Legitimate routes form a continuum between their extremes (every
+  // equation here is monotonic in each input over the ranges generated), so
+  // a typed value is accepted when its rounding interval overlaps the span of
+  // the candidate values.
+  const lo = Math.min(...set), hi = Math.max(...set);
+  const ok = y => {
+    if (y === 0) return set.some(c => Math.abs(c) < 1e-9);
+    const u = Math.pow(10, Math.floor(Math.log10(Math.abs(y))) - n + 1) / 2;
+    const pad = REL_SLOP * Math.max(Math.abs(lo), Math.abs(hi)) + 1e-12;
+    return y - u <= hi + pad && y + u >= lo - pad;
+  };
+  const sfOk = x === 0 || (e.sfMin <= n && n <= e.sfMax);
+  if (x === 0) return T === 0 ? { status: "correct" } : { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite() };
+  if (ok(x) && sfOk) return { status: "correct" };
+  if (ok(x)) return { status: "wrong", msg: sfMsg(e, n) };
+  if (T !== 0 && (ok(-x) || ok(roundSig(-x, n)))) return { status: "wrong", msg: signMsg(key) };
+  if (!sfOk && ok(roundSig(x, n))) return { status: "wrong", msg: sfMsg(e, n) };
+  if (key === "theta" && ok(roundSig(x * 180 / Math.PI, n))) return { status: "wrong", msg: "That looks like radians. Put your calculator in degree mode." };
+  if (key === "theta" && ok(roundSig(90 - x, n))) return { status: "wrong", msg: "That's the angle from vertical. Launch angles are measured up from the horizontal." };
+  // the classic 2D slip: using the whole speed in a component box
+  if (key === "x.dv") return { status: "wrong", msg: "Nothing pushes the projectile forward or back once it's launched. What does that make its change in horizontal velocity?" };
+  if (key === "y.vbar" && problem.kind === "sym") return { status: "wrong", msg: "It lands at the height it started from. What does that make its average vertical velocity?" };
+  if ((key === "x.vi" || key.endsWith("y.vi") || key === "yu.vi") && "v" in problem.truth && roundsTo(x, problem.truth.v, n))
+    return { status: "wrong", msg: "That's the whole launch speed. This box wants just one component of it." };
+  if (row && row !== "x" && key.endsWith(".dt") && roundsTo(x, problem.truth["x.dt"], n) && problem.kind === "asym")
+    return { status: "wrong", msg: "That's the whole flight time. This row only covers part of it." };
+  return { status: "wrong", msg: wrongColumnMsg(problem, key, x) || notQuite() };
+}
+function sfMsg(e, n) {
+  const k = e.sfMin === e.sfMax ? e.sfMin : e.sfMax;
+  return `The value is right, but that's ${k} significant figure${k === 1 ? "" : "s"} and this problem uses ${n}.`;
+}
+function signMsg(key) {
+  if (key === "v" || key === "theta") return "Right size, but a launch speed and angle are written without a sign here.";
+  return key.startsWith("x.") ? "Right size, wrong sign. Forward is positive." : "Right size, wrong sign. Up is positive.";
+}
+function notQuite() { return "Not quite. Check which equation you used for this box and redo the arithmetic."; }
+function wrongColumnMsg(problem, key, x) {
+  for (const [k, v] of Object.entries(problem.givens)) {
+    if (k === key || v === 0) continue;
+    if (Math.abs(Math.abs(x) - Math.abs(v)) <= 1e-9 * Math.abs(v)) {
+      // a Δt given once applies to more than one row, so this is only a
+      // "wrong box" when the number really belongs elsewhere
+      return "That number is given in the problem, but it belongs in a different box.";
+    }
+  }
+  return null;
+}
+function answerString(problem, key) {
+  if (key in problem.givens) return signed(key, String(Number(problem.givens[key].toPrecision(6))), problem.givens[key]);
+  const x = problem.truth[key];
+  if (x === 0) return "0";
+  return signed(key, fmtSig(x, problem.sf).replace("−", "-"), x);
+}
+
+const api = { Q, ROWS, SCEN, mulberry32, roundSig, fmtSig, parseEntry, roundsTo, solveExact, equationsFor, varsFor,
+  makeProblem, candidateSet, gradeBox, isVector, answerString, label, defaultSigns, G_EARTH, setDepth: d => { DEPTH = d; }, setKeep3: b => { KEEP3 = b; } };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.KM2 = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+"use strict";
+const COLS = ["vi", "vf", "vbar", "dv", "a", "dt", "ds"];
+const HEAD = {
+  vi:   { sym: '<span class="v vec">v<sub>i</sub></span>', unit: "m/s" },
+  vf:   { sym: '<span class="v vec">v<sub>f</sub></span>', unit: "m/s" },
+  vbar: { sym: '<span class="v vec bar">v</span>', unit: "m/s" },
+  dv:   { sym: '<span class="v vec"><span class="d">Δ</span>v</span>', unit: "m/s" },
+  a:    { sym: '<span class="v vec">a</span>', unit: "m/s<sup>2</sup>" },
+  dt:   { sym: '<span class="v"><span class="d">Δ</span>t</span>', unit: "s" },
+  ds:   { sym: '<span class="v vec"><span class="d">Δ</span>s</span>', unit: "m" },
+};
+const ROWLAB = { x: "X", y: "Y", yu: 'Y<small>up</small>', yd: 'Y<small>down</small>' };
+const ROWNAME = { x: "X", y: "Y", yu: "Y up", yd: "Y down" };
+const MARK = { given: "given", correct: "correct", wrong: "check", empty: "" };
+const KIND = { half: "Half parabola", sym: "Symmetric parabola", asym: "Asymmetric parabola" };
+
+const state = { difficulty: "easy", problem: null, status: {}, accepted: {}, msgs: {}, finished: 0,
+  byKind: { half: 0, sym: 0, asym: 0 }, complete: false, stage: 1 };
+const $ = id => document.getElementById(id);
+const chartEl = $("chart"), launchEl = $("launch"), stepEl = $("step"), counterEl = $("counter"), feedbackEl = $("feedback");
+const inputFor = k => document.querySelector(`input[data-k="${k}"]`);
+const cellFor = k => document.querySelector(`[data-cell="${k}"]`);
+
+function symFor(k) {
+  if (k === "v") return '<span class="v">v</span>';
+  if (k === "theta") return '<span class="v">θ</span>';
+  const [r, q] = k.split(".");
+  return `${HEAD[q].sym} <span style="font-size:.7em">(${ROWNAME[r]})</span>`;
+}
+function boxHTML(k, label) {
+  return `<div class="cell" data-cell="${k}"><div class="box">
+    <input type="text" id="in-${k.replace(".", "-")}" autocomplete="off" spellcheck="false" data-k="${k}" aria-label="${label}">
+    <div class="mark"></div></div></div>`;
+}
+
+function newProblem(opts) {
+  state.problem = KM2.makeProblem(opts || {});
+  state.status = {}; state.accepted = {}; state.msgs = {}; state.complete = false; state.stage = 1;
+  for (const k of state.problem.vars) state.status[k] = "empty";
+  renderProblem(); renderChart(); renderStatus(); setFeedback("");
+  const first = document.querySelector("#chartPanel input");
+  if (first && !(opts && opts.noFocus)) first.focus({ preventScroll: true });
+}
+
+function renderProblem() {
+  const p = state.problem;
+  $("tags").innerHTML = `<span class="tag">${KIND[p.kind]}</span><span class="tag">${p.env.label}</span><span class="tag sf" id="sfTag">${p.sf} significant figure${p.sf === 1 ? "" : "s"}</span>`;
+  $("prompt").textContent = p.text;
+}
+
+function renderChart() {
+  const p = state.problem;
+  if (p.kind === "half") { launchEl.innerHTML = ""; launchEl.hidden = true; }
+  else {
+    launchEl.hidden = false;
+    launchEl.innerHTML =
+      `<div class="lbox"><div class="lname"><span class="sym"><span class="v">v</span></span>launch speed<br><span class="unit">m/s</span></div>${boxHTML("v", "launch speed")}</div>` +
+      `<div class="lbox"><div class="lname"><span class="sym"><span class="v">θ</span></span>launch angle<br><span class="unit">degrees above horizontal</span></div>${boxHTML("theta", "launch angle")}</div>`;
+  }
+  let html = `<div class="hcell"></div>` + COLS.map(q => `<div class="hcell"><div class="sym">${HEAD[q].sym}</div><div class="unit">${HEAD[q].unit}</div></div>`).join("");
+  for (const r of KM2.ROWS[p.kind]) {
+    html += `<div class="rowlab">${ROWLAB[r]}</div>`;
+    html += COLS.map(q => boxHTML(r + "." + q, KM2.label(r + "." + q))).join("");
+  }
+  chartEl.innerHTML = html;
+  document.querySelectorAll("#chartPanel input[data-k]").forEach(inp => {
+    inp.addEventListener("change", () => grade(inp.dataset.k));
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); grade(inp.dataset.k); focusNext(inp.dataset.k); } });
+    inp.addEventListener("input", () => {
+      const k = inp.dataset.k;
+      if (state.status[k] === "wrong") { state.status[k] = "empty"; delete state.msgs[k]; paintCell(k); setFeedback(""); }
+    });
+    inp.addEventListener("focus", () => { const k = inp.dataset.k; if (state.status[k] === "wrong" && state.msgs[k]) setFeedback(state.msgs[k], k); });
+  });
+}
+
+function orderedKeys() { return [...document.querySelectorAll("#chartPanel input[data-k]")].map(i => i.dataset.k); }
+function focusNext(k) {
+  if (state.status[k] === "wrong") return;
+  const keys = orderedKeys(), i = keys.indexOf(k);
+  for (let j = 1; j <= keys.length; j++) {
+    const kk = keys[(i + j) % keys.length];
+    if (state.status[kk] === "empty") { inputFor(kk).focus(); return; }
+  }
+}
+function paintCell(k) {
+  const cell = cellFor(k); if (!cell) return;
+  const s = state.status[k];
+  cell.classList.remove("given", "correct", "wrong");
+  if (s !== "empty") cell.classList.add(s);
+  cell.querySelector(".mark").textContent = MARK[s];
+  cell.querySelector("input").disabled = (s === "given" || s === "correct");
+}
+function grade(k) {
+  if (state.complete) return;
+  const s0 = state.status[k];
+  if (s0 === "given" || s0 === "correct") return;
+  const inp = inputFor(k);
+  const r = KM2.gradeBox(state.problem, k, inp.value, state.accepted);
+  if (r.status === "empty") { state.status[k] = "empty"; paintCell(k); return; }
+  state.status[k] = r.status;
+  if (r.status === "given" || r.status === "correct") {
+    state.accepted[k] = KM2.parseEntry(inp.value).value; inp.value = inp.value.trim();
+    delete state.msgs[k]; setFeedback("");
+  } else { state.msgs[k] = r.msg; setFeedback(r.msg, k); }
+  paintCell(k); renderStatus();
+}
+function givensDone() { return Object.keys(state.problem.givens).every(k => state.status[k] === "given"); }
+function renderStatus() {
+  const p = state.problem, gk = Object.keys(p.givens);
+  const placed = gk.filter(k => state.status[k] === "given").length;
+  counterEl.innerHTML = `Givens placed: <b>${placed} of ${gk.length}</b>`;
+  if (!state.complete && p.vars.every(k => state.status[k] === "given" || state.status[k] === "correct")) {
+    state.complete = true; state.finished++; state.byKind[p.kind]++; renderTally();
+  }
+  stepEl.classList.toggle("done", state.complete);
+  if (state.complete) { state.stage = 3; stepEl.innerHTML = `<b>Done</b>Chart complete. Every box checks out. Press <i>New problem</i> for another one.`; }
+  else if (givensDone()) { state.stage = 2; stepEl.innerHTML = `<b>Step 2</b>All of the given information is in. Use your calculator and the kinematics equations to fill in the rest of the chart. Any order works.`; }
+  else { state.stage = 1; stepEl.innerHTML = `<b>Step 1</b>Put the information the problem gives you into the chart, including anything it implies (like the accelerations, or a vertical velocity of zero at the apex). Press Enter to check a box.`; }
+}
+function setFeedback(msg, k) {
+  if (!msg) { feedbackEl.textContent = ""; feedbackEl.className = "feedback"; return; }
+  feedbackEl.className = "feedback bad";
+  feedbackEl.innerHTML = `<span class="who">${symFor(k)}</span>`;
+  feedbackEl.appendChild(document.createTextNode(msg));
+}
+function renderTally() {
+  const b = state.byKind;
+  $("tally").innerHTML = `<b>${state.finished}</b> chart${state.finished === 1 ? "" : "s"} finished <span style="opacity:.8">· Half ${b.half} · Sym ${b.sym} · Asym ${b.asym}</span>`;
+}
+function setDifficulty(d) {
+  state.difficulty = d;
+  document.querySelectorAll("#diffSeg button").forEach(b => b.classList.toggle("active", b.dataset.diff === d));
+  $("work").classList.toggle("hard", d === "hard");
+}
+$("diffSeg").addEventListener("click", e => { const b = e.target.closest("button[data-diff]"); if (b) setDifficulty(b.dataset.diff); });
+$("newBtn").addEventListener("click", () => newProblem());
+renderTally();
+newProblem({ noFocus: true });
+
+window.__mc = {
+  state: () => JSON.parse(JSON.stringify(state)),
+  problem: () => state.problem,
+  newProblem, setDifficulty, grade,
+  type(k, v) { const inp = inputFor(k); inp.value = v; grade(k); return state.status[k]; },
+  answer: k => KM2.answerString(state.problem, k),
+  KM2,
+};
+</script>
+</body>
+</html>
