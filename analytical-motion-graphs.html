@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analytical Motion Graphs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600;1,9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:4px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:70ch; margin:0;}
+
+.toolbar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:16px 0 14px;
+}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{
+  font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent;
+  color:var(--ink-soft); cursor:pointer;
+}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{
+  font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px;
+  border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.tally{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft);}
+.tally b{color:var(--ink); font-size:17px;}
+
+
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 1px 2px var(--shadow); padding:18px 20px;
+}
+.panel h2{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em;
+  color:var(--ink-muted); margin:0 0 12px;
+}
+
+/* ---- layout: step card on top; each graph has its own row with a side panel */
+.stepcard{margin-bottom:14px;}
+.given{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;}
+.chip{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; padding:5px 11px; border-radius:14px; background:var(--surface-alt); border:1px solid var(--line-strong); color:var(--ink-soft);}
+.chip.warm{background:var(--accent-warm); border-color:var(--accent-warm); color:#fff;}
+.prompt{font-family:"Fraunces",Georgia,serif; font-size:21px; line-height:1.45; margin:0 0 10px; text-wrap:pretty;}
+.controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+.controls select, .controls input, .tbl select, .tbl input{font-family:"IBM Plex Mono",monospace; font-size:15px; padding:8px 10px; border-radius:9px; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink);}
+.controls select:focus, .tbl select:focus, .tbl input:focus, .controls input:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+.readout{font-family:"IBM Plex Mono",monospace; font-size:18px; font-weight:600; padding:7px 12px; border-radius:9px; background:var(--surface-alt); border:1px solid var(--line-strong);}
+.msg{margin-top:10px; font-size:15.5px; min-height:22px; line-height:1.45;}
+.msg.bad{color:var(--critical);} .msg.good{color:var(--good);}
+.toolrow{display:flex; gap:6px; flex-wrap:wrap;}
+.tool{font-family:inherit; font-size:13.5px; font-weight:600; padding:8px 13px; border-radius:9px; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink-soft); cursor:pointer;}
+.tool.on{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+
+.rows{display:grid; grid-template-columns:minmax(0, 1.35fr) minmax(300px, 1fr); gap:12px 14px; align-items:stretch;}
+.gpanel{padding:8px 10px;}
+.gsvg{display:block; width:100%; height:auto; touch-action:none; user-select:none; -webkit-user-select:none;}
+.slot{display:flex; flex-direction:column; gap:8px; min-width:0;}
+.slot h3{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted); margin:0;}
+.slot .state{font-size:14.5px; color:var(--ink-soft); line-height:1.45;}
+.slot .state b{color:var(--ink);}
+.badge{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:8px; margin-left:6px; vertical-align:2px;}
+.badge.isgiven{background:var(--ink); color:var(--surface);}
+.badge.done{background:var(--good); color:#fff;}
+.badge.now{background:var(--accent-warm); color:#fff;}
+.tblwrap{overflow-x:auto;}
+.tbl{border-collapse:collapse; width:100%; font-size:14px; font-variant-numeric:tabular-nums;}
+.tbl th{font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-muted); text-align:left; padding:4px 6px; border-bottom:1px solid var(--line-strong); white-space:nowrap;}
+.tbl td{padding:5px 6px; border-bottom:1px solid var(--line); white-space:nowrap; font-family:"IBM Plex Mono",monospace;}
+.tbl tr.cur td{background:color-mix(in srgb, var(--accent-warm) 12%, transparent);}
+.tbl tr.ok td.mark{color:var(--good); font-weight:700;}
+.tbl td.mark{width:18px;}
+.tbl select, .tbl input{font-size:13.5px; padding:4px 6px;}
+.tbl input.num{width:64px;}
+.tbl .delta{font-family:"Fraunces",Georgia,serif; font-style:italic; font-weight:600; font-size:15px;}
+.tbl input.okin{border-color:var(--good); background:color-mix(in srgb, var(--good) 14%, var(--surface));}
+.tbl input.badin, .tbl select.badin{border-color:var(--critical);}
+
+/* graph drawing */
+.grid{stroke:var(--line); stroke-width:1;}
+.grid.major{stroke:var(--line-strong);}
+.axis{stroke:var(--ink); stroke-width:2;}
+.axhead{fill:var(--ink);}
+.ylab{font-family:"IBM Plex Mono",monospace; font-size:11.5px; fill:var(--ink-muted);}
+.gname{font-family:"Fraunces",Georgia,serif; font-style:italic; font-size:17px; font-weight:600; fill:var(--ink);}
+.gunit{font-family:"IBM Plex Mono",monospace; font-size:11.5px; fill:var(--ink-soft);}
+.bline{stroke:var(--accent-warm); stroke-width:1.4; stroke-dasharray:5 5;}
+.bline.cross{stroke-dasharray:2 4; opacity:.8;}
+.givenline{fill:none; stroke:var(--ink); stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round;}
+.givendot{fill:var(--ink);}
+.builtline{fill:none; stroke:var(--good); stroke-width:3.2; stroke-linecap:round;}
+.band{fill:var(--accent-warm); opacity:.10;}
+.tan{stroke:var(--accent-warm); stroke-width:3; stroke-linecap:round;}
+.tan.ext{stroke-dasharray:7 5; stroke-width:2;}
+.tanh{fill:var(--surface); stroke:var(--accent-warm); stroke-width:2.5; cursor:grab;}
+.lab{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; fill:var(--ink);}
+.labbg{fill:var(--surface); stroke:var(--line-strong);}
+.poly{fill:var(--accent-warm); fill-opacity:.22; stroke:var(--accent-warm); stroke-width:2.2;}
+.poly.ok{fill:var(--good); fill-opacity:.22; stroke:var(--good);}
+.polyv{fill:var(--accent-warm);}
+.seg{fill:none; stroke:var(--accent); stroke-width:3.2; stroke-linecap:round;}
+.seg.ok{stroke:var(--good);}
+.seg.hit{stroke:transparent; stroke-width:16; cursor:pointer;}
+.pt{fill:var(--accent-warm); stroke:var(--surface); stroke-width:2;}
+.pt.sel{stroke:var(--accent); stroke-width:3.5;}
+.handle{fill:var(--surface); stroke:var(--accent); stroke-width:2; cursor:ns-resize;}
+.jump{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--accent-warm);}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+@media (max-width:900px){ .rows{grid-template-columns:minmax(0,1fr);} }
+@media (max-width:600px){ .ylab,.gunit{font-size:17px;} .gname{font-size:23px;} .lab{font-size:16px;} .jump{font-size:14px;} }
+@media (max-width:430px){ .frame{padding:18px 16px 48px;} .panel{padding:14px 12px;} .tally{margin-left:0; flex-basis:100%;} .prompt{font-size:18.5px;} h1{font-size:26px;} }
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 1 · Kinematics</div>
+    <h1>Analytical Motion Graphs</h1>
+    <p class="desc">One graph is given. Build the other two with middle school calculus: slopes to go down the stack, areas to go up.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="btn primary" id="newBtn">New problem</button>
+    <div class="tally" id="tally"></div>
+  </div>
+
+  <section class="panel stepcard" id="stepcard">
+    <div class="given" id="givenChips"></div>
+    <p class="prompt" id="prompt"></p>
+    <div class="controls" id="controls"></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+  </section>
+
+  <div class="rows" id="rows"></div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook — discussion questions</summary>
+    <div class="body">
+      <p>1. Why does going down the stack use slopes, and going up use areas? What would the units of a slope or an area tell you, even if you forgot the rule?</p>
+      <p>2. An area under the velocity graph is a <i>change</i> in position, ∆s. Why do you need the starting position to draw the position graph, but not to find ∆s?</p>
+      <p>3. When the velocity graph crosses the time axis, why do you split the area there? What happens to the position graph at that moment?</p>
+      <p>4. A straight, slanted velocity segment gives a curved position segment. How can you tell from the velocity graph whether the position curve bends up or down?</p>
+      <p>5. On a curved position segment, you measured two slopes. Why is one slope not enough to describe that segment?</p>
+      <p>6. Where on a position graph is the velocity zero? Where on a velocity graph is the acceleration zero?</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Analytical Motion Graphs — problem model and grading.
+// One graph (a, v or s) is given as 2–5 piecewise segments on 0–10 s; the
+// student builds the other two with "middle school calculus": slopes to go
+// down the stack (s → v → a), areas to go up (a → v → s).
+// Inlined into the page by build.js and required by the Node tests.
+(function (root) {
+"use strict";
+
+const T_MAX = 10;
+const BOXES = 6;                       // each graph shows ±6 boxes vertically
+const SCALES = { a: [1, 2], v: [1, 2, 4, 5], s: [1, 2, 5, 10, 20] };
+const HARD_SCALES = { a: [1, 2, 5], v: [1, 2, 4, 5, 10], s: [1, 2, 5, 10, 20, 25] };
+const UNIT = { a: "m/s²", v: "m/s", s: "m" };
+const NAME = { a: "acceleration", v: "velocity", s: "position" };
+const LIMIT = { a: 10, v: 20, s: 100 };
+const UNIT_CHOICES = ["m", "m/s", "m/s²", "s", "m·s"];
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const pick = (r, l) => l[Math.floor(r() * l.length)];
+const ri = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+const isInt = x => Math.abs(x - Math.round(x)) < 1e-9;
+
+// segment lengths: a random composition of 10 into n parts
+function lengths(r, n, minLen) {
+  for (let k = 0; k < 200; k++) {
+    const cuts = new Set();
+    while (cuts.size < n - 1) cuts.add(ri(r, 1, T_MAX - 1));
+    const c = [0, ...[...cuts].sort((a, b) => a - b), T_MAX];
+    const L = c.slice(1).map((x, i) => x - c[i]);
+    if (L.every(l => l >= minLen)) return c;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------- motion
+// The truth is always a piecewise-constant acceleration on the segments
+// (plus, for an Easy position-given problem, piecewise-constant velocity with
+// jumps). From it we build each graph as "pieces":
+//   { t0, t1, y0, y1, bend }   bend = curve's control point minus the chord
+//                              midpoint (0 for a straight piece), in units
+// Velocity and position pieces are split wherever velocity crosses zero.
+function buildMotion(spec) {
+  const { bounds, acc, v0, s0, vJumps } = spec;
+  const segs = [];
+  let v = v0, s = s0;
+  for (let i = 0; i + 1 < bounds.length; i++) {
+    const t0 = bounds[i], t1 = bounds[i + 1];
+    const a = vJumps ? 0 : acc[i];
+    if (vJumps) v = vJumps[i];
+    const vEnd = v + a * (t1 - t0);
+    segs.push({ i, t0, t1, a, vStart: v, vEnd, sStart: s });
+    s = s + (v + vEnd) / 2 * (t1 - t0);
+    segs[i].sEnd = s;
+    v = vEnd;
+  }
+  // fine pieces: split at velocity zero crossings strictly inside a segment
+  const fine = [];
+  for (const g of segs) {
+    const cuts = [g.t0];
+    if (g.a !== 0 && g.vStart * g.vEnd < 0) cuts.push(g.t0 - g.vStart / g.a);
+    cuts.push(g.t1);
+    for (let k = 0; k + 1 < cuts.length; k++) {
+      const t0 = cuts[k], t1 = cuts[k + 1];
+      const vA = g.vStart + g.a * (t0 - g.t0), vB = g.vStart + g.a * (t1 - g.t0);
+      const sA = g.sStart + (g.vStart + vA) / 2 * (t0 - g.t0), sB = sA + (vA + vB) / 2 * (t1 - t0);
+      fine.push({ seg: g.i, t0, t1, a: g.a, vA, vB, sA, sB });
+    }
+  }
+  const pieces = {
+    a: segs.map(g => ({ seg: g.i, t0: g.t0, t1: g.t1, y0: g.a, y1: g.a, bend: 0 })),
+    v: segs.map(g => ({ seg: g.i, t0: g.t0, t1: g.t1, y0: g.vStart, y1: g.vEnd, bend: 0 })),
+    s: fine.map(f => ({ seg: f.seg, t0: f.t0, t1: f.t1, y0: f.sA, y1: f.sB, bend: f.vA * (f.t1 - f.t0) / 2 - (f.sB - f.sA) / 2 })),
+    vFine: fine.map(f => ({ seg: f.seg, t0: f.t0, t1: f.t1, y0: f.vA, y1: f.vB, bend: 0 })),
+  };
+  return { segs, fine, pieces, crossings: fine.filter((f, k) => k > 0 && fine[k - 1].seg === f.seg).map(f => f.t0) };
+}
+
+// all values that must land on a grid line for a graph
+function keyValues(motion, g) {
+  const P = g === "v" ? motion.pieces.vFine : motion.pieces[g];
+  const out = [];
+  P.forEach(p => out.push(p.y0, p.y1));
+  return out;
+}
+// largest nice scale on which every key value sits on a grid line and fits ±6 boxes
+function niceScale(vals, g, list) {
+  const L = (list || SCALES[g]).slice().sort((a, b) => b - a);
+  const mx = Math.max(...vals.map(Math.abs));
+  for (const sc of L) if (vals.every(x => isInt(x / sc)) && mx <= BOXES * sc + 1e-9 && mx >= 1.5 * sc) return sc;
+  return null;
+}
+
+// ---------------------------------------------------------------- generator
+// given: "a" | "v" | "s"; mode: "easy" | "hard"
+function makeProblem(opts) {
+  opts = opts || {};
+  const rng = opts.rng || Math.random;
+  const mode = opts.mode || "easy";
+  // pick what is given and how many segments FIRST, then retry only the
+  // numbers, so 5-segment Hard problems show up as often as 3-segment ones
+  const given = opts.given || (rng() < 0.6 ? "v" : rng() < 0.5 ? "a" : "s");
+  const n = opts.n || (mode === "easy" ? ri(rng, 2, 3) : ri(rng, 3, 5));
+  for (let tries = 0; tries < 300000; tries++) {
+    const bounds = lengths(rng, n, mode === "easy" ? 2 : 1);
+    if (!bounds) continue;
+    const L = bounds.slice(1).map((x, i) => x - bounds[i]);
+    let spec;
+    if (given === "s" && mode === "easy") {
+      // straight position segments: constant velocity on each, jumps at corners
+      const vs = [];
+      for (let i = 0; i < n; i++) vs.push(pick(rng, [-10, -8, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 8, 10]));
+      if (vs.some((x, i) => i > 0 && x === vs[i - 1])) continue;
+      spec = { bounds, acc: vs.map(() => 0), vJumps: vs, v0: vs[0], s0: pick(rng, [-40, -30, -20, -10, 0, 10, 20, 30, 40]) };
+    } else {
+      // velocities kept even at every corner, so every area (half the sum
+      // of two even numbers times a whole number of seconds) is a whole number
+      const acc = [];
+      const v0 = pick(rng, [-12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12]);
+      let v = v0, bad = false;
+      for (let i = 0; i < n; i++) {
+        const choices = [];
+        const lo = given === "a" ? -8 : -5, hi = given === "a" ? 8 : 5;
+        for (let a = lo; a <= hi; a++) {
+          if (i > 0 && a === acc[i - 1]) continue;
+          if (given === "a" && a === 0) continue;
+          const ve = v + a * L[i];
+          if (Math.abs(ve) > LIMIT.v || ve % 2 !== 0) continue;
+          if (a !== 0 && v * ve < 0 && !isInt(-v / a)) continue;     // crossing on a whole second
+          if (a === 0 && v === 0) continue;                          // resting on zero: an area of nothing
+          choices.push(a);
+        }
+        if (!choices.length) { bad = true; break; }
+        const a = pick(rng, choices);
+        acc.push(a); v = v + a * L[i];
+      }
+      if (bad) continue;
+      spec = { bounds, acc, v0, s0: pick(rng, [-50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50]) };
+    }
+    const m = buildMotion(spec);
+    // ---- ranges
+    if (m.segs.some(g => Math.abs(g.a) > LIMIT.a || Math.abs(g.vStart) > LIMIT.v || Math.abs(g.vEnd) > LIMIT.v)) continue;
+    if (m.fine.some(f => Math.abs(f.sA) > LIMIT.s || Math.abs(f.sB) > LIMIT.s)) continue;
+    // ---- lattice: crossings on whole seconds, every key value a whole number
+    if (m.crossings.some(t => !isInt(t))) continue;
+    if (m.fine.some(f => !isInt(f.sA) || !isInt(f.sB) || !isInt(f.vA) || !isInt(f.vB))) continue;
+    // ---- shape rules
+    // Hard position-given: the curve may turn around only at a segment boundary
+    if (given === "s" && mode === "hard" && m.crossings.length) continue;
+    if (given === "s" && mode === "hard" && !m.segs.some(g => g.a !== 0)) continue;
+    // something worth drawing: position actually goes somewhere
+    const sAll = m.fine.flatMap(f => [f.sA, f.sB]);
+    if (Math.max(...sAll) - Math.min(...sAll) < 12) continue;
+    // ---- scales: every graph gets a grid scale that puts its key values on grid lines
+    const sc = {};
+    let ok = true;
+    for (const g of ["a", "v", "s"]) {
+      sc[g] = niceScale(keyValues(m, g), g);
+      if (sc[g] === null) {
+        if (g === "a" && keyValues(m, "a").every(x => x === 0)) sc[g] = 1;   // all-zero acceleration (Easy straight position)
+        else { ok = false; break; }
+      }
+    }
+    if (!ok) continue;
+    const prob = { given, mode, n, bounds, spec, motion: m, scale: sc, tries };
+    prob.announce = given === "a" ? { v0: spec.v0, s0: spec.s0 } : given === "v" ? { s0: spec.s0 } : {};
+    prob.corners = given === "s" && mode === "easy" ? bounds.slice(1, -1) : [];
+    return prob;
+  }
+  throw new Error("could not generate " + JSON.stringify({ mode, given, n }));
+}
+
+// ---------------------------------------------------------------- the plan
+// Which graph is built from which, and how.
+const ORDER = ["s", "v", "a"];                      // top to bottom
+function sourceFor(prob, target, built) {
+  // a target is built from its neighbor: from below by areas, from above by slopes
+  const i = ORDER.indexOf(target);
+  const above = ORDER[i - 1], below = ORDER[i + 1];
+  const have = g => g === prob.given || (built && built.includes(g));
+  if (below && have(below)) return { from: below, method: "areas" };
+  if (above && have(above)) return { from: above, method: "slopes" };
+  return null;
+}
+// what to tell a student who picks a target that can't be built yet
+function cannotYet(prob, target) {
+  const via = prob.given === "a" ? "v" : "v";
+  const how = prob.given === "a" ? "areas" : "slopes";
+  return `The ${NAME[target]} graph comes from the ${how} of the ${NAME[via]} graph, and you don't have that yet. Make the ${NAME[via]} graph first.`;
+}
+
+// Items the student measures on the source graph.
+//  slopes: one per segment (two, start and end, for a curved segment)
+//  areas:  one per piece (segments split where the graph crosses zero)
+function itemsFor(prob, from, method) {
+  const m = prob.motion, items = [];
+  if (method === "slopes") {
+    const P = from === "s" ? segPieces(m, "s") : m.pieces.v;
+    P.forEach((p, k) => {
+      const slope = from === "s" ? sSlopes(m, p) : { start: (p.y1 - p.y0) / (p.t1 - p.t0) };
+      if (slope.end === undefined) items.push({ k, t0: p.t0, t1: p.t1, at: "segment", value: slope.start, piece: p });
+      else {
+        items.push({ k, t0: p.t0, t1: p.t1, at: "start", value: slope.start, piece: p });
+        items.push({ k, t0: p.t0, t1: p.t1, at: "end", value: slope.end, piece: p });
+      }
+    });
+  } else {
+    const P = from === "a" ? m.pieces.a : m.pieces.vFine;
+    P.forEach((p, k) => items.push({ k, t0: p.t0, t1: p.t1, value: (p.y0 + p.y1) / 2 * (p.t1 - p.t0), piece: p }));
+  }
+  return items;
+}
+// position pieces regrouped by segment (a Hard parabola is never split, since it can't turn mid-segment)
+function segPieces(m, g) {
+  return m.segs.map(seg => {
+    const f = m.pieces.s.filter(p => p.seg === seg.i);
+    return { seg: seg.i, t0: seg.t0, t1: seg.t1, y0: f[0].y0, y1: f[f.length - 1].y1, bend: f.length === 1 ? f[0].bend : 0, curved: seg.a !== 0, vStart: seg.vStart, vEnd: seg.vEnd };
+  });
+}
+function sSlopes(m, p) {
+  return p.curved ? { start: p.vStart, end: p.vEnd } : { start: (p.y1 - p.y0) / (p.t1 - p.t0) };
+}
+// slope items from any straight-piece graph (used when the source is a graph
+// the student built, whose values come from their own table)
+function slopeItemsFromPieces(pieces) {
+  return pieces.map((p, k) => ({ k, t0: p.t0, t1: p.t1, at: "segment", value: (p.y1 - p.y0) / (p.t1 - p.t0), piece: p }));
+}
+// the graph a slope table describes, piece by piece (values from the table)
+function piecesFromSlopes(items, values) {
+  const out = [];
+  const segs = [...new Set(items.map(it => it.k))];
+  for (const k of segs) {
+    const its = items.map((it, i) => ({ it, v: values[i] })).filter(x => x.it.k === k);
+    const t0 = its[0].it.t0, t1 = its[0].it.t1;
+    if (its.length === 1) out.push({ seg: k, t0, t1, y0: its[0].v, y1: its[0].v, bend: 0 });
+    else out.push({ seg: k, t0, t1, y0: its.find(x => x.it.at === "start").v, y1: its.find(x => x.it.at === "end").v, bend: 0 });
+  }
+  return out;
+}
+// what the finished target graph looks like, piece by piece
+function targetPieces(prob, target) {
+  const m = prob.motion;
+  if (target === "a") return m.pieces.a.map(p => Object.assign({}, p));
+  if (target === "v") return m.pieces.v.map(p => Object.assign({}, p));   // a straight line across any zero crossing
+  return m.pieces.s.map(p => Object.assign({}, p));
+}
+function countAnswer(prob, from, method) {
+  if (method === "slopes") return prob.motion.segs.length;
+  return itemsFor(prob, from, "areas").length;
+}
+function areaStart(prob, target) {
+  // the value the running total starts from
+  return target === "v" ? prob.spec.v0 : prob.spec.s0;
+}
+
+// ---------------------------------------------------------------- grading
+// A tangent / traced line drawn on the source graph, in data units:
+// {t1, y1, t2, y2}. Checked against the item's true slope, and it must run
+// through the right place (the segment for a straight piece, the start or
+// end point for a curved one).
+const TOL = {
+  slopeRel: 0.12,        // straight pieces are traced (Easy snaps to grid points)
+  slopeAbsBoxes: 0.25,   // … plus a quarter box of the target graph's scale
+  tangentRel: 0.25,      // a hand-placed tangent to a curve (Derivative Practice measured 25%)
+  touchBoxes: 0.45,      // the line must pass this close (in boxes) to where it should touch
+  calc: 0.03,            // Hard: typed slope vs the student's own labeled points
+  pointBoxes: 0.3,       // a plotted point must be within 0.3 box of the true value
+  bendRel: 0.4, bendAbsBoxes: 0.3,
+};
+function lineSlope(L) { return (L.y2 - L.y1) / (L.t2 - L.t1); }
+function distToLine(L, t, y, yScale) {
+  // vertical distance in boxes from (t, y) to the line, a fair proxy here
+  const m = lineSlope(L), yl = L.y1 + m * (t - L.t1);
+  return Math.abs(yl - y) / yScale;
+}
+function gradeTangent(prob, item, from, L, targetScale) {
+  if (!L || Math.abs(L.t2 - L.t1) < 0.2) return { ok: false, msg: "Draw a longer line so its slope can be measured." };
+  const m = lineSlope(L), ys = prob.scale[from];
+  const p = item.piece;
+  const where = item.at === "end" ? { t: p.t1, y: p.y1 } : item.at === "start" ? { t: p.t0, y: p.y0 } : { t: (p.t0 + p.t1) / 2, y: (p.y0 + p.y1) / 2 };
+  if (distToLine(L, where.t, where.y, ys) > TOL.touchBoxes) {
+    return { ok: false, msg: item.at === "segment" ? "Line your tool up on top of this segment." : `Touch the curve at the ${item.at} of the segment, at t = ${item.at === "end" ? p.t1 : p.t0} s.` };
+  }
+  const tol = (item.at === "segment" ? TOL.slopeRel : TOL.tangentRel) * Math.abs(item.value) + TOL.slopeAbsBoxes * targetScale;
+  if (Math.abs(m - item.value) > tol) return { ok: false, msg: item.at === "segment" ? "Your line isn't quite along the segment. Line it up with both ends." : "That line isn't tangent yet. Tilt it until it just touches the curve without cutting through it." };
+  return { ok: true, slope: m };
+}
+// Hard: the two labeled points on the student's committed line
+function labelPoints(L, yMin, yMax) {
+  const m = lineSlope(L), b = L.y1 - m * L.t1, eps = 1e-4 * (yMax - yMin);
+  const cand = [];
+  for (const t of [0, T_MAX]) { const y = m * t + b; if (y >= yMin - eps && y <= yMax + eps) cand.push({ t, y: Math.max(yMin, Math.min(yMax, y)) }); }
+  if (Math.abs(m) > 1e-9) for (const y of [yMin, yMax]) { const t = (y - b) / m; if (t > 0 && t < T_MAX) cand.push({ t, y }); }
+  cand.sort((p, q) => p.t - q.t);
+  const r1 = x => Math.round(x * 10) / 10;
+  if (cand.length < 2 || cand[cand.length - 1].t - cand[0].t < 0.5) return [{ t: r1(L.t1), y: r1(L.y1) }, { t: r1(L.t2), y: r1(L.y2) }].sort((p, q) => p.t - q.t);
+  const A = cand[0], B = cand[cand.length - 1];
+  return [{ t: r1(A.t), y: r1(A.y) }, { t: r1(B.t), y: r1(B.y) }];
+}
+// a typed answer: sign ("+"|"−"|"0"), value text, units
+function parseNum(s) {
+  if (s == null) return NaN;
+  s = String(s).trim().replace(/[−–]/g, "-").replace(/,/g, "");
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+  return Number(s);
+}
+function gradeTyped(entry, truth, unitWant, tolAbs) {
+  const v = parseNum(entry.value);
+  if (isNaN(v)) return { ok: false, msg: "Type the size as a number, like 4 or 2.5. The sign goes in the dropdown." };
+  if (v < 0) return { ok: false, msg: "Put the sign in the dropdown and type only the size." };
+  const sign = entry.sign === "−" ? -1 : entry.sign === "+" ? 1 : entry.sign === "0" ? 0 : null;
+  if (sign === null) return { ok: false, msg: "Choose a sign." };
+  const val = sign === 0 ? 0 : sign * v;
+  const okUnit = entry.unit === unitWant;
+  const okVal = Math.abs(val - truth) <= tolAbs;
+  const okSize = Math.abs(Math.abs(val) - Math.abs(truth)) <= tolAbs;
+  if (okVal && okUnit) return { ok: true };
+  if (okSize && !okVal) return { ok: false, msg: "Right size, wrong sign." };
+  if (okVal && !okUnit) return { ok: false, msg: `Right number, wrong units. Think about what you multiplied or divided.` };
+  return { ok: false, msg: "Not quite. Check your rise and run, or your base and height." };
+}
+// a perimeter around one area piece: vertices in data units, snapped to the grid
+function gradePerimeter(item, verts) {
+  const p = item.piece;
+  const want = [[p.t0, 0], [p.t0, p.y0], [p.t1, p.y1], [p.t1, 0]];
+  const key = ([t, y]) => `${Math.round(t * 1000)}|${Math.round(y * 1000)}`;
+  const W = [...new Set(want.map(key))];
+  const V = verts.map(q => key([q.t, q.y]));
+  const Vu = [...new Set(V)];
+  if (Vu.length !== W.length || !W.every(w => Vu.includes(w))) {
+    return { ok: false, msg: `That outline doesn't fit the area between the graph and the time axis from t = ${p.t0} s to t = ${p.t1} s. Use its corners: on the time axis at both ends, and on the graph at both ends.` };
+  }
+  // corners in perimeter order (no criss-cross)
+  if (Math.abs(shoelace(verts)) < 1e-9 || Math.abs(Math.abs(shoelace(verts)) - Math.abs(item.value)) > 1e-6) {
+    return { ok: false, msg: "Go around the edge in order so the outline doesn't cross itself." };
+  }
+  return { ok: true };
+}
+function shoelace(V) {
+  let s = 0;
+  for (let i = 0; i < V.length; i++) { const p = V[i], q = V[(i + 1) % V.length]; s += p.t * q.y - q.t * p.y; }
+  return s / 2;
+}
+
+// The student's target graph: points {id, t, y} and edges {id, a, b, bend}
+// in data units (bend in value units). Each true piece turns green when an
+// edge joins points at its two ends with the right values and shape.
+function gradeTarget(prob, target, work, yScale, piecesOverride) {
+  const P = piecesOverride || targetPieces(prob, target);
+  const byId = {}; work.points.forEach(p => { byId[p.id] = p; });
+  const close = (y, want) => Math.abs(y - want) <= TOL.pointBoxes * yScale;
+  return P.map(piece => {
+    const e = work.edges.find(e => {
+      const A = byId[e.a], B = byId[e.b];
+      if (!A || !B) return false;
+      const [p, q] = A.t <= B.t ? [A, B] : [B, A];
+      return Math.abs(p.t - piece.t0) < 1e-6 && Math.abs(q.t - piece.t1) < 1e-6;
+    });
+    if (!e) return { piece, ok: false, why: "missing" };
+    const A = byId[e.a], B = byId[e.b];
+    const [p, q] = A.t <= B.t ? [A, B] : [B, A];
+    if (!close(p.y, piece.y0) || !close(q.y, piece.y1)) return { piece, ok: false, why: "values" };
+    const bend = e.bend || 0;
+    // a bend smaller than the tolerance is invisible at this scale: straight is fine there
+    if (piece.bend === 0 || Math.abs(piece.bend) <= TOL.bendAbsBoxes * yScale) {
+      if (Math.abs(bend - piece.bend) > TOL.bendAbsBoxes * yScale) return { piece, ok: false, why: "straight" };
+    } else {
+      if (Math.sign(bend) !== Math.sign(piece.bend) || Math.abs(bend - piece.bend) > TOL.bendRel * Math.abs(piece.bend) + TOL.bendAbsBoxes * yScale) return { piece, ok: false, why: "curve" };
+    }
+    return { piece, ok: true };
+  });
+}
+const WHY = {
+  missing: "Put points at both ends of this piece and connect them.",
+  values: "One of the end points is at the wrong value. Check it against your table.",
+  straight: "This piece should be a straight line.",
+  curve: "This piece should curve. Drag the handle so it bends the right way, matching the slope at each end.",
+};
+
+// exact solution in the same shape as student work (for tests and the overlay)
+function modelTarget(prob, target, piecesOverride) {
+  const P = piecesOverride || targetPieces(prob, target), points = [], edges = [];
+  let n = 0;
+  const pt = (t, y) => { let p = points.find(q => Math.abs(q.t - t) < 1e-9 && Math.abs(q.y - y) < 1e-9); if (!p) { p = { id: "m" + n++, t, y }; points.push(p); } return p; };
+  for (const pc of P) { const a = pt(pc.t0, pc.y0), b = pt(pc.t1, pc.y1); edges.push({ id: "me" + edges.length, a: a.id, b: b.id, bend: pc.bend }); }
+  return { points, edges };
+}
+
+// Hard: is a student-chosen scale workable for this graph?
+function checkScale(prob, target, sc, piecesOverride) {
+  const P = piecesOverride || targetPieces(prob, target), all = [];
+  P.forEach(p => all.push(p.y0, p.y1));
+  const mx = Math.max(...all.map(Math.abs));
+  if (mx > BOXES * sc + 1e-9) return { ok: false, msg: `With 1 box = ${sc} ${UNIT[target]}, the graph only reaches ${BOXES * sc} ${UNIT[target]}, and some of your values are bigger than that. Pick a bigger scale.` };
+  if (mx < 1.5 * sc - 1e-9 && mx !== 0) return { ok: false, msg: `With 1 box = ${sc} ${UNIT[target]}, your whole graph would fit inside about one box. Pick a smaller scale so the shape is readable.` };
+  return { ok: true };
+}
+
+const api = { T_MAX, BOXES, SCALES, HARD_SCALES, UNIT, NAME, ORDER, UNIT_CHOICES, TOL, WHY, mulberry32,
+  buildMotion, makeProblem, sourceFor, cannotYet, itemsFor, targetPieces, countAnswer, areaStart,
+  gradeTangent, labelPoints, slopeItemsFromPieces, piecesFromSlopes, lineSlope, gradeTyped, parseNum, gradePerimeter, shoelace, gradeTarget, modelTarget, checkScale };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.AMG = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+"use strict";
+// ---------------------------------------------------------------- geometry (one SVG per graph)
+const SVGNS = "http://www.w3.org/2000/svg";
+const GW = 640, X0 = 74, X1 = 614, BOX = 20, TOPY = 22, MIDY = TOPY + AMG.BOXES * BOX, GHT = TOPY + 2 * AMG.BOXES * BOX + 48;
+const tx = t => X0 + (t / AMG.T_MAX) * (X1 - X0);
+const xt = x => (x - X0) / (X1 - X0) * AMG.T_MAX;
+const el = (tag, attrs, parent) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const $ = id => document.getElementById(id);
+const GORDER = ["s", "v", "a"];
+const SYM = { s: "s", v: "v", a: "a" };
+const fmt = x => { const r = Math.round(x * 100) / 100; return (Object.is(r, -0) ? 0 : r).toString(); };
+const signed = x => (x > 0 ? "+" : x < 0 ? "−" : "") + fmt(Math.abs(x));
+
+// ---------------------------------------------------------------- state
+const state = {
+  mode: "easy", prob: null, built: [], builtPieces: {}, history: {},
+  phase: "chooseTarget", target: null, src: null, items: [], idx: 0, rows: [], running: [],
+  scale: {}, work: { points: [], edges: [] }, nextId: 1, tool: "point", sel: null, drag: null,
+  line: null, lineLocked: false, labels: null, poly: [], polyOk: false, msg: "", msgKind: "",
+  finished: 0, byGiven: { a: 0, v: 0, s: 0 },
+};
+
+function scaleOf(g) {
+  if (g === state.prob.given || state.mode === "easy") return state.prob.scale[g];
+  return state.scale[g] || null;
+}
+function graphPieces(g) {
+  if (g === state.prob.given) return state.prob.motion.pieces[g === "v" ? "v" : g];
+  return state.builtPieces[g] || null;
+}
+const py = (g, y) => { const sc = scaleOf(g) || 1; return MIDY - (y / sc) * BOX; };
+const yv = (g, p) => { const sc = scaleOf(g) || 1; return (MIDY - p) / BOX * sc; };
+
+// ---------------------------------------------------------------- new problem
+function newProblem(opts) {
+  state.prob = AMG.makeProblem(Object.assign({ mode: state.mode }, opts || {}));
+  Object.assign(state, { built: [], builtPieces: {}, history: {}, phase: "chooseTarget", target: null, src: null, items: [], idx: 0, rows: [], running: [],
+    scale: {}, work: { points: [], edges: [] }, nextId: 1, tool: "point", sel: null, drag: null, line: null, lineLocked: false, labels: null, poly: [], polyOk: false, msg: "", msgKind: "", counted: false, finishedThis: false });
+  buildRows(); render();
+}
+function say(msg, kind) { state.msg = msg; state.msgKind = kind || ""; renderMsg(); }
+
+// ---------------------------------------------------------------- page structure
+function buildRows() {
+  const rows = $("rows"); rows.innerHTML = "";
+  for (const g of GORDER) {
+    const gp = document.createElement("section"); gp.className = "panel gpanel";
+    const svg = el("svg", { class: "gsvg", id: "g-" + g, viewBox: `0 0 ${GW} ${GHT}`, role: "img", "aria-label": AMG.NAME[g] + " graph" });
+    gp.appendChild(svg); rows.appendChild(gp);
+    const slot = document.createElement("section"); slot.className = "panel slot"; slot.id = "slot-" + g; rows.appendChild(slot);
+    svg.addEventListener("pointerdown", e => onDown(g, e));
+    svg.addEventListener("pointermove", e => onMove(g, e));
+    svg.addEventListener("pointerup", e => onUp(g, e));
+  }
+}
+function svgPt(g, evt) {
+  const svg = $("g-" + g), r = svg.getBoundingClientRect();
+  return { x: (evt.clientX - r.left) * GW / r.width, y: (evt.clientY - r.top) * GHT / r.height };
+}
+
+// ---------------------------------------------------------------- rendering
+function render() { renderTally(); renderCard(); renderGraphs(); renderSlots(); renderMsg(); }
+function renderMsg() { const m = $("msg"); m.textContent = state.msg; m.className = "msg " + state.msgKind; }
+function renderTally() { const b = state.byGiven; $("tally").innerHTML = `<b>${state.finished}</b> finished <span style="opacity:.8">· from a ${b.a} · from v ${b.v} · from s ${b.s}</span>`; }
+
+function renderGraphs() { for (const g of GORDER) drawGraph(g); }
+function drawGraph(g) {
+  const svg = $("g-" + g); svg.innerHTML = "";
+  const p = state.prob, sc = scaleOf(g);
+  // grid
+  for (let k = -AMG.BOXES; k <= AMG.BOXES; k++) el("line", { class: "grid" + (k % 2 === 0 ? " major" : ""), x1: X0, x2: X1, y1: MIDY - k * BOX, y2: MIDY - k * BOX }, svg);
+  for (let t = 0; t <= AMG.T_MAX; t++) el("line", { class: "grid", x1: tx(t), x2: tx(t), y1: TOPY, y2: TOPY + 2 * AMG.BOXES * BOX }, svg);
+  // labels
+  for (let k = -AMG.BOXES; k <= AMG.BOXES; k += 2) {
+    const tl = el("text", { class: "ylab", x: X0 - 6, y: MIDY - k * BOX + 4, "text-anchor": "end" }, svg);
+    tl.textContent = sc ? fmt(k * sc) : (k === 0 ? "0" : "?");
+  }
+  const BOT = TOPY + 2 * AMG.BOXES * BOX;
+  for (let t = 0; t <= AMG.T_MAX; t++) { const tl = el("text", { class: "ylab", x: tx(t), y: BOT + 17, "text-anchor": "middle" }, svg); tl.textContent = t; }
+  const nm = el("text", { class: "gname", x: 10, y: TOPY + 4 }, svg); nm.textContent = SYM[g];
+  const un = el("text", { class: "gunit", x: 10, y: TOPY + 20 }, svg); un.textContent = "(" + AMG.UNIT[g] + ")";
+  const bx = el("text", { class: "gunit", x: X0, y: BOT + 40 }, svg); bx.textContent = sc ? `1 box = ${fmt(sc)} ${AMG.UNIT[g]}` : "1 box = ?";
+  const tlab = el("text", { class: "gunit", x: X1, y: BOT + 40, "text-anchor": "end" }, svg); tlab.textContent = "time, t (s)";
+  // axes
+  el("line", { class: "axis", x1: X0, x2: X1 + 14, y1: MIDY, y2: MIDY }, svg);
+  el("polygon", { class: "axhead", points: `${X1 + 22},${MIDY} ${X1 + 10},${MIDY - 6} ${X1 + 10},${MIDY + 6}` }, svg);
+  el("line", { class: "axis", x1: X0, x2: X0, y1: TOPY - 6, y2: TOPY + 2 * AMG.BOXES * BOX }, svg);
+  // alignment lines at every segment boundary (and at zero crossings once the student is splitting areas there)
+  for (const b of p.bounds.slice(1, -1)) el("line", { class: "bline", x1: tx(b), x2: tx(b), y1: TOPY - 4, y2: TOPY + 2 * AMG.BOXES * BOX }, svg);
+  if (showCrossings()) for (const c of p.motion.crossings) el("line", { class: "bline cross", x1: tx(c), x2: tx(c), y1: TOPY - 4, y2: TOPY + 2 * AMG.BOXES * BOX }, svg);
+  // Easy straight-position problems: velocity jumps at the corners
+  if (p.corners.length && g !== "s") for (const c of p.corners) { const j = el("text", { class: "jump", x: tx(c) + 3, y: TOPY + 8 }, svg); j.textContent = g === "v" ? "jumps" : "v jumps"; }
+  // highlight band for the item being measured
+  if (state.phase === "measure" && state.src && state.src.from === g) {
+    const it = state.items[state.idx];
+    if (it) el("rect", { class: "band", x: tx(it.t0), y: TOPY, width: tx(it.t1) - tx(it.t0), height: 2 * AMG.BOXES * BOX }, svg);
+  }
+  // given or finished graphs
+  const P = graphPieces(g);
+  if (P && sc) {
+    const cls = g === p.given ? "givenline" : "builtline";
+    for (const pc of P) {
+      const x1 = tx(pc.t0), y1 = py(g, pc.y0), x2 = tx(pc.t1), y2 = py(g, pc.y1);
+      const cy = py(g, (pc.y0 + pc.y1) / 2 + pc.bend);
+      el("path", { class: cls, d: `M${x1} ${y1} Q${(x1 + x2) / 2} ${cy} ${x2} ${y2}` }, svg);
+      if (g === p.given) { el("circle", { class: "givendot", cx: x1, cy: y1, r: 3.5 }, svg); el("circle", { class: "givendot", cx: x2, cy: y2, r: 3.5 }, svg); }
+    }
+  }
+  // tools on this graph
+  if (state.src && state.src.from === g && state.phase === "measure") {
+    if (state.src.method === "slopes") drawLine(svg, g); else drawPoly(svg, g);
+  }
+  if (state.target === g && state.phase === "plot") drawWork(svg, g);
+}
+function showCrossings() {
+  if (!state.src) return false;
+  return state.src.method === "areas" && state.src.from === "v" && (state.counted || state.phase !== "count");
+}
+function drawLine(svg, g) {
+  const L = state.line; if (!L) return;
+  if (state.lineLocked && state.mode === "hard" && state.labels) {
+    const [A, B] = state.labels;
+    el("line", { class: "tan ext", x1: tx(A.t), y1: py(g, A.y), x2: tx(B.t), y2: py(g, B.y) }, svg);
+    for (const q of [A, B]) {
+      el("circle", { class: "polyv", cx: tx(q.t), cy: py(g, q.y), r: 5 }, svg);
+      const s = `(${fmt(q.t)} s, ${fmt(q.y)} ${AMG.UNIT[g]})`;
+      const w = s.length * 7.2 + 10, lx = Math.min(Math.max(tx(q.t) - w / 2, 2), GW - w - 2), ly = py(g, q.y) + (py(g, q.y) < MIDY ? 14 : -30);
+      el("rect", { class: "labbg", x: lx, y: ly, width: w, height: 18, rx: 4 }, svg);
+      const t = el("text", { class: "lab", x: lx + 5, y: ly + 13 }, svg); t.textContent = s;
+    }
+  }
+  el("line", { class: "tan", x1: tx(L.t1), y1: py(g, L.y1), x2: tx(L.t2), y2: py(g, L.y2) }, svg);
+  if (!state.lineLocked) { el("circle", { class: "tanh", cx: tx(L.t1), cy: py(g, L.y1), r: 8, "data-h": "1" }, svg); el("circle", { class: "tanh", cx: tx(L.t2), cy: py(g, L.y2), r: 8, "data-h": "2" }, svg); }
+}
+function drawPoly(svg, g) {
+  // finished perimeters for earlier items stay green
+  state.rows.forEach((r, i) => { if (r.poly && i !== state.idx) el("polygon", { class: "poly ok", points: r.poly.map(q => `${tx(q.t)},${py(g, q.y)}`).join(" ") }, svg); });
+  const V = state.poly; if (!V.length) return;
+  if (state.polyOk) el("polygon", { class: "poly ok", points: V.map(q => `${tx(q.t)},${py(g, q.y)}`).join(" ") }, svg);
+  else el("polyline", { class: "poly", points: V.map(q => `${tx(q.t)},${py(g, q.y)}`).join(" "), "fill-opacity": 0.08 }, svg);
+  V.forEach((q, i) => el("circle", { class: "polyv", cx: tx(q.t), cy: py(g, q.y), r: i === 0 ? 7 : 5 }, svg));
+}
+function drawWork(svg, g) {
+  const W = state.work, byId = {}; W.points.forEach(p => { byId[p.id] = p; });
+  const res = gradeNow();
+  for (const e of W.edges) {
+    const A = byId[e.a], B = byId[e.b]; if (!A || !B) continue;
+    const [p, q] = A.t <= B.t ? [A, B] : [B, A];
+    const x1 = tx(p.t), y1 = py(g, p.y), x2 = tx(q.t), y2 = py(g, q.y), cy = py(g, (p.y + q.y) / 2 + (e.bend || 0));
+    const ok = res.some(r => r.ok && r.edge === e.id);
+    const d = `M${x1} ${y1} Q${(x1 + x2) / 2} ${cy} ${x2} ${y2}`;
+    el("path", { class: "seg" + (ok ? " ok" : ""), d }, svg);
+    el("path", { class: "seg hit", d, "data-edge": e.id }, svg);
+    el("circle", { class: "handle", cx: (x1 + x2) / 2, cy: (y1 + 2 * cy + y2) / 4, r: 7, "data-handle": e.id }, svg);
+  }
+  for (const p of W.points) el("circle", { class: "pt" + (state.sel === p.id ? " sel" : ""), cx: tx(p.t), cy: py(g, p.y), r: 6.5 }, svg);
+}
+
+// ---------------------------------------------------------------- the step card
+function chips() {
+  const p = state.prob, out = [`<span class="chip warm">Given: ${AMG.NAME[p.given]}</span>`];
+  if ("s0" in p.announce || "v0" in p.announce) {
+    if ("v0" in p.announce) out.push(`<span class="chip">initial velocity v₀ = ${signed(p.announce.v0)} m/s</span>`);
+    if ("s0" in p.announce) out.push(`<span class="chip">initial position s₀ = ${signed(p.announce.s0)} m</span>`);
+  }
+  return out.join("");
+}
+function remaining() { return ["s", "v", "a"].filter(g => g !== state.prob.given && !state.built.includes(g)); }
+function renderCard() {
+  $("givenChips").innerHTML = chips();
+  const p = state.prob, ph = state.phase, C = $("controls");
+  const G = AMG.NAME;
+  if (ph === "chooseTarget") {
+    const rem = remaining();
+    $("prompt").textContent = state.built.length === 0
+      ? `Here you have a ${G[p.given]} graph. You need to make ${rem.map(g => "a" + (g === "a" ? "n " : " ") + G[g] + " graph").join(" and ")}. Which one do you want to make first?`
+      : `Nice. Now make the ${G[rem[0]]} graph.`;
+    C.innerHTML = `<select id="selTarget"><option value="">Choose a graph…</option>${rem.map(g => `<option value="${g}">${G[g]}</option>`).join("")}</select><button class="btn primary" id="goTarget">Start</button>`;
+    $("goTarget").onclick = () => {
+      const t = $("selTarget").value; if (!t) return say("Choose a graph first.", "bad");
+      const src = AMG.sourceFor(p, t, state.built);
+      if (!src) return say(AMG.cannotYet(p, t), "bad");
+      state.target = t; state.src = src; state.phase = "chooseMethod"; say(""); render();
+    };
+  } else if (ph === "chooseMethod") {
+    const f = state.src.from;
+    $("prompt").textContent = `You'll build the ${G[state.target]} graph from the ${G[f]} graph. Will you use its slopes or its areas?`;
+    C.innerHTML = `<select id="selMethod"><option value="">Choose…</option><option value="slopes">slopes</option><option value="areas">areas</option></select><button class="btn primary" id="goMethod">Check</button>`;
+    $("goMethod").onclick = () => {
+      const m = $("selMethod").value; if (!m) return say("Choose slopes or areas.", "bad");
+      if (m !== state.src.method) {
+        return say(state.src.method === "slopes"
+          ? `Not areas. ${G[state.target][0].toUpperCase() + G[state.target].slice(1)} is the slope of ${G[f]}: going down the stack, you take slopes.`
+          : `Not slopes. The area under the ${G[f]} graph is the change in ${G[state.target]}: going up the stack, you add up areas.`, "bad");
+      }
+      state.phase = "count"; say(""); render();
+    };
+  } else if (ph === "count") {
+    const f = state.src.from;
+    $("prompt").textContent = state.src.method === "slopes" ? `How many segments do you see on the ${G[f]} graph?` : `How many areas will you break the total area under the ${G[f]} graph into?`;
+    C.innerHTML = `<select id="selCount"><option value="">Choose…</option>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<option>${n}</option>`).join("")}</select><button class="btn primary" id="goCount">Check</button>`;
+    $("goCount").onclick = () => {
+      const n = Number($("selCount").value), want = AMG.countAnswer(p, f, state.src.method);
+      if (!n) return say("Choose a number.", "bad");
+      if (n !== want) return say(state.src.method === "slopes"
+        ? "Count again. Each piece between the dashed lines is one segment."
+        : "Count again. Each piece between the dashed lines is one area, and any piece that crosses the time axis splits into two: the part above the axis and the part below it count separately.", "bad");
+      state.counted = true; startMeasure(); say(""); render();
+    };
+  } else if (ph === "measure") renderMeasureCard();
+  else if (ph === "running") {
+    $("prompt").textContent = `Start from ${state.target === "v" ? "v₀" : "s₀"} and add each ${deltaName()} in turn. Fill in the value at the end of each piece in the table. Put in a number like −12 or +30.`;
+    C.innerHTML = "";
+  } else if (ph === "scale") {
+    $("prompt").textContent = `Choose a scale for your ${G[state.target]} graph. Every value you need has to fit on the grid (6 boxes up, 6 boxes down).`;
+    C.innerHTML = `<span>1 box =</span><select id="selScale"><option value="">…</option>${AMG.HARD_SCALES[state.target].map(s => `<option>${s}</option>`).join("")}</select><span>${AMG.UNIT[state.target]}</span><button class="btn primary" id="goScale">Use this scale</button>`;
+    $("goScale").onclick = () => {
+      const sc = Number($("selScale").value); if (!sc) return say("Choose a scale.", "bad");
+      const r = AMG.checkScale(p, state.target, sc, expectedPieces());
+      if (!r.ok) return say(r.msg, "bad");
+      state.scale[state.target] = sc; state.phase = "plot"; state.tool = "point"; say(""); render();
+    };
+  } else if (ph === "plot") {
+    $("prompt").textContent = `Now draw the ${G[state.target]} graph. Put a point at each end of every piece using your table, connect them, and drag a line's handle to curve it where the shape should bend. Each piece turns green when it's right.`;
+    C.innerHTML = `<div class="toolrow">${[["point", "Point"], ["connect", "Connect"], ["erase", "Erase"]].map(([k, n]) => `<button class="tool${state.tool === k ? " on" : ""}" data-tool="${k}" id="tool-${k}">${n}</button>`).join("")}</div>`;
+    C.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => { state.tool = b.dataset.tool; state.sel = null; render(); });
+  } else if (ph === "done") {
+    $("prompt").textContent = "All three graphs are complete. Slopes took you down the stack and areas took you up. Press New problem for another one.";
+    C.innerHTML = "";
+  }
+}
+function deltaName() { return state.target === "v" ? "∆v" : "∆s"; }
+
+// ---------------------------------------------------------------- measuring (slopes or areas)
+function startMeasure() {
+  const p = state.prob, f = state.src.from;
+  state.items = (f === p.given || state.src.method === "areas") ? AMG.itemsFor(p, f, state.src.method) : AMG.slopeItemsFromPieces(state.builtPieces[f]);
+  state.idx = 0; state.rows = state.items.map(() => ({ done: false })); state.running = state.items.map(() => ({ ok: false, value: "" }));
+  state.line = null; state.lineLocked = false; state.labels = null; state.poly = []; state.polyOk = false;
+  state.phase = "measure";
+}
+function unitWanted() {
+  const f = state.src.from;
+  return state.src.method === "slopes" ? (f === "s" ? "m/s" : "m/s²") : (f === "a" ? "m/s" : "m");
+}
+function itemLabel(it, method) {
+  method = method || (state.src && state.src.method) || "slopes";
+  const k = it.k + 1;
+  if (it.at === "start") return `segment ${k}, start (t = ${it.t0} s)`;
+  if (it.at === "end") return `segment ${k}, end (t = ${it.t1} s)`;
+  return method === "slopes" ? `segment ${k} (${it.t0}–${it.t1} s)` : `area ${it.k + 1} (${it.t0}–${it.t1} s)`;
+}
+function renderMeasureCard() {
+  const it = state.items[state.idx], C = $("controls"), f = state.src.from, hard = state.mode === "hard";
+  const row = state.rows[state.idx];
+  if (state.src.method === "slopes") {
+    const what = it.at === "segment" ? `Trace ${itemLabel(it)} on the ${AMG.NAME[f]} graph` : `Draw a tangent line that touches the curve at the ${it.at} of segment ${it.k + 1} (t = ${it.at === "end" ? it.t1 : it.t0} s)`;
+    if (!state.lineLocked) {
+      $("prompt").textContent = `${what}. Drag on the graph to draw a line, then drag its ends to adjust it.`;
+      const m = state.line && Math.abs(state.line.t2 - state.line.t1) > 0.05 ? AMG.lineSlope(state.line) : null;
+      C.innerHTML = (hard ? "" : `<span class="readout" id="slopeRead">slope = ${m === null ? "—" : signed(m) + " " + unitWanted()}</span>`) + `<button class="btn primary" id="lockLine" ${state.line ? "" : "disabled"}>Lock in this line</button>`;
+      $("lockLine").onclick = lockLine;
+    } else {
+      const [A, B] = state.labels;
+      $("prompt").textContent = `Your line passes through the two labeled points. Use them to find its slope (rise over run), then enter the sign, size and units.`;
+      C.innerHTML = typedInputs("ty") + `<button class="btn primary" id="goTyped">Check</button><button class="btn" id="redraw">Redraw the line</button>`;
+      $("goTyped").onclick = () => {
+        const mOwn = (B.y - A.y) / (B.t - A.t);
+        const r = AMG.gradeTyped(readTyped("ty"), mOwn, unitWanted(), AMG.TOL.calc * Math.abs(mOwn) + 0.05);
+        if (!r.ok) return say(r.msg, "bad");
+        recordRow(mOwn);
+      };
+      $("redraw").onclick = () => { state.line = null; state.lineLocked = false; state.labels = null; say(""); render(); };
+    }
+  } else {
+    if (!state.polyOk) {
+      $("prompt").textContent = `Outline ${itemLabel(it)} under the ${AMG.NAME[f]} graph. Click its corners in order, then click the first corner again to close it.`;
+      C.innerHTML = `<button class="btn" id="undoPt" ${state.poly.length ? "" : "disabled"}>Undo corner</button><button class="btn ghost" id="clearPoly">Start over</button>`;
+      $("undoPt").onclick = () => { state.poly.pop(); render(); };
+      $("clearPoly").onclick = () => { state.poly = []; render(); };
+    } else {
+      $("prompt").textContent = `That outline is right. Find its area: base × height for a rectangle, ½ × base × height for a triangle. Below the axis, the area is negative. Enter the sign, size and units of ${deltaName()}.`;
+      C.innerHTML = typedInputs("ty") + `<button class="btn primary" id="goTyped">Check</button>`;
+      $("goTyped").onclick = () => {
+        const r = AMG.gradeTyped(readTyped("ty"), it.value, unitWanted(), 0.01 + 1e-9);
+        if (!r.ok) return say(r.msg, "bad");
+        recordRow(it.value);
+      };
+    }
+  }
+}
+function typedInputs(pfx) {
+  return `<select id="${pfx}-sign"><option value="">sign</option><option>+</option><option>−</option><option>0</option></select>
+    <input id="${pfx}-val" inputmode="decimal" placeholder="size" size="6">
+    <select id="${pfx}-unit"><option value="">units</option>${AMG.UNIT_CHOICES.map(u => `<option>${u}</option>`).join("")}</select>`;
+}
+function readTyped(pfx) { return { sign: $(pfx + "-sign").value, value: $(pfx + "-val").value, unit: $(pfx + "-unit").value }; }
+
+function lockLine() {
+  const it = state.items[state.idx], L = state.line;
+  const tScale = state.mode === "easy" ? state.prob.scale[state.target] : (state.prob.scale[state.target]);
+  const r = AMG.gradeTangent(state.prob, it, state.src.from, L, tScale);
+  if (!r.ok) return say(r.msg, "bad");
+  if (state.mode === "easy") { recordRow(r.slope); return; }
+  const g = state.src.from, sc = scaleOf(g);
+  state.lineLocked = true; state.labels = AMG.labelPoints(L, -AMG.BOXES * sc, AMG.BOXES * sc);
+  say("Good line. Now find its slope from the labeled points.", "good"); render();
+}
+function recordRow(value) {
+  const it = state.items[state.idx];
+  state.rows[state.idx] = { done: true, value, poly: state.src.method === "areas" ? state.poly.slice() : null };
+  say(`${itemLabel(it)}: ${signed(value)} ${unitWanted()} ✓`, "good");
+  state.idx++; state.line = null; state.lineLocked = false; state.labels = null; state.poly = []; state.polyOk = false;
+  if (state.idx >= state.items.length) afterMeasure();
+  render();
+}
+function afterMeasure() {
+  if (state.src.method === "areas") { state.phase = "running"; return; }
+  goPlot();
+}
+function goPlot() {
+  state.work = { points: [], edges: [] }; state.sel = null; state.tool = "point";
+  state.phase = state.mode === "hard" ? "scale" : "plot";
+}
+// the target graph
+// (every row was graded against the truth within tolerance, so once accepted the graph carries the true values forward)
+function expectedPieces() {
+  return AMG.targetPieces(state.prob, state.target);
+}
+function gradeNow() {
+  const sc = scaleOf(state.target);
+  if (!sc) return [];
+  const exp = expectedPieces();
+  const res = AMG.gradeTarget(state.prob, state.target, state.work, sc, exp);
+  // remember which edge satisfied each piece, for colouring
+  const byId = {}; state.work.points.forEach(p => { byId[p.id] = p; });
+  return res.map(r => {
+    const e = state.work.edges.find(e => { const A = byId[e.a], B = byId[e.b]; if (!A || !B) return false; const [p, q] = A.t <= B.t ? [A, B] : [B, A]; return Math.abs(p.t - r.piece.t0) < 1e-6 && Math.abs(q.t - r.piece.t1) < 1e-6; });
+    return Object.assign({ edge: e && e.id }, r);
+  });
+}
+function checkPlotDone() {
+  const res = gradeNow();
+  if (res.length && res.every(r => r.ok)) {
+    state.built.push(state.target);
+    state.builtPieces[state.target] = expectedPieces();
+    state.history[state.target] = { src: state.src, items: state.items, rows: state.rows, running: state.running };
+    const rem = remaining();
+    state.src = null; state.items = []; state.rows = []; state.running = [];
+    if (rem.length) { state.phase = "chooseTarget"; say(`The ${AMG.NAME[state.target]} graph is complete.`, "good"); state.target = null; }
+    else { state.phase = "done"; state.target = null; say("All three graphs are complete.", "good");
+      if (!state.finishedThis) { state.finishedThis = true; state.finished++; state.byGiven[state.prob.given]++; } }
+    render();
+  }
+}
+
+// ---------------------------------------------------------------- side panels (tables next to the graph being built)
+function renderSlots() {
+  const p = state.prob;
+  for (const g of GORDER) {
+    const slot = $("slot-" + g);
+    const name = AMG.NAME[g][0].toUpperCase() + AMG.NAME[g].slice(1);
+    let html = "";
+    if (g === p.given) {
+      html = `<h3>${name}<span class="badge isgiven">given</span></h3><div class="state">This is the graph you start from.${g === "v" && "s0" in p.announce ? ` The object starts at <b>s₀ = ${signed(p.announce.s0)} m</b>.` : ""}${g === "a" ? ` It starts with <b>v₀ = ${signed(p.announce.v0)} m/s</b> at <b>s₀ = ${signed(p.announce.s0)} m</b>.` : ""}</div>`;
+      if (p.corners.length && g === "s") html += `<div class="state">Each segment is a straight line, so the velocity is constant on each one and jumps at the corners. The acceleration is zero on every segment.</div>`;
+    } else if (state.target === g && state.src) {
+      html = `<h3>${name}<span class="badge now">building</span></h3>` + tableHTML(state.src, state.items, state.rows, state.running, true);
+    } else if (state.built.includes(g)) {
+      const h = state.history[g];
+      html = `<h3>${name}<span class="badge done">done</span></h3>` + tableHTML(h.src, h.items, h.rows, h.running, false);
+    } else {
+      html = `<h3>${name}</h3><div class="state">Not built yet.</div>`;
+    }
+    slot.innerHTML = html;
+  }
+  wireRunning();
+}
+function tableHTML(src, items, rows, running, live) {
+  const f = AMG.NAME[src.from], u = src.method === "slopes" ? (src.from === "s" ? "m/s" : "m/s²") : (src.from === "a" ? "m/s" : "m");
+  if (src.method === "slopes") {
+    return `<div class="state">Slopes of the ${f} graph</div><div class="tblwrap"><table class="tbl"><thead><tr><th>where</th><th>slope</th><th></th></tr></thead><tbody>${items.map((it, i) => {
+      const r = rows[i] || {};
+      return `<tr class="${r.done ? "ok" : ""}${live && i === state.idx && state.phase === "measure" ? " cur" : ""}"><td>${itemLabel(it, src.method)}</td><td>${r.done ? signed(r.value) + " " + u : ""}</td><td class="mark">${r.done ? "✓" : ""}</td></tr>`;
+    }).join("")}</tbody></table></div>`;
+  }
+  const D = src.from === "a" ? "∆v" : "∆s", Y = src.from === "a" ? "v" : "s", y0 = src.from === "a" ? "v₀" : "s₀";
+  const start0 = AMG.areaStart(state.prob, src.from === "a" ? "v" : "s");
+  let prev = start0;
+  return `<div class="state">Areas under the ${f} graph are changes, <span class="delta">${D}</span>. Start from <b>${y0} = ${signed(start0)} ${src.from === "a" ? "m/s" : "m"}</b> and add each one.</div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>area</th><th class="delta">${D}</th><th>${Y} at start</th><th>${Y} at end</th><th></th></tr></thead><tbody>${items.map((it, i) => {
+      const r = rows[i] || {}, run = running[i] || {};
+      const startTxt = i === 0 ? signed(start0) : (running[i - 1] && running[i - 1].ok ? signed(prev) : "");
+      const cell = run.ok ? signed(run.num) : (live && state.phase === "running" && (i === 0 || (running[i - 1] && running[i - 1].ok)) ? `<input class="num" data-run="${i}" inputmode="decimal" placeholder="±" value="${run.value || ""}">` : "");
+      const out = `<tr class="${run.ok ? "ok" : ""}${live && i === state.idx && state.phase === "measure" ? " cur" : ""}"><td>${it.t0}–${it.t1} s</td><td>${r.done ? signed(r.value) + " " + u : ""}</td><td>${startTxt}</td><td>${cell}</td><td class="mark">${run.ok ? "✓" : ""}</td></tr>`;
+      if (run.ok) prev = run.num;
+      return out;
+    }).join("")}</tbody></table></div>`;
+}
+function wireRunning() {
+  document.querySelectorAll("input[data-run]").forEach(inp => {
+    const go = () => {
+      const i = Number(inp.dataset.run), it = state.items[i];
+      const prev = i === 0 ? AMG.areaStart(state.prob, state.target) : state.running[i - 1].num;
+      const want = prev + state.rows[i].value, x = AMG.parseNum(inp.value);
+      state.running[i].value = inp.value;
+      if (isNaN(x)) return say("Put in a number like −12 or +30.", "bad");
+      // a vector value: positive needs its + sign (zero needs none)
+      const typed = inp.value.trim();
+      if (Math.abs(x - want) <= 1e-6 && want > 0 && !typed.startsWith("+")) return say(`Right size, but it's positive: put a + in front, like ${signed(want)}.`, "bad");
+      if (Math.abs(x - want) > 1e-6) return say(`Not quite: start at ${signed(prev)} and add ${signed(state.rows[i].value)}.`, "bad");
+      state.running[i] = { ok: true, num: want, value: inp.value };
+      say(`${signed(prev)} + (${signed(state.rows[i].value)}) = ${signed(want)} ✓`, "good");
+      if (state.running.every(r => r.ok)) goPlot();
+      render();
+      const nx = document.querySelector("input[data-run]"); if (nx) nx.focus();
+    };
+    inp.addEventListener("change", go);
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } });
+  });
+}
+
+// ---------------------------------------------------------------- pointer input
+function snapT(t) { return Math.max(0, Math.min(AMG.T_MAX, Math.round(t))); }
+function snapGridY(g, y) { const sc = scaleOf(g) || 1; return Math.round(y / sc) * sc; }
+function nearGridPoint(g, pt, radius) {
+  const t = Math.round(xt(pt.x)), y = snapGridY(g, yv(g, pt.y));
+  return Math.hypot(tx(t) - pt.x, py(g, y) - pt.y) <= radius ? { t, y } : null;
+}
+function clampT(t) { return Math.max(0, Math.min(AMG.T_MAX, t)); }
+function onDown(g, evt) {
+  const pt = svgPt(g, evt);
+  if (state.phase === "measure" && state.src.from === g) {
+    if (state.src.method === "slopes") {
+      if (state.lineLocked) return;
+      const h = evt.target.getAttribute && evt.target.getAttribute("data-h");
+      if (h) { state.drag = { kind: "lineEnd", h }; $("g-" + g).setPointerCapture(evt.pointerId); return; }
+      const q = lineSnap(g, pt);
+      state.line = { t1: q.t, y1: q.y, t2: q.t, y2: q.y }; state.drag = { kind: "lineEnd", h: "2" };
+      $("g-" + g).setPointerCapture(evt.pointerId); render(); return;
+    }
+    // perimeter corner
+    if (state.polyOk) return;
+    const q = polySnap(g, pt);
+    const V = state.poly;
+    if (V.length >= 3 && Math.abs(V[0].t - q.t) < 1e-9 && Math.abs(V[0].y - q.y) < 1e-9) {
+      const r = AMG.gradePerimeter(state.items[state.idx], V);
+      if (!r.ok) { say(r.msg, "bad"); state.poly = []; render(); return; }
+      state.polyOk = true;
+      if (state.mode === "easy") { recordRow(state.items[state.idx].value); state.rows[state.idx - 1].poly = V.slice(); render(); }
+      else { say("That outline is right.", "good"); render(); }
+      return;
+    }
+    if (V.length && Math.abs(V[V.length - 1].t - q.t) < 1e-9 && Math.abs(V[V.length - 1].y - q.y) < 1e-9) return;
+    V.push(q); render(); return;
+  }
+  if (state.phase === "plot" && state.target === g) {
+    const tgt = evt.target;
+    const hid = tgt.getAttribute && tgt.getAttribute("data-handle");
+    const eid = tgt.getAttribute && (tgt.getAttribute("data-edge") || hid);
+    if (state.tool === "erase") {
+      const near = pointNear(g, pt);
+      if (near) { state.work.points = state.work.points.filter(p => p !== near); state.work.edges = state.work.edges.filter(e => e.a !== near.id && e.b !== near.id); }
+      else if (eid) state.work.edges = state.work.edges.filter(e => e.id !== eid);
+      afterEdit(); return;
+    }
+    if (hid) { state.drag = { kind: "bend", id: hid }; $("g-" + g).setPointerCapture(evt.pointerId); return; }
+    const near = pointNear(g, pt);
+    if (state.tool === "point") {
+      if (near) { state.drag = { kind: "pt", id: near.id }; $("g-" + g).setPointerCapture(evt.pointerId); return; }
+      const q = plotSnap(g, pt);
+      const p = { id: "p" + state.nextId++, t: q.t, y: q.y };
+      state.work.points.push(p); state.drag = { kind: "pt", id: p.id }; $("g-" + g).setPointerCapture(evt.pointerId); afterEdit(); return;
+    }
+    if (state.tool === "connect") {
+      if (!near) { state.sel = null; render(); return; }
+      if (!state.sel) { state.sel = near.id; render(); return; }
+      if (state.sel !== near.id && !state.work.edges.some(e => (e.a === state.sel && e.b === near.id) || (e.b === state.sel && e.a === near.id)))
+        state.work.edges.push({ id: "e" + state.nextId++, a: state.sel, b: near.id, bend: 0 });
+      state.sel = null; afterEdit(); return;
+    }
+  }
+}
+function onMove(g, evt) {
+  const d = state.drag; if (!d) return;
+  const pt = svgPt(g, evt);
+  if (d.kind === "lineEnd") {
+    const q = lineSnap(g, pt);
+    if (d.h === "1") { state.line.t1 = q.t; state.line.y1 = q.y; } else { state.line.t2 = q.t; state.line.y2 = q.y; }
+    drawGraph(g); updateReadout();
+  } else if (d.kind === "pt") {
+    const p = state.work.points.find(q => q.id === d.id); if (!p) return;
+    const q = plotSnap(g, pt); p.t = q.t; p.y = q.y; drawGraph(g);
+  } else if (d.kind === "bend") {
+    const e = state.work.edges.find(q => q.id === d.id); if (!e) return;
+    const A = state.work.points.find(q => q.id === e.a), B = state.work.points.find(q => q.id === e.b);
+    e.bend = 2 * (yv(g, pt.y) - (A.y + B.y) / 2);
+    const sc = scaleOf(g); if (Math.abs(e.bend) < 0.12 * sc) e.bend = 0;
+    drawGraph(g);
+  }
+}
+function onUp(g, evt) {
+  const d = state.drag; state.drag = null; if (!d) return;
+  if (d.kind === "lineEnd") { renderCard(); return; }
+  afterEdit();
+}
+function afterEdit() { render(); checkPlotDone(); }
+function updateReadout() {
+  const r = $("slopeRead"); if (!r || !state.line) return;
+  const L = state.line, m = Math.abs(L.t2 - L.t1) > 0.05 ? AMG.lineSlope(L) : null;
+  r.textContent = `slope = ${m === null ? "—" : signed(m) + " " + unitWanted()}`;
+  const b = $("lockLine"); if (b) b.disabled = false;
+}
+// Easy: the line's ends snap to grid points; Hard: they snap only when close, so a tangent can sit anywhere
+function lineSnap(g, pt) {
+  const grid = nearGridPoint(g, pt, state.mode === "easy" ? 999 : 9);
+  if (grid) return grid;
+  return { t: clampT(xt(pt.x)), y: yv(g, pt.y) };
+}
+// perimeter corners: whole seconds, on the time axis, on the graph line, or on a grid point
+function polySnap(g, pt) {
+  const t = snapT(xt(pt.x)), cands = [0];
+  for (const pc of graphPieces(g) || []) { if (Math.abs(pc.t0 - t) < 1e-9) cands.push(pc.y0); if (Math.abs(pc.t1 - t) < 1e-9) cands.push(pc.y1); }
+  const sc = scaleOf(g);
+  const yRaw = yv(g, pt.y);
+  // crossings are on whole seconds too: the graph is at 0 there
+  let best = cands.reduce((b, y) => Math.abs(y - yRaw) < Math.abs(b - yRaw) ? y : b, cands[0]);
+  if (Math.abs(best - yRaw) / sc > 0.6) best = snapGridY(g, yRaw);
+  return { t, y: best };
+}
+// plotting: whole seconds; Easy values on grid lines, Hard on quarter boxes
+function plotSnap(g, pt) {
+  const sc = scaleOf(g), q = state.mode === "easy" ? sc : sc / 4;
+  return { t: snapT(xt(pt.x)), y: Math.max(-AMG.BOXES * sc, Math.min(AMG.BOXES * sc, Math.round(yv(g, pt.y) / q) * q)) };
+}
+function pointNear(g, pt) {
+  let best = null, bd = 13;
+  for (const p of state.work.points) { const d = Math.hypot(tx(p.t) - pt.x, py(g, p.y) - pt.y); if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+
+// ---------------------------------------------------------------- toolbar
+function setMode(m) { state.mode = m; document.querySelectorAll("#diffSeg button").forEach(b => b.classList.toggle("active", b.dataset.diff === m)); newProblem(); }
+$("diffSeg").addEventListener("click", e => { const b = e.target.closest("button[data-diff]"); if (b) setMode(b.dataset.diff); });
+$("newBtn").addEventListener("click", () => newProblem());
+newProblem();
+
+// ---------------------------------------------------------------- test hook
+window.__amg = {
+  state: () => state, AMG, newProblem, setMode,
+  client(g, t, y) { const svg = $("g-" + g), r = svg.getBoundingClientRect(); return { x: r.left + tx(t) * r.width / GW, y: r.top + py(g, y) * r.height / GHT }; },
+  handleClient(eid) { const h = document.querySelector(`[data-handle="${eid}"]`); const b = h.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; },
+  expectedPieces, scaleOf,
+};
+</script>
+</body>
+</html>
