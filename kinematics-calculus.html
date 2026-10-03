@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinematics Calculus</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:74ch; margin:0;}
+
+nav.catbar{display:flex; gap:8px; margin:22px 0 0; padding:6px; flex-wrap:wrap; background:var(--surface-alt); border:1px solid var(--line-strong); border-radius:14px;}
+nav.catbar button{font-family:inherit; font-weight:600; font-size:15.5px; padding:12px 22px; border-radius:10px; cursor:pointer; flex:1 1 200px; border:1px solid transparent; background:transparent; color:var(--ink-soft);}
+nav.catbar button .sub{display:block; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; opacity:.85; margin-top:2px;}
+nav.catbar button.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+
+.toolbar{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:14px 0;}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.newhint{font-size:13.5px; color:var(--ink-muted);}
+.tally{margin-left:auto; display:flex; gap:16px; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); align-items:center;}
+.tally b{color:var(--ink); font-size:17px;}
+.tally .ck{color:var(--good);}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:18px 20px;}
+.panel + .panel{margin-top:14px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.chip{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; padding:3px 10px; border-radius:12px; background:var(--surface-alt); border:1px solid var(--line-strong); color:var(--ink-soft); text-transform:none; letter-spacing:0;}
+.story{font-family:"Fraunces",Georgia,serif; font-size:19.5px; line-height:1.6; margin:0; max-width:78ch; text-wrap:pretty;}
+.hat{font-style:normal; font-weight:600;}
+sup{line-height:0;}
+
+/* function rows: s, v, a, j down the page, always in that order */
+.frows{display:flex; flex-direction:column;}
+.frow{display:grid; grid-template-columns:136px minmax(0,1fr) 64px; gap:8px 14px; align-items:center; padding:14px 0; border-top:1px solid var(--line);}
+.frow:first-child{border-top:none; padding-top:4px;}
+.fl{display:flex; flex-direction:column; gap:2px;}
+.fl .nm{font-family:"Fraunces",Georgia,serif; font-style:italic; font-weight:600; font-size:28px; line-height:1;}
+.fl .nm span{font-style:normal; font-weight:500;}
+.fl .cap{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink-soft);}
+.fbody{min-width:0; display:flex; flex-direction:column; gap:8px;}
+.cline{display:flex; flex-wrap:wrap; align-items:center; gap:8px 6px; min-width:0;}
+.cline .par{font-family:"Fraunces",Georgia,serif; font-size:30px; font-weight:300; color:var(--ink-muted); line-height:1;}
+.cline .uv{font-family:"Fraunces",Georgia,serif; font-size:24px; font-weight:600; margin-left:2px;}
+.cline .lead{font-family:"Fraunces",Georgia,serif; font-size:22px; color:var(--ink-soft); width:18px; text-align:center;}
+.glue{font-family:"Fraunces",Georgia,serif; font-size:22px; color:var(--ink-soft); padding:0 2px;}
+.given{font-family:"Fraunces",Georgia,serif; font-size:23px; line-height:1.5;}
+.given .gt{white-space:nowrap;}
+.given sup{font-size:.7em;}
+.badge{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:3px 9px; border-radius:8px; background:var(--ink); color:var(--surface); align-self:flex-start;}
+
+.term{display:inline-flex; align-items:flex-start; gap:3px; padding:4px 5px 4px 4px; border-radius:10px; background:var(--surface-alt); border:1px solid var(--line);}
+.term select, .term input, .fq select, .fq input{
+  font-family:"IBM Plex Mono",monospace; font-size:16px; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line-strong); border-radius:8px; padding:6px 6px;
+}
+.term select.sg{width:58px; padding-left:10px; font-size:17px; font-weight:600; margin-top:8px;}
+.term input.mg{width:70px; text-align:center; margin-top:8px;}
+.term .tv{font-family:"Fraunces",Georgia,serif; font-style:italic; font-size:24px; padding:10px 0 0 4px;}
+.term input.ex{width:42px; font-size:14.5px; text-align:center; padding:3px 4px; margin-top:0;}
+.term .rm{border:none; background:transparent; color:var(--ink-muted); font-size:17px; cursor:pointer; padding:0 2px; margin-top:12px; line-height:1;}
+.term .rm:hover{color:var(--critical);}
+.addt{font-family:inherit; font-size:13.5px; font-weight:600; padding:7px 11px; border-radius:9px; border:1.5px dashed var(--line-strong); background:transparent; color:var(--ink-soft); cursor:pointer;}
+.addt:hover{border-color:var(--accent); color:var(--accent);}
+select:focus, input:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+.ok{border-color:var(--good) !important; background:color-mix(in srgb, var(--good) 16%, var(--surface)) !important;}
+.bad{border-color:var(--critical) !important; background:color-mix(in srgb, var(--critical) 13%, var(--surface)) !important;}
+input:disabled, select:disabled{opacity:1; color:var(--ink); -webkit-text-fill-color:var(--ink);}
+.fmsg{grid-column:2 / 4; font-size:14.5px; color:var(--critical); min-height:0; line-height:1.4;}
+.fmsg:empty{display:none;}
+
+.check{width:56px; height:56px; justify-self:center;}
+.check circle{fill:none; stroke:var(--line-strong); stroke-width:2; stroke-dasharray:4 5;}
+.check path{fill:none; stroke:transparent; stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
+.check.on circle{fill:var(--good); stroke:var(--good); stroke-dasharray:none;}
+.check.on path{stroke:#fff;}
+@media (prefers-reduced-motion:no-preference){ .check.on{animation:pop .35s ease-out;} @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}} }
+
+/* follow-ups */
+.fups.locked .fq{opacity:.45;}
+.lockmsg{font-size:14.5px; color:var(--ink-soft); margin:0 0 10px;}
+.fups:not(.locked) .lockmsg{display:none;}
+.fq{display:grid; grid-template-columns:minmax(0,1fr) 64px; gap:10px 14px; align-items:center; padding:12px 0; border-top:1px solid var(--line);}
+.fq:first-of-type{border-top:none;}
+.fq .qt{font-family:"Fraunces",Georgia,serif; font-size:19px; line-height:1.45; margin:0 0 8px;}
+.fq .qt b{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-muted); margin-right:6px;}
+.fq .ctrls{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.fq select.sg{width:58px; padding-left:10px; font-weight:600;}
+.fq input.mg{width:110px;}
+.fq select.un{width:104px;}
+.fq .fmsg{grid-column:1 / 3;}
+.done{margin-top:14px; padding:12px 16px; border-radius:12px; border:1.5px solid var(--good); background:color-mix(in srgb, var(--good) 9%, var(--surface)); font-weight:600; color:var(--good); display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.done[hidden]{display:none;}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+.notebook .rule{font-family:"Fraunces",Georgia,serif; font-size:18px; color:var(--ink);}
+
+@media (max-width:700px){
+  .frame{padding:18px 16px 48px;}
+  h1{font-size:26px;}
+  .panel{padding:14px 12px;}
+  .story{font-size:18px;}
+  .frow{grid-template-columns:minmax(0,1fr) 52px;}
+  .fl{grid-column:1; flex-direction:row; align-items:baseline; gap:10px;}
+  .frow .check{grid-row:1; grid-column:2; width:48px; height:48px;}
+  .fbody{grid-column:1 / 3;}
+  .fmsg{grid-column:1 / 3;}
+  .given{font-size:20px;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .term select.sg{width:50px; padding-left:6px;}
+  .term input.mg{width:56px;}
+  .term input.ex{width:36px;}
+  .cline .par{font-size:24px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 1 · Kinematics</div>
+    <h1>Kinematics Calculus</h1>
+    <p class="desc">One function is given. Write the other three, always in the order <i>s</i>, <i>v</i>, <i>a</i>, <i>j</i>. Differentiate to go down the list, integrate to go up, and find each integration constant in the story.</p>
+  </header>
+
+  <nav class="catbar" id="skillbar" aria-label="Skill">
+    <button data-skill="1" class="active">Skill 1 · Polynomial rule<span class="sub">write s, v, a and j</span></button>
+    <button data-skill="2">Skill 2 · Analysis<span class="sub">the four functions, then two questions</span></button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <button class="btn primary" id="newBtn" disabled>New problem</button>
+    <span class="newhint" id="newHint">Finish every part to unlock</span>
+    <div class="tally"><span class="ck">✓</span><span>Checkmarks <b id="tChecks">0</b></span><span>Problems <b id="tProbs">0</b></span></div>
+  </div>
+
+  <section class="panel">
+    <h2>The situation <span class="chip" id="dimChip"></span><span class="chip" id="givenChip"></span></h2>
+    <p class="story" id="story"></p>
+  </section>
+
+  <section class="panel">
+    <h2>The four functions</h2>
+    <div class="frows" id="frows"></div>
+  </section>
+
+  <section class="panel fups locked" id="fups" hidden>
+    <h2>Follow-up questions</h2>
+    <p class="lockmsg">Finish all four functions to unlock these.</p>
+    <div id="fqs"></div>
+  </section>
+
+  <div class="done" id="done" hidden><span>✓ Everything is correct.</span><button class="btn primary" id="newBtn2">New problem</button></div>
+
+  <details class="notebook panel">
+    <summary>Lab notebook · rules and discussion questions</summary>
+    <div class="body">
+      <p class="rule">Down the list (differentiate): <i>c</i>·<i>t</i><sup><i>n</i></sup> → <i>n</i>·<i>c</i>·<i>t</i><sup><i>n</i>−1</sup></p>
+      <p class="rule">Up the list (integrate): <i>c</i>·<i>t</i><sup><i>n</i></sup> → <i>c</i>/(<i>n</i>+1)·<i>t</i><sup><i>n</i>+1</sup>, plus a constant</p>
+      <p>1. Going down the list never needs any information from the story. Going up always does. Why?</p>
+      <p>2. The constant you add when you integrate <i>v</i> to get <i>s</i> is the position at <i>t</i> = 0. What is the constant you add when you integrate <i>a</i> to get <i>v</i>?</p>
+      <p>3. If a clue tells you where the object is at <i>t</i> = 2 s instead of <i>t</i> = 0, how do you find the constant?</p>
+      <p>4. An object "momentarily stops accelerating." Which function is zero at that moment? Does that mean the object stops moving?</p>
+      <p>5. When is the total distance traveled different from the size of the displacement? What do you have to find first?</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Kinematics Calculus — model. No DOM. Inlined into the page by build.js and required by the tests.
+// Polynomials are arrays: p[k] is the coefficient of t^k. A 2D quantity is [xPoly, yPoly].
+"use strict";
+const KC = (() => {
+  // ------------------------------------------------------------------ rng
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  const ri = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
+  const nz = (r, lo, hi) => { let v; do { v = ri(r, lo, hi); } while (v === 0); return v; };
+  const pm = (r, lo, hi) => (r() < 0.5 ? -1 : 1) * ri(r, lo, hi);
+  const pick = (r, a) => a[Math.floor(r() * a.length)];
+  const wpick = (r, pairs) => { let x = r() * pairs.reduce((s, p) => s + p[1], 0); for (const [v, w] of pairs) { if ((x -= w) < 0) return v; } return pairs[pairs.length - 1][0]; };
+
+  // ------------------------------------------------------------------ polynomials
+  const EPS = 1e-9;
+  const clean = (x) => (Math.abs(x) < EPS ? 0 : Math.round(x * 1e9) / 1e9);
+  const deriv = (p) => p.slice(1).map((c, i) => clean(c * (i + 1)));
+  const integ = (p, C) => [C, ...p.map((c, k) => clean(c / (k + 1)))];
+  const ev = (p, t) => p.reduce((s, c, k) => s + c * t ** k, 0);
+  const isZero = (p) => p.every((c) => Math.abs(c) < EPS);
+  // degree as built (top coefficient is never zero for s, v, a; j may be the zero polynomial)
+  const deg = (p) => { for (let k = p.length - 1; k >= 0; k--) if (Math.abs(p[k]) > EPS) return k; return -1; };
+
+  // number formatting: up to 4 decimals, trailing zeros trimmed, true minus sign
+  function fmt(x) {
+    const v = clean(x);
+    let s = Number.isInteger(v) ? String(Math.abs(v)) : String(Math.abs(+v.toFixed(4)));
+    return (v < 0 ? "−" : "") + s;
+  }
+  const fmtAbs = (x) => fmt(Math.abs(x));
+  // decimals of a number (0 for integers); used to keep answers clean
+  const decimals = (x) => { const v = clean(x); for (let d = 0; d <= 6; d++) if (Math.abs(v * 10 ** d - Math.round(v * 10 ** d)) < 1e-6) return d; return 99; };
+
+  // ------------------------------------------------------------------ quantities
+  const Q = ["s", "v", "a", "j"];
+  const QNAME = { s: "position", v: "velocity", a: "acceleration", j: "jerk" };
+  const QUNIT = { s: "m", v: "m/s", a: "m/s<sup>2</sup>", j: "m/s<sup>3</sup>" };
+  const UNITS = ["s", "m", "m/s", "m/s²", "m/s³"]; // follow-up unit dropdown, in s v a j order after time
+  const UNIT_HTML = { "s": "s", "m": "m", "m/s": "m/s", "m/s²": "m/s<sup>2</sup>", "m/s³": "m/s<sup>3</sup>" };
+
+  // all four functions from a velocity polynomial and the position constant
+  function family(v, s0) { const s = integ(v, s0), a = deriv(v), j = deriv(a); return { s, v, a, j: j.length ? j : [0] }; }
+
+  // ------------------------------------------------------------------ contexts
+  // 1D: positive/negative words for position and direction.
+  const CTX1 = [
+    { id: "goat", noun: "the goat", Noun: "The goat", intro: "A rabid goat is constrained to run along the <i>x</i>-axis of a large pasture.", axis: "Take east as positive, with the origin at the fence post.", ref: "the fence post", pw: ["east of", "west of"], dw: ["east", "west"] },
+    { id: "drag", noun: "the dragster", Noun: "The dragster", intro: "A dragster is being tested on a long, straight strip.", axis: "Take forward (down the strip) as positive, with the origin at the starting line.", ref: "the starting line", pw: ["past", "behind"], dw: ["forward", "backward"] },
+    { id: "plane", noun: "the plane", Noun: "The plane", intro: "A small plane is rolling along a straight runway after touching down.", axis: "Take down the runway as positive, with the origin at the runway threshold.", ref: "the runway threshold", pw: ["past", "short of"], dw: ["down the runway", "back toward the threshold"] },
+    { id: "elev", noun: "the elevator", Noun: "The elevator", intro: "An elevator moves up and down a tall shaft in an office tower.", axis: "Take up as positive, with the origin at the lobby floor.", ref: "the lobby floor", pw: ["above", "below"], dw: ["up", "down"] },
+    { id: "rocket", noun: "the rocket", Noun: "The rocket", intro: "A model rocket rides a long vertical guide rail on a test stand.", axis: "Take up as positive, with the origin at the top of the launch tower.", ref: "the top of the launch tower", pw: ["above", "below"], dw: ["up", "down"] },
+    { id: "train", noun: "the train", Noun: "The train", intro: "A commuter train runs on a straight east–west track.", axis: "Take east as positive, with the origin at the station platform.", ref: "the station platform", pw: ["east of", "west of"], dw: ["east", "west"] },
+    { id: "robot", noun: "the robot", Noun: "The robot", intro: "A warehouse robot slides along a straight rail between two rows of shelves.", axis: "Take right as positive, with the origin at the charging dock.", ref: "the charging dock", pw: ["to the right of", "to the left of"], dw: ["to the right", "to the left"] },
+    { id: "cart", noun: "the cart", Noun: "The cart", intro: "A dynamics cart is pushed along a level lab track by a small fan.", axis: "Take toward the far end of the track as positive, with the origin at the photogate.", ref: "the photogate", pw: ["past", "before"], dw: ["toward the far end", "toward the near end"] },
+    { id: "sub", noun: "the submarine", Noun: "The submarine", intro: "A research submarine moves straight up and down beside a moored buoy line.", axis: "Take up as positive, with the origin at the 50 m depth marker.", ref: "the 50 m depth marker", pw: ["above", "below"], dw: ["up", "down"] },
+    { id: "skate", noun: "the skater", Noun: "The skater", intro: "A speed skater glides along the long straight side of an oval rink.", axis: "Take forward as positive, with the origin at the timing line.", ref: "the timing line", pw: ["past", "behind"], dw: ["forward", "backward"] },
+  ];
+  const CTX2 = [
+    { id: "puck", noun: "the puck", Noun: "The puck", intro: "A hockey puck slides across a rink while a magnet under the ice pulls on it.", axis: "Take east as +<i class='hat'>î</i> and north as +<i class='hat'>ĵ</i>, with the origin at center ice.", ref: "center ice" },
+    { id: "drone", noun: "the drone", Noun: "The drone", intro: "A delivery drone flies at a constant altitude over a flat field.", axis: "Take east as +<i class='hat'>î</i> and north as +<i class='hat'>ĵ</i>, with the origin at its landing pad.", ref: "the landing pad" },
+    { id: "rover", noun: "the rover", Noun: "The rover", intro: "A Mars rover drives across a flat plain near its lander.", axis: "Take east as +<i class='hat'>î</i> and north as +<i class='hat'>ĵ</i>, with the origin at the lander.", ref: "the lander" },
+    { id: "boat", noun: "the boat", Noun: "The boat", intro: "A remote-controlled boat crosses a calm lake.", axis: "Take east as +<i class='hat'>î</i> and north as +<i class='hat'>ĵ</i>, with the origin at a floating buoy.", ref: "the buoy" },
+    { id: "rc", noun: "the car", Noun: "The car", intro: "A remote-control car drives around an empty parking lot.", axis: "Take east as +<i class='hat'>î</i> and north as +<i class='hat'>ĵ</i>, with the origin at a light pole.", ref: "the light pole" },
+    { id: "bug", noun: "the ladybug", Noun: "The ladybug", intro: "A ladybug crawls across a giant sheet of graph paper laid out on a gym floor.", axis: "Take right as +<i class='hat'>î</i> and up the page as +<i class='hat'>ĵ</i>, with the origin at the lower-left corner.", ref: "the lower-left corner" },
+  ];
+
+  const UA = "m/s<sup>2</sup>";
+  function pos1(c, n) { return Math.abs(n) < EPS ? `at ${c.ref}` : `${fmtAbs(n)} m ${c.pw[n > 0 ? 0 : 1]} ${c.ref}`; }
+  function vel1(c, n) { return Math.abs(n) < EPS ? "at rest" : `moving ${c.dw[n > 0 ? 0 : 1]} at ${fmtAbs(n)} m/s`; }
+  function acc1(c, n) { return Math.abs(n) < EPS ? "zero" : `${fmtAbs(n)} ${UA} directed ${c.dw[n > 0 ? 0 : 1]}`; }
+  const vecTxt = (x, y, unit) => `(${fmt(x)}<i class='hat'>î</i> ${y < 0 ? "−" : "+"} ${fmtAbs(y)}<i class='hat'>ĵ</i>) ${unit}`;
+  function pos2(c, x, y) { return Math.abs(x) < EPS && Math.abs(y) < EPS ? `at ${c.ref}` : `at the point (${fmt(x)} m, ${fmt(y)} m)`; }
+  function vel2(c, x, y) { return Math.abs(x) < EPS && Math.abs(y) < EPS ? "at rest" : `moving with velocity ${vecTxt(x, y, "m/s")}`; }
+  function acc2(c, x, y) { return vecTxt(x, y, UA); }
+
+  // ------------------------------------------------------------------ polynomial builders
+  // Easy (1D only): position has whole-number coefficients, so every function does.
+  function buildEasy(r, dv) {
+    const D = dv + 1; // degree of s
+    const s = new Array(D + 1).fill(0);
+    s[0] = r() < 0.25 ? 0 : nz(r, -30, 30);
+    s[1] = r() < 0.25 ? 0 : nz(r, -12, 12);
+    for (let k = 2; k <= D; k++) s[k] = k === 2 ? pm(r, 1, 9) : k === 3 ? pm(r, 1, 5) : pm(r, 1, 3);
+    return family(deriv(s), s[0]);
+  }
+  // Hard: velocity has whole-number coefficients; the t² term is a multiple of 3 so position never needs thirds.
+  // Position then picks up halves (from t¹) and quarters (from t³).
+  function buildHard(r, dv, small) {
+    const v = new Array(dv + 1).fill(0);
+    v[0] = r() < 0.2 ? 0 : nz(r, small ? -9 : -15, small ? 9 : 15);
+    if (dv >= 1) v[1] = pm(r, 1, small ? 8 : 12);
+    if (dv >= 2) v[2] = 3 * pm(r, 1, small ? 3 : 5);
+    if (dv >= 3) v[3] = pm(r, 1, small ? 3 : 6);
+    const s0 = r() < 0.2 ? 0 : (r() < 0.3 ? pm(r, 1, 30) + 0.5 * pick(r, [-1, 1]) : nz(r, -30, 30));
+    return family(v, s0);
+  }
+
+  // ------------------------------------------------------------------ follow-up questions
+  // Every follow-up: {fam, html, ans, sign:"+"|"-"|"0", unit, tol:"exact"|"2sf", t?}
+  const nice = (t) => t > EPS && t <= 6 + EPS && Math.abs(t * 2 - Math.round(t * 2)) < 1e-7; // multiple of 0.5 in (0, 6]
+  // first positive root of p in (0, 6] where p changes sign, if it's a multiple of 0.5
+  function niceRoot(p) {
+    if (deg(p) < 1) return null;
+    let prev = ev(p, 0);
+    for (let i = 1; i <= 600; i++) {
+      const t = i / 100, cur = ev(p, t);
+      if (Math.abs(cur) < 1e-9) { // exact root on the grid: check sign change across it
+        const a = ev(p, t - 0.005), b = ev(p, t + 0.005);
+        if (a * b < 0) return nice(t) ? t : null;
+        prev = cur; continue;
+      }
+      if (prev * cur < 0 && Math.abs(prev) > 1e-9) { // root strictly between grid points: not a multiple of 0.5
+        return null;
+      }
+      prev = cur;
+    }
+    return null;
+  }
+  // all sign-changing roots of p strictly inside (t1, t2), each required to be a multiple of 0.5
+  function rootsIn(p, t1, t2) {
+    const out = [];
+    for (let i = Math.round(t1 * 100) + 1; i < Math.round(t2 * 100); i++) {
+      const t = i / 100;
+      const a = ev(p, t - 0.005), b = ev(p, t + 0.005);
+      if (a * b < 0) { if (Math.abs(ev(p, t)) < 1e-9 && nice(t)) out.push(t); else return null; }
+    }
+    return out;
+  }
+  const signOf = (x) => (Math.abs(x) < 1e-9 ? "0" : x > 0 ? "+" : "-");
+  const okExact = (x) => Math.abs(x) <= 2000 && decimals(x) <= 2;
+
+  // 1D families. Each returns a follow-up or null if this problem can't support it cleanly.
+  const F1 = {
+    aZeroTime(P, c) { const t = niceRoot(P.a); if (t == null) return null;
+      return { fam: "aZeroTime", t, html: `At what time does ${c.noun} momentarily stop accelerating?`, ans: t, unit: "s", tol: "exact" }; },
+    aZeroPos(P, c) { const t = niceRoot(P.a); if (t == null) return null; const x = ev(P.s, t); if (!okExact(x)) return null;
+      return { fam: "aZeroPos", t, html: `Where is ${c.noun} when it momentarily stops accelerating? (Give its position.)`, ans: x, unit: "m", tol: "exact" }; },
+    aZeroVel(P, c) { const t = niceRoot(P.a); if (t == null) return null; const x = ev(P.v, t); if (!okExact(x) || Math.abs(x) < EPS) return null;
+      return { fam: "aZeroVel", t, html: `What is ${c.noun}'s velocity at the moment it stops accelerating?`, ans: x, unit: "m/s", tol: "exact" }; },
+    speedPeak(P, c) { const t = niceRoot(P.a); if (t == null) return null; const vt = ev(P.v, t);
+      // |v| has a local peak at t only if v is at a local max while positive, or a local min while negative
+      const before = ev(P.a, t - 0.01); if (Math.abs(vt) < EPS || !((vt > 0 && before > 0) || (vt < 0 && before < 0))) return null;
+      const x = Math.abs(ev(P.s, t)); if (!okExact(x)) return null;
+      return { fam: "speedPeak", t, html: `How far from the origin is ${c.noun} at the moment its speed reaches a peak?`, ans: x, unit: "m", tol: "exact" }; },
+    turnTime(P, c) { const t = niceRoot(P.v); if (t == null) return null;
+      return { fam: "turnTime", t, html: `At what time does ${c.noun} turn around?`, ans: t, unit: "s", tol: "exact" }; },
+    turnPos(P, c) { const t = niceRoot(P.v); if (t == null) return null; const x = ev(P.s, t); if (!okExact(x)) return null;
+      return { fam: "turnPos", t, html: `Where is ${c.noun} when it turns around? (Give its position.)`, ans: x, unit: "m", tol: "exact" }; },
+    disp(P, c, q) { const { t1, t2 } = q; const x = ev(P.s, t2) - ev(P.s, t1); if (!okExact(x) || Math.abs(x) < EPS) return null;
+      return { fam: "disp", t1, t2, html: `What is ${c.noun}'s displacement from <i>t</i> = ${t1} s to <i>t</i> = ${t2} s?`, ans: x, unit: "m", tol: "exact" }; },
+    dist(P, c, q) { // only when the object turns around inside the interval, so distance ≠ |displacement|
+      const { t1, t2 } = q; const roots = rootsIn(P.v, t1, t2); if (!roots || !roots.length) return null;
+      const pts = [t1, ...roots, t2]; let d = 0; for (let i = 1; i < pts.length; i++) d += Math.abs(ev(P.s, pts[i]) - ev(P.s, pts[i - 1]));
+      if (!okExact(d)) return null;
+      return { fam: "dist", t1, t2, html: `What total distance does ${c.noun} travel from <i>t</i> = ${t1} s to <i>t</i> = ${t2} s?`, ans: d, unit: "m", tol: "exact" }; },
+  };
+  const A1 = ["aZeroTime", "aZeroPos", "aZeroVel", "speedPeak", "turnTime", "turnPos"], B1 = ["disp", "dist"];
+
+  // 2D families (Hard only). P = {s:[x,y], v:[x,y], a:[x,y]}
+  const mag = (x, y) => Math.hypot(x, y);
+  const F2 = {
+    speedAt(P, c, q) { const { t } = q; const m = mag(ev(P.v[0], t), ev(P.v[1], t)); if (m < 0.5 || m > 2000) return null;
+      return { fam: "speedAt", t, html: `What is ${c.noun}'s speed at <i>t</i> = ${t} s? (2 significant figures)`, ans: m, unit: "m/s", tol: "2sf" }; },
+    distAt(P, c, q) { const { t } = q; const m = mag(ev(P.s[0], t), ev(P.s[1], t)); if (m < 0.5 || m > 2000) return null;
+      return { fam: "distAt", t, html: `How far from the origin is ${c.noun} at <i>t</i> = ${t} s? (2 significant figures)`, ans: m, unit: "m", tol: "2sf" }; },
+    accAt(P, c, q) { const { t } = q; const m = mag(ev(P.a[0], t), ev(P.a[1], t)); if (m < 0.5 || m > 2000) return null;
+      return { fam: "accAt", t, html: `What is the magnitude of ${c.noun}'s acceleration at <i>t</i> = ${t} s? (2 significant figures)`, ans: m, unit: "m/s²", tol: "2sf" }; },
+    vyZeroTime(P, c) { const t = niceRoot(P.v[1]); if (t == null || Math.abs(ev(P.v[0], t)) < EPS) return null;
+      return { fam: "vyZeroTime", t, html: `At what time is ${c.noun} moving only in the <i class='hat'>î</i> direction?`, ans: t, unit: "s", tol: "exact" }; },
+    vxZeroTime(P, c) { const t = niceRoot(P.v[0]); if (t == null || Math.abs(ev(P.v[1], t)) < EPS) return null;
+      return { fam: "vxZeroTime", t, html: `At what time is ${c.noun} moving only in the <i class='hat'>ĵ</i> direction?`, ans: t, unit: "s", tol: "exact" }; },
+    distAtVy0(P, c) { const t = niceRoot(P.v[1]); if (t == null || Math.abs(ev(P.v[0], t)) < EPS) return null; const m = mag(ev(P.s[0], t), ev(P.s[1], t)); if (m < 0.5 || m > 2000) return null;
+      return { fam: "distAtVy0", t, html: `How far from the origin is ${c.noun} at the moment it is moving only in the <i class='hat'>î</i> direction? (2 significant figures)`, ans: m, unit: "m", tol: "2sf" }; },
+    dispX(P, c, q) { const { t1, t2 } = q; const x = ev(P.s[0], t2) - ev(P.s[0], t1); if (!okExact(x) || Math.abs(x) < EPS) return null;
+      return { fam: "dispX", t1, t2, html: `What is the <i class='hat'>î</i>-component of ${c.noun}'s displacement from <i>t</i> = ${t1} s to <i>t</i> = ${t2} s?`, ans: x, unit: "m", tol: "exact" }; },
+  };
+  const A2 = ["vyZeroTime", "vxZeroTime", "distAtVy0"], B2 = ["speedAt", "distAt", "accAt", "dispX"];
+
+  // Interval/instant choices are made before a family is tried, so re-rendering can reuse them exactly.
+  function paramsFor(fam, r) {
+    if (fam === "disp") { const t1 = ri(r, 0, 4); return { t1, t2: t1 + ri(r, 1, 3) }; }
+    if (fam === "dist") { const t1 = ri(r, 0, 3); return { t1, t2: t1 + ri(r, 2, 4) }; }
+    if (fam === "dispX") { const t1 = ri(r, 0, 3); return { t1, t2: t1 + ri(r, 1, 3) }; }
+    if (["speedAt", "distAt", "accAt"].includes(fam)) return { t: ri(r, 1, 4) };
+    return {};
+  }
+
+  // ------------------------------------------------------------------ clues
+  // The constants a student needs: given s → none; v → s0; a → v0, s0; j → a0, v0, s0.
+  const NEED = { s: [], v: ["s"], a: ["v", "s"], j: ["a", "v", "s"] };
+
+  function clueText1(c, P, need, late) {
+    // late: {q, t} — this constant is stated at a later time instead of t = 0
+    const at0 = need.filter((q) => !late || late.q !== q);
+    const parts = [];
+    const has = (q) => at0.includes(q);
+    if (has("s") && has("v")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${pos1(c, P.s[0])} and ${vel1(c, P.v[0])}.`);
+    else if (has("s")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${pos1(c, P.s[0])}.`);
+    else if (has("v")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${vel1(c, P.v[0])}.`);
+    if (has("a")) parts.push(`${at0.length > 1 ? "At that moment, its" : "At <i>t</i> = 0, its"} acceleration is ${acc1(c, P.a[0])}.`);
+    if (late) {
+      const T = late.t;
+      if (late.q === "s") parts.push(`At <i>t</i> = ${T} s, ${c.noun} is ${pos1(c, ev(P.s, T))}.`);
+      if (late.q === "v") parts.push(`At <i>t</i> = ${T} s, ${c.noun} is ${vel1(c, ev(P.v, T))}.`);
+      if (late.q === "a") parts.push(`At <i>t</i> = ${T} s, its acceleration is ${acc1(c, ev(P.a, T))}.`);
+    }
+    return parts.join(" ");
+  }
+  function clueText2(c, P, need, late) {
+    const at0 = need.filter((q) => !late || late.q !== q);
+    const parts = [];
+    const has = (q) => at0.includes(q);
+    const S = (t) => [ev(P.s[0], t), ev(P.s[1], t)], V = (t) => [ev(P.v[0], t), ev(P.v[1], t)], Ac = (t) => [ev(P.a[0], t), ev(P.a[1], t)];
+    if (has("s") && has("v")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${pos2(c, ...S(0))} and ${vel2(c, ...V(0))}.`);
+    else if (has("s")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${pos2(c, ...S(0))}.`);
+    else if (has("v")) parts.push(`At <i>t</i> = 0, ${c.noun} is ${vel2(c, ...V(0))}.`);
+    if (has("a")) parts.push(`${at0.length > 1 ? "At that moment, its" : "At <i>t</i> = 0, its"} acceleration is ${acc2(c, ...Ac(0))}.`);
+    if (late) {
+      const T = late.t;
+      if (late.q === "s") parts.push(`At <i>t</i> = ${T} s, ${c.noun} is ${pos2(c, ...S(T))}.`);
+      if (late.q === "v") parts.push(`At <i>t</i> = ${T} s, ${c.noun} is ${vel2(c, ...V(T))}.`);
+      if (late.q === "a") parts.push(`At <i>t</i> = ${T} s, its acceleration is ${acc2(c, ...Ac(T))}.`);
+    }
+    return parts.join(" ");
+  }
+
+  // ------------------------------------------------------------------ problem generation
+  // opts: {skill: 1|2, diff: "easy"|"hard", seed?}
+  function generate(opts, rnd) {
+    const r = rnd || mulberry32(opts.seed == null ? (Math.random() * 2 ** 32) >>> 0 : opts.seed);
+    const hard = opts.diff === "hard";
+    const dim = hard && r() < 0.5 ? 2 : 1;
+    const choosePair = () => {
+      if (dim === 1) return r() < 0.7 ? [pick(r, A1), r() < 0.55 ? "dist" : "disp"] : [pick(r, ["aZeroTime", "aZeroPos", "speedPeak", "aZeroVel"]), pick(r, ["turnTime", "turnPos"])];
+      const A = r() < 0.5 ? pick(r, A2) : pick(r, B2); let B; do { B = pick(r, B2); } while (B === A); return [A, B];
+    };
+    let pair = choosePair(), tries = 0;
+    for (let attempt = 1; attempt <= 20000; attempt++) {
+      if (++tries > 3000) { pair = choosePair(); tries = 0; }
+      const given = pick(r, Q);
+      let P, comps;
+      if (dim === 1) {
+        const dv = wpick(r, given === "j" ? [[2, 0.55], [3, 0.45]] : [[1, 0.25], [2, 0.45], [3, 0.3]]);
+        P = hard ? buildHard(r, dv, false) : buildEasy(r, dv);
+        comps = [P];
+      } else {
+        const dvx = wpick(r, given === "j" ? [[2, 0.8], [3, 0.2]] : [[1, 0.35], [2, 0.5], [3, 0.15]]);
+        const dvy = wpick(r, given === "j" ? [[2, 0.8], [3, 0.2]] : [[1, 0.35], [2, 0.5], [3, 0.15]]);
+        comps = [buildHard(r, dvx, true), buildHard(r, dvy, true)];
+        P = { s: [comps[0].s, comps[1].s], v: [comps[0].v, comps[1].v], a: [comps[0].a, comps[1].a], j: [comps[0].j, comps[1].j] };
+      }
+      // keep the numbers readable: every coefficient ≤ 100 in size
+      if (comps.some((C) => Q.some((q) => C[q].some((x) => Math.abs(x) > 100)))) continue;
+
+      // follow-ups (Skill 2): two different families, chosen first, then this polynomial must support them
+      let follow = [], qa, qb;
+      if (opts.skill === 2) {
+        const ctxTmp = { noun: "it" };
+        let A, B;
+        if (dim === 1) {
+          [A, B] = pair;
+          qa = paramsFor(A, r); qb = paramsFor(B, r);
+          const fa = F1[A](P, ctxTmp, qa), fb = F1[B](P, ctxTmp, qb);
+          if (!fa || !fb) continue;
+          follow = [A, B, fa, fb];
+        } else {
+          [A, B] = pair;
+          qa = paramsFor(A, r); qb = paramsFor(B, r);
+          const fa = F2[A](P, ctxTmp, qa), fb = F2[B](P, ctxTmp, qb);
+          if (!fa || !fb) continue;
+          if (["speedAt", "distAt", "accAt"].includes(A) && qa.t === qb.t && A === B) continue;
+          follow = [A, B, fa, fb];
+        }
+      }
+
+      // context + clues
+      const c = dim === 1 ? pick(r, CTX1) : pick(r, CTX2);
+      const need = NEED[given];
+      let late = null;
+      if (hard && need.length && r() < 0.5) late = { q: pick(r, need), t: ri(r, 1, 3) };
+      // clue values must be readable too
+      const clueVals = [];
+      const vals = (q, t) => (dim === 1 ? [ev(P[q], t)] : [ev(P[q][0], t), ev(P[q][1], t)]);
+      for (const q of need) clueVals.push(...vals(q, late && late.q === q ? late.t : 0));
+      if (clueVals.some((x) => Math.abs(x) > 500 || decimals(x) > 2)) continue;
+
+      const clues = dim === 1 ? clueText1(c, P, need, late) : clueText2(c, P, need, late);
+      const para = [c.intro, c.axis, clues, `Its ${QNAME[given]} is given below, in standard units.`].filter(Boolean).join(" ");
+
+      // re-render follow-up text with the real noun (the families were checked with a placeholder)
+      if (follow.length) {
+        const fams = dim === 1 ? F1 : F2;
+        const out = [];
+        const qs = [qa, qb];
+        follow.slice(2).forEach((f, i) => {
+          const again = { ...f, html: fams[f.fam](P, c, qs[i]).html };
+          again.sign = f.tol === "2sf" || f.unit === "s" || ["dist", "speedPeak"].includes(f.fam) ? "+" : signOf(f.ans);
+          if (Math.abs(f.ans) < EPS) again.sign = "0";
+          again.mag = Math.abs(f.ans);
+          out.push(again);
+        });
+        follow = out;
+      }
+
+      return { dim, given, ctx: c.id, noun: c.noun, P, need, late, para, follow, hard, attempts: attempt };
+    }
+    throw new Error("generator gave up");
+  }
+  // ------------------------------------------------------------------ display of the given function
+  // (signed number)(t^signed number), highest power first, zero terms omitted
+  const sgn = (x) => (x < 0 ? "−" : "+");
+  function termsHtml(p) {
+    const parts = [];
+    for (let k = p.length - 1; k >= 0; k--) {
+      if (Math.abs(p[k]) < EPS) continue;
+      parts.push(`<span class="gt">(${sgn(p[k])}${fmtAbs(p[k])})(<i>t</i><sup>+${k}</sup>)</span>`);
+    }
+    return parts.length ? parts.join(" <span class='glue'>+</span> ") : `<span class="gt">0</span>`;
+  }
+  function givenHtml(prob) {
+    const p = prob.P[prob.given];
+    if (prob.dim === 1) return termsHtml(p);
+    return `[ ${termsHtml(p[0])} ] <i class='hat'>î</i> <span class='glue'>+</span> [ ${termsHtml(p[1])} ] <i class='hat'>ĵ</i>`;
+  }
+
+  // ------------------------------------------------------------------ grading
+  // Number box: magnitude only. Accepts 3, 2.5, .25, 5/2. A typed sign is reported, not accepted.
+  function parseMag(raw) {
+    const s = String(raw == null ? "" : raw).trim().replace(/\s+/g, "");
+    if (!s) return { empty: true };
+    if (/^[-−+]/.test(s)) return { err: "sign" };
+    let m;
+    if ((m = s.match(/^(\d+(?:\.\d*)?|\.\d+)$/))) return { val: parseFloat(m[1]) };
+    if ((m = s.match(/^(\d+)\/(\d+)$/)) && +m[2] !== 0) return { val: +m[1] / +m[2] };
+    return { err: "format" };
+  }
+  function parseExp(raw) {
+    const s = String(raw == null ? "" : raw).trim();
+    if (!s) return { empty: true };
+    if (/^[-−]/.test(s)) return { err: "neg" };
+    if (/^\+?\d+$/.test(s)) return { val: parseInt(s.replace("+", ""), 10) };
+    return { err: "format" };
+  }
+  // terms: [{sign:"+"|"-"|"", mag, exp}], target: polynomial. Returns per-term box states and completion.
+  // Box state: "ok" | "bad" | "" (not judged yet). A term with a zero coefficient is fine at any power.
+  function gradePoly(terms, target) {
+    const parsed = terms.map((t) => ({ sign: t.sign, m: parseMag(t.mag), e: parseExp(t.exp) }));
+    const T = (e) => (e < target.length ? target[e] : 0);
+    // which exponents (with a non-zero typed coefficient) appear more than once
+    const count = {};
+    parsed.forEach((p) => { if (p.e.val != null && !(p.m.val === 0)) count[p.e.val] = (count[p.e.val] || 0) + 1; });
+    let allFilled = true, msg = "";
+    const states = parsed.map((p) => {
+      const st = { sign: "", mag: "", exp: "" };
+      if (p.m.empty || p.e.empty || (!p.sign && p.m.val !== 0)) allFilled = false;
+      if (p.m.err === "sign") { st.mag = "bad"; msg = msg || "Type only the size of the number in the box. The sign goes in the dropdown."; allFilled = false; }
+      else if (p.m.err) { st.mag = "bad"; msg = msg || "Use a number like 3, 2.5 or 5/2."; allFilled = false; }
+      if (p.e.err === "neg") { st.exp = "bad"; msg = msg || "None of these functions has a negative power of t."; allFilled = false; }
+      else if (p.e.err) { st.exp = "bad"; msg = msg || "Exponents are whole numbers: 0, 1, 2, …"; allFilled = false; }
+      if (p.m.val === 0 && p.e.val != null) { st.mag = "ok"; st.exp = "ok"; st.sign = "ok"; return st; } // a zero term is never wrong
+      if (p.e.val != null) {
+        const tc = T(p.e.val);
+        const dup = count[p.e.val] > 1;
+        st.exp = Math.abs(tc) > EPS && !dup ? "ok" : "bad";
+        if (dup) msg = msg || `Two terms have t<sup>${p.e.val}</sup>. Combine them into one.`;
+        else if (st.exp === "bad" && p.m.val != null && p.m.val !== 0) msg = msg || `This function has no t<sup>${p.e.val}</sup> term. Check the power.`;
+        if (p.m.val != null) st.mag = st.exp === "ok" && Math.abs(Math.abs(tc) - p.m.val) < 1e-6 ? "ok" : (st.exp === "ok" ? "bad" : "");
+        if (p.sign) st.sign = st.exp === "ok" ? ((tc > 0) === (p.sign === "+") ? "ok" : "bad") : "";
+        if (st.exp === "bad" && p.m.val != null) st.mag = "bad";
+      }
+      return st;
+    });
+    // polynomial equality
+    const sum = {};
+    let valid = true;
+    parsed.forEach((p) => {
+      if (p.m.val == null || p.e.val == null) { valid = false; return; }
+      if (p.m.val !== 0 && !p.sign) { valid = false; return; }
+      const v = p.m.val * (p.sign === "-" ? -1 : 1);
+      sum[p.e.val] = (sum[p.e.val] || 0) + v;
+    });
+    let equal = valid;
+    if (valid) {
+      const maxE = Math.max(target.length - 1, ...Object.keys(sum).map(Number));
+      for (let e = 0; e <= maxE; e++) if (Math.abs((sum[e] || 0) - T(e)) > 1e-6) { equal = false; break; }
+    }
+    // only "every term is right but something is missing" is worth saying when the boxes are all green
+    const allOk = states.every((s) => s.sign !== "bad" && s.mag !== "bad" && s.exp !== "bad");
+    if (!equal && allFilled && allOk && !msg) msg = "Every term here is right, but the function isn't finished yet. A term is missing.";
+    return { states, complete: equal && allFilled, msg };
+  }
+
+  // Follow-up answer: sign dropdown, magnitude box, unit dropdown.
+  function gradeFollow(f, input) {
+    const out = { sign: "", mag: "", unit: "", complete: false, msg: "" };
+    const m = parseMag(input.mag);
+    if (input.sign) out.sign = f.sign === "0" || input.sign === f.sign ? "ok" : "bad";
+    if (m.err === "sign") { out.mag = "bad"; out.msg = "Type only the size of the number. The sign goes in the dropdown."; }
+    else if (m.err) { out.mag = "bad"; out.msg = "Use a number like 12, 2.5 or 5/2."; }
+    else if (m.val != null) {
+      const tol = f.tol === "2sf" ? 0.05 * f.mag : Math.max(0.005 * f.mag, 0.01);
+      out.mag = Math.abs(m.val - f.mag) <= tol + 1e-9 ? "ok" : "bad";
+      if (out.mag === "bad" && f.tol === "exact" && Math.abs(m.val - f.mag) <= 0.05 * f.mag) out.msg = "Close. Give the exact value, or round to 3 significant figures.";
+    }
+    if (input.unit) out.unit = input.unit === f.unit ? "ok" : "bad";
+    out.complete = out.sign === "ok" && out.mag === "ok" && out.unit === "ok";
+    return out;
+  }
+
+  // slot plan for Easy (exact number of terms, highest power first): one slot per power from the top down to t⁰
+  function slotCount(p) { const d = deg(p); return d < 0 ? 1 : d + 1; }
+
+  return { mulberry32, generate, gradePoly, gradeFollow, parseMag, parseExp, givenHtml, termsHtml, slotCount,
+    deriv, integ, ev, deg, fmt, decimals, Q, QNAME, QUNIT, UNITS, UNIT_HTML, CTX1, CTX2, NEED, F1, F2 };
+})();
+if (typeof module !== "undefined") module.exports = KC;
+
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NAMES = { s: "position", v: "velocity", a: "acceleration", j: "jerk" };
+const UNITS_TXT = { s: "m", v: "m/s", a: "m/s²", j: "m/s³" };
+const CHECK_SVG = `<svg class="check" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25"/><path d="M16 29 l8 8 l16 -18"/></svg>`;
+const st = { skill: 1, diff: "easy", prob: null, done: {}, fdone: [], checks: 0, probs: 0, counted: false };
+
+// ------------------------------------------------------------- building the rows
+function termHtml(hard, t = {}) {
+  return `<span class="term"><select class="sg" aria-label="sign"><option value="">±</option><option value="+"${t.sign === "+" ? " selected" : ""}>+</option><option value="-"${t.sign === "-" ? " selected" : ""}>−</option></select>` +
+    `<input class="mg" inputmode="decimal" autocomplete="off" aria-label="coefficient" value="${t.mag ?? ""}">` +
+    `<span class="tv">t</span><input class="ex" inputmode="numeric" autocomplete="off" aria-label="exponent" value="${t.exp ?? ""}">` +
+    (hard ? `<button class="rm" title="Remove this term" aria-label="Remove term">×</button>` : "") + `</span>`;
+}
+function compLine(q, c, hard, count, dim, vals) {
+  // one component's editable terms. dim 2: wrapped in ( … ) î / ĵ
+  const n = vals ? vals.length : count;
+  let h = "";
+  for (let i = 0; i < n; i++) h += (i ? `<span class="glue">+</span>` : "") + termHtml(hard, vals ? vals[i] : {});
+  if (hard) h += `<button class="addt">+ term</button>`;
+  if (dim === 2) h = `${c ? `<span class="lead">+</span>` : `<span class="lead"></span>`}<span class="par">(</span>${h}<span class="par">)</span><span class="uv hat">${c ? "ĵ" : "î"}</span>`;
+  return `<div class="cline" data-q="${q}" data-c="${c}">${h}</div>`;
+}
+function givenLine(p, c, dim) {
+  const h = KC.termsHtml(p);
+  if (dim === 1) return `<div class="given">${h}</div>`;
+  return `<div class="cline given">${c ? `<span class="lead">+</span>` : `<span class="lead"></span>`}<span class="par">(</span>${h}<span class="par">)</span><span class="uv hat">${c ? "ĵ" : "î"}</span></div>`;
+}
+
+function newProblem() {
+  st.prob = KC.generate({ skill: st.skill, diff: st.diff });
+  st.done = { [st.prob.given]: true };
+  st.fdone = st.prob.follow.map(() => false);
+  st.counted = false;
+  render();
+}
+function comps() { return st.prob.dim === 1 ? [0] : [0, 1]; }
+function target(q, c) { return st.prob.dim === 1 ? st.prob.P[q] : st.prob.P[q][c]; }
+
+function render() {
+  const p = st.prob, hard = st.diff === "hard";
+  $("story").innerHTML = p.para;
+  $("dimChip").textContent = p.dim === 1 ? "1D" : "2D · unit vectors";
+  $("givenChip").textContent = "given: " + NAMES[p.given];
+  let h = "";
+  for (const q of KC.Q) {
+    const isGiven = q === p.given;
+    let body = "";
+    for (const c of comps()) {
+      if (isGiven) body += givenLine(target(q, c), c, p.dim);
+      else body += compLine(q, c, hard, KC.slotCount(target(q, c)), p.dim, hard ? [{}] : null);
+    }
+    if (isGiven) body = `<span class="badge">given</span>` + body;
+    h += `<div class="frow" data-q="${q}"><div class="fl"><span class="nm">${q} <span>=</span></span><span class="cap">${NAMES[q]} · ${UNITS_TXT[q]}</span></div>` +
+      `<div class="fbody">${body}</div>${CHECK_SVG}<div class="fmsg" aria-live="polite"></div></div>`;
+  }
+  $("frows").innerHTML = h;
+  for (const q of KC.Q) if (q === p.given) setCheck(q, true, true);
+  // follow-ups
+  $("fups").hidden = st.skill !== 2;
+  $("fqs").innerHTML = p.follow.map((f, i) => `<div class="fq" data-i="${i}"><div><p class="qt"><b>${i + 1}.</b>${f.html}</p>
+    <div class="ctrls"><select class="sg" aria-label="sign"><option value="">±</option><option value="+">+</option><option value="-">−</option></select>
+    <input class="mg" inputmode="decimal" autocomplete="off" aria-label="number">
+    <select class="un" aria-label="units"><option value="">units</option>${KC.UNITS.map((u) => `<option value="${u}">${u}</option>`).join("")}</select></div></div>
+    ${CHECK_SVG}<div class="fmsg" aria-live="polite"></div></div>`).join("");
+  updateLocks();
+  updateDone();
+}
+
+// ------------------------------------------------------------- grading
+function readTerms(line) {
+  return [...line.querySelectorAll(".term")].map((t) => ({ sign: t.querySelector(".sg").value, mag: t.querySelector(".mg").value, exp: t.querySelector(".ex").value, el: t }));
+}
+// full = true: show red too (on change/blur). full = false (while typing): only show green.
+function gradeRow(q, full) {
+  if (st.done[q]) return;
+  const row = document.querySelector(`.frow[data-q="${q}"]`);
+  let allComplete = true, msg = "";
+  for (const line of row.querySelectorAll(".cline:not(.given)")) {
+    const c = +line.dataset.c;
+    const terms = readTerms(line);
+    const g = KC.gradePoly(terms, target(q, c));
+    terms.forEach((t, i) => {
+      const s = g.states[i];
+      for (const [cls, k] of [[".sg", "sign"], [".mg", "mag"], [".ex", "exp"]]) {
+        const el = t.el.querySelector(cls);
+        el.classList.toggle("ok", s[k] === "ok");
+        el.classList.toggle("bad", full && s[k] === "bad");
+      }
+    });
+    if (!g.complete) allComplete = false;
+    if (full && g.msg && !msg) msg = g.msg;
+  }
+  row.querySelector(".fmsg").innerHTML = allComplete ? "" : (full ? msg : row.querySelector(".fmsg").innerHTML);
+  if (allComplete) {
+    st.done[q] = true;
+    st.checks++;
+    row.querySelectorAll("input,select,button").forEach((el) => (el.disabled = true));
+    row.querySelectorAll(".rm,.addt").forEach((el) => el.remove());
+    setCheck(q, true);
+    updateLocks(); updateDone(); updateTally();
+  }
+}
+function setCheck(q, on, quiet) {
+  const svg = document.querySelector(`.frow[data-q="${q}"] .check`);
+  svg.classList.toggle("on", on);
+  if (quiet) svg.style.animation = "none";
+  svg.setAttribute("aria-label", on ? `${NAMES[q]} correct` : "");
+}
+function functionsDone() { return KC.Q.every((q) => st.done[q]); }
+function updateLocks() {
+  const locked = !functionsDone();
+  $("fups").classList.toggle("locked", locked);
+  document.querySelectorAll(".fq").forEach((fq, i) => fq.querySelectorAll("input,select").forEach((el) => (el.disabled = locked || st.fdone[i])));
+}
+function gradeFollow(i, full) {
+  if (st.fdone[i] || !functionsDone()) return;
+  const fq = document.querySelector(`.fq[data-i="${i}"]`);
+  const inp = { sign: fq.querySelector(".sg").value, mag: fq.querySelector(".mg").value, unit: fq.querySelector(".un").value };
+  const g = KC.gradeFollow(st.prob.follow[i], inp);
+  for (const [cls, k] of [[".sg", "sign"], [".mg", "mag"], [".un", "unit"]]) {
+    const el = fq.querySelector(cls);
+    el.classList.toggle("ok", g[k] === "ok");
+    el.classList.toggle("bad", full && g[k] === "bad");
+  }
+  fq.querySelector(".fmsg").textContent = full ? g.msg : fq.querySelector(".fmsg").textContent;
+  if (g.complete) {
+    st.fdone[i] = true; st.checks++;
+    fq.querySelectorAll("input,select").forEach((el) => (el.disabled = true));
+    fq.querySelector(".check").classList.add("on");
+    fq.querySelector(".fmsg").textContent = "";
+    updateDone(); updateTally();
+  }
+}
+function allDone() { return functionsDone() && st.fdone.every(Boolean); }
+function updateDone() {
+  const d = allDone();
+  $("newBtn").disabled = !d;
+  $("newHint").hidden = d;
+  $("done").hidden = !d;
+  if (d && !st.counted) { st.counted = true; st.probs++; updateTally(); }
+}
+function updateTally() { $("tChecks").textContent = st.checks; $("tProbs").textContent = st.probs; }
+
+// ------------------------------------------------------------- events
+$("frows").addEventListener("input", (e) => { const row = e.target.closest(".frow"); if (row) gradeRow(row.dataset.q, e.target.tagName === "SELECT"); });
+$("frows").addEventListener("change", (e) => { const row = e.target.closest(".frow"); if (row) gradeRow(row.dataset.q, true); });
+$("frows").addEventListener("focusout", (e) => { const row = e.target.closest(".frow"); if (row && e.target.tagName === "INPUT") gradeRow(row.dataset.q, true); });
+$("frows").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.tagName === "INPUT") { const row = e.target.closest(".frow"); if (row) gradeRow(row.dataset.q, true); } });
+$("frows").addEventListener("click", (e) => {
+  const line = e.target.closest(".cline"); if (!line) return;
+  if (e.target.classList.contains("addt") || e.target.classList.contains("rm")) {
+    const vals = readTerms(line).map(({ sign, mag, exp }) => ({ sign, mag, exp }));
+    const idx = [...line.querySelectorAll(".term")].indexOf(e.target.closest(".term"));
+    if (e.target.classList.contains("addt")) vals.push({});
+    else { vals.splice(idx, 1); if (!vals.length) vals.push({}); }
+    const q = line.dataset.q, c = +line.dataset.c;
+    line.outerHTML = compLine(q, c, true, 0, st.prob.dim, vals);
+    const fresh = document.querySelector(`.cline[data-q="${q}"][data-c="${c}"]`);
+    const focusTerm = e.target.classList.contains("addt") ? fresh.querySelectorAll(".term")[vals.length - 1] : fresh.querySelectorAll(".term")[Math.max(0, idx - 1)];
+    (focusTerm ? focusTerm.querySelector(".sg") : fresh.querySelector(".addt")).focus();
+    gradeRow(q, true);
+  }
+});
+$("fqs").addEventListener("input", (e) => { const fq = e.target.closest(".fq"); if (fq) gradeFollow(+fq.dataset.i, e.target.tagName === "SELECT"); });
+$("fqs").addEventListener("change", (e) => { const fq = e.target.closest(".fq"); if (fq) gradeFollow(+fq.dataset.i, true); });
+$("fqs").addEventListener("keydown", (e) => { if (e.key === "Enter") { const fq = e.target.closest(".fq"); if (fq) gradeFollow(+fq.dataset.i, true); } });
+$("newBtn").addEventListener("click", () => { if (allDone()) { newProblem(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+$("newBtn2").addEventListener("click", () => $("newBtn").click());
+document.querySelectorAll("#skillbar button").forEach((b) => b.addEventListener("click", () => {
+  st.skill = +b.dataset.skill;
+  document.querySelectorAll("#skillbar button").forEach((x) => x.classList.toggle("active", x === b));
+  newProblem();
+}));
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => {
+  st.diff = b.dataset.diff;
+  document.querySelectorAll("#diffSeg button").forEach((x) => x.classList.toggle("active", x === b));
+  newProblem();
+}));
+
+// Test hook for the Playwright scripts. Harmless in class.
+window.__kc = { st, KC, newProblem, gradeRow, target, comps };
+newProblem();
+updateTally();
+</script>
+</body>
+</html>
