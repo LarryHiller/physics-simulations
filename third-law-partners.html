@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Third Law Partners</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:74ch; margin:0;}
+
+nav.catbar{display:flex; gap:8px; margin:22px 0 0; padding:6px; flex-wrap:wrap; background:var(--surface-alt); border:1px solid var(--line-strong); border-radius:14px;}
+nav.catbar button{font-family:inherit; font-weight:600; font-size:15.5px; padding:12px 22px; border-radius:10px; cursor:pointer; flex:1 1 200px; border:1px solid transparent; background:transparent; color:var(--ink-soft);}
+nav.catbar button .sub{display:block; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; opacity:.85; margin-top:2px;}
+nav.catbar button.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+
+.toolbar{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:14px 0;}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.btn{font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.btn:focus-visible{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:2px;}
+.diffhint{font-size:13.5px; color:var(--ink-soft);}
+.tally{margin-left:auto; display:flex; gap:16px; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); align-items:center;}
+.tally b{color:var(--ink); font-size:17px;}
+.tally .ck{color:var(--good);}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:18px 20px;}
+.panel + .panel{margin-top:14px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.chip{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; padding:3px 10px; border-radius:12px; background:var(--surface-alt); border:1px solid var(--line-strong); color:var(--ink-soft); text-transform:none; letter-spacing:0;}
+sup{line-height:0; font-size:.7em;}
+
+/* object identity: the prompt's agent keeps slot 1 (teal), its object slot 2 (amber), through the swap */
+:root{--n1:#1a8f7b; --n2:#c4791e;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--n1:#229b86; --n2:#c97f22;} }
+:root[data-theme="dark"]{--n1:#229b86; --n2:#c97f22;}
+.n1{color:var(--n1); font-weight:600;}
+.n2{color:var(--n2); font-weight:600;}
+.mag{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:.88em; white-space:nowrap;}
+
+.prompt{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-size:30px; line-height:1.4; margin:4px 0 2px; text-wrap:pretty;}
+.prompt .mag{font-size:.8em;}
+.asklabel{font-size:15px; color:var(--ink-soft); margin:0 0 10px;}
+.ansrow{display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;}
+#answer{flex:1 1 420px; min-width:0; font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-size:23px; color:var(--ink); background:var(--surface); border:1.5px solid var(--line-strong); border-radius:12px; padding:12px 14px;}
+#answer::placeholder{color:var(--ink-muted); font-style:italic;}
+#answer:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+#answer.ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 12%, var(--surface));}
+#answer.bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 10%, var(--surface));}
+#answer:disabled{opacity:1; -webkit-text-fill-color:var(--ink);}
+#checkBtn{font-size:16px; padding:12px 26px;}
+
+.parts{display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 0; align-items:center;}
+.parts .lbl{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin-right:2px;}
+.part{font-family:"IBM Plex Mono",monospace; font-size:13.5px; font-weight:600; padding:5px 12px; border-radius:20px; border:1.5px dashed var(--line-strong); color:var(--ink-soft); background:transparent;}
+.part.ok{border-style:solid; border-color:var(--good); color:var(--good); background:color-mix(in srgb, var(--good) 10%, var(--surface));}
+.part.bad{border-style:solid; border-color:var(--critical); color:var(--critical); background:color-mix(in srgb, var(--critical) 9%, var(--surface));}
+.part.ok::before{content:"✓ ";}
+.part.bad::before{content:"✗ ";}
+.msg{font-size:16px; color:var(--critical); margin:12px 0 0; line-height:1.45;}
+.msg:empty, .note:empty{display:none;}
+.note{font-size:15px; color:var(--ink-soft); margin:10px 0 0; line-height:1.45;}
+
+.pair{margin-top:16px; padding:14px 16px; border-radius:12px; border:1.5px solid var(--good); background:color-mix(in srgb, var(--good) 7%, var(--surface));}
+.pair.revealed{border-color:var(--accent-warm); background:color-mix(in srgb, var(--accent-warm) 7%, var(--surface));}
+.pair[hidden]{display:none;}
+.pair .verdict{font-weight:700; color:var(--good); margin:0 0 10px;}
+.pair.revealed .verdict{color:var(--accent-warm);}
+.pgrid{display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px 14px; align-items:center;}
+.pgrid .tag{font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted);}
+.pgrid .sent{font-family:"Fraunces",Georgia,serif; font-size:22px; line-height:1.35;}
+.pgrid .arrow{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); white-space:nowrap; text-align:right;}
+.pgrid .arrow b{font-size:22px; color:var(--ink); vertical-align:-2px; margin-right:4px;}
+.pair .rule{font-size:14.5px; color:var(--ink-soft); margin:12px 0 0;}
+.pair .foot{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+.notebook .rule{font-family:"Fraunces",Georgia,serif; font-size:18px; color:var(--ink);}
+.vec{position:relative; font-style:italic;}
+.vec::before{content:"→"; position:absolute; left:50%; transform:translateX(-50%); top:-.62em; font-size:.62em; font-style:normal;}
+
+@media (max-width:700px){
+  .frame{padding:18px 16px 48px;}
+  h1{font-size:26px;}
+  .panel{padding:14px 12px;}
+  .prompt{font-size:24px;}
+  #answer{font-size:19px; flex-basis:100%;}
+  #checkBtn{flex:1 1 100%;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .pgrid{grid-template-columns:minmax(0,1fr) auto;}
+  .pgrid .tag{grid-column:1 / 3;}
+  .pgrid .sent{font-size:19px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 2 · Forces</div>
+    <h1>Third Law Partners</h1>
+    <p class="desc">Every force is half of a pair. Read the force, then write the other half: the same two nouns with their roles swapped, the same verb, the same size, the opposite direction.</p>
+  </header>
+
+  <nav class="catbar" id="tabbar" aria-label="Mode">
+    <button data-tab="words" class="active">Words<span class="sub">agent · verb · object</span></button>
+    <button data-tab="numbers">Numbers<span class="sub">with the size in newtons</span></button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <span class="diffhint" id="diffHint"></span>
+    <button class="btn" id="showBtn">Show answer</button>
+    <button class="btn primary" id="newBtn" disabled>New problem</button>
+    <div class="tally"><span class="ck">✓</span><span>Correct <b id="tCorrect">0</b></span><span>First try <b id="tFirst">0</b></span></div>
+  </div>
+
+  <section class="panel">
+    <h2>The force <span class="chip" id="modeChip"></span></h2>
+    <p class="prompt" id="prompt"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Its third-law partner</h2>
+    <p class="asklabel">Write the partner force as one sentence. Press Enter or Check.</p>
+    <div class="ansrow">
+      <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Partner force" data-k="answer">
+      <button class="btn primary" id="checkBtn">Check</button>
+    </div>
+    <div class="parts" id="parts" aria-live="polite"></div>
+    <p class="msg" id="msg" aria-live="polite"></p>
+    <p class="note" id="note"></p>
+    <div class="pair" id="pair" hidden>
+      <p class="verdict" id="verdict"></p>
+      <div class="pgrid" id="pgrid"></div>
+      <p class="rule">Each noun keeps its colour, so you can see the agent and the object trade places.</p>
+      <div class="foot"><button class="btn primary" id="newBtn2">New problem</button></div>
+    </div>
+  </section>
+
+  <details class="notebook panel">
+    <summary>Lab notebook · the rule and discussion questions</summary>
+    <div class="body">
+      <p class="rule"><span class="vec">F</span><sub>A</sub> = −<span class="vec">F</span><sub>B</sub></p>
+      <p class="rule">Agent verb object → object verb agent. Same verb, same size, opposite direction.</p>
+      <p>1. A proper third-law pair has exactly two nouns and exactly one verb. Why does that rule out the table pushing up on a block and Earth pulling down on the same block, even though those two forces are the same size and point in opposite directions?</p>
+      <p>2. “For every action there is an equal and opposite reaction.” What do the words <i>action</i> and <i>reaction</i> suggest about timing? When does the partner force actually happen?</p>
+      <p>3. A 2200 kg truck pushes a stalled 1500 kg car. Which pushes harder: the truck on the car, or the car on the truck?</p>
+      <p>4. A kid kicks a ball. The ball flies off and the kid barely moves. If the two forces are the same size, why are the results so different?</p>
+      <p>5. When you walk across a room, what is the agent that pushes you forward? What do you push, and which way?</p>
+      <p>6. “Earth pulls the goat down” has the partner “the goat pulls Earth up.” If those forces are the same size, why don’t we notice Earth moving toward the goat?</p>
+      <p>7. Can an object be its own agent? Think of a wagon “pulling itself” down the sidewalk.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Third Law Partners — model. Everything but the page: the scenario bank, the prompt
+// generator, and the forgiving sentence grader. Inlined into the page by build.js.
+// In Node: const N3 = require("./model.js").
+const N3 = (() => {
+  "use strict";
+
+  // ------------------------------------------------------------------ nouns
+  // art: article used in sentences ("" for proper nouns like Earth). m: mass range in kg
+  // for the mass-distractor prompts (null = never shown with a mass).
+  const NOUNS = {
+    kid: { m: [25, 45] }, wagon: { m: [6, 12] }, shopper: { m: [55, 90] }, cart: { m: [12, 30] },
+    horse: { m: [450, 700] }, tractor: { m: [2500, 4500] }, plow: { m: [300, 700] },
+    tugboat: { m: [150000, 300000] }, barge: { m: [800000, 2000000] },
+    "bowling ball": { m: [5, 7.2] }, pin: { m: [1.4, 1.6] }, car: { m: [1100, 1600] }, bug: { m: [0.0005, 0.003] },
+    bat: { m: [0.85, 1] }, ball: { m: [0.14, 0.45] }, racket: { m: [0.28, 0.34] },
+    truck: { m: [2000, 3500] }, player: { m: [55, 85] }, girl: { m: [35, 55] }, pebble: { m: [0.01, 0.1] },
+    swimmer: { m: [50, 85] }, wall: { m: null }, runner: { m: [50, 80] }, ground: { m: null },
+    monkey: { m: [6, 15] }, goat: { m: [30, 70] }, robot: { m: [10, 18] }, block: { m: [0.1, 2] },
+    magnet: { m: [0.05, 0.4] }, nail: { m: [0.005, 0.02] }, hammer: { m: [0.5, 1.2] },
+    rope: { m: null }, bucket: { m: [2, 12] }, table: { m: [15, 40] }, book: { m: [0.4, 2] }, shelf: { m: null },
+    thumb: { m: null }, button: { m: null }, Earth: { art: "", m: null }, apple: { m: [0.1, 0.25] },
+    Moon: { art: "the", m: null }, Sun: { art: "the", m: null }, climber: { m: [55, 85] }, cable: { m: null },
+    elevator: { m: [800, 2000] }, dog: { m: [10, 40] }, leash: { m: null }, boxer: { m: [55, 100] },
+    bag: { m: [20, 50] }, wind: { m: null }, sail: { m: null }, hand: { m: null }, door: { m: [15, 40] },
+    person: { m: [50, 90] }, coin: { m: [0.003, 0.01] },
+  };
+  const art = (n) => (NOUNS[n] && NOUNS[n].art !== undefined ? NOUNS[n].art : "the");
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  // ------------------------------------------------------------------ verbs
+  const VERB3 = { push: "pushes", pull: "pulls", hit: "hits", kick: "kicks", press: "presses" };
+  const VERB_FORMS = {
+    push: ["push", "pushes", "pushed", "pushing"],
+    pull: ["pull", "pulls", "pulled", "pulling"],
+    hit: ["hit", "hits", "hitting"],
+    kick: ["kick", "kicks", "kicked", "kicking"],
+    press: ["press", "presses", "pressed", "pressing"],
+  };
+  // Verbs a student might reach for instead. Recognised only so the message can be specific.
+  const OTHER_VERBS = ["shove", "shoves", "shoved", "tug", "tugs", "tugged", "drag", "drags", "dragged", "lift", "lifts", "lifted",
+    "hold", "holds", "held", "support", "supports", "supported", "resist", "resists", "resisted", "stop", "stops", "stopped",
+    "react", "reacts", "reacted", "exert", "exerts", "exerted", "apply", "applies", "applied", "attract", "attracts", "attracted",
+    "repel", "repels", "repelled", "move", "moves", "moved", "accelerate", "accelerates", "accelerated", "strike", "strikes", "struck",
+    "bump", "bumps", "bumped", "throw", "throws", "threw", "squeeze", "squeezes", "squeezed", "slow", "slows", "slowed", "touch", "touches", "touched"];
+  const VERB_OF = {};
+  for (const [b, fs] of Object.entries(VERB_FORMS)) for (const f of fs) VERB_OF[f] = b;
+
+  // ------------------------------------------------------------------ directions
+  const OPP = { north: "south", south: "north", east: "west", west: "east", up: "down", down: "up",
+    forward: "backward", backward: "forward", left: "right", right: "left" };
+  const DIR_OF = {
+    north: "north", northward: "north", northwards: "north", south: "south", southward: "south", southwards: "south",
+    east: "east", eastward: "east", eastwards: "east", west: "west", westward: "west", westwards: "west",
+    up: "up", upward: "up", upwards: "up", down: "down", downward: "down", downwards: "down",
+    forward: "forward", forwards: "forward", ahead: "forward", backward: "backward", backwards: "backward", back: "backward",
+    left: "left", leftward: "left", leftwards: "left", right: "right", rightward: "right", rightwards: "right",
+  };
+  const ARROW = { north: "↑", up: "↑", south: "↓", down: "↓", east: "→", forward: "→", right: "→", west: "←", backward: "←", left: "←" };
+  const C = ["north", "south", "east", "west"];
+
+  // ------------------------------------------------------------------ scenarios
+  // a VERB b. v: verbs this pair can use. dirs: directions the prompt force can point
+  // (empty = only used when no direction is asked for). F: force range in N.
+  // grav: a gravity pair ("Earth pulls goat down" → "goat pulls Earth up"). mass: can carry a mass distractor.
+  const S = [
+    { a: "kid", b: "wagon", v: ["pull"], dirs: [...C, "forward"], F: [15, 60], mass: true },
+    { a: "shopper", b: "cart", v: ["push"], dirs: [...C, "forward"], F: [20, 80], mass: true },
+    { a: "horse", b: "cart", v: ["pull"], dirs: [...C, "forward"], F: [300, 900], mass: true },
+    { a: "tractor", b: "plow", v: ["pull"], dirs: [...C, "forward"], F: [2000, 9000], mass: true },
+    { a: "tugboat", b: "barge", v: ["push", "pull"], dirs: C, F: [5000, 40000], mass: true },
+    { a: "bowling ball", b: "pin", v: ["push", "hit"], dirs: [...C, "forward"], F: [100, 400], mass: true },
+    { a: "car", b: "bug", v: ["hit"], dirs: C, F: [0.5, 3], mass: true },
+    { a: "bat", b: "ball", v: ["push", "hit"], dirs: [...C, "left", "right"], F: [150, 800], mass: true },
+    { a: "racket", b: "ball", v: ["hit", "push"], dirs: [...C, "left", "right"], F: [100, 600], mass: true },
+    { a: "truck", b: "car", v: ["push"], dirs: [...C, "forward"], F: [300, 2000], mass: true },
+    { a: "player", b: "ball", v: ["kick"], dirs: [...C, "forward", "left", "right"], F: [100, 600], mass: true },
+    { a: "girl", b: "pebble", v: ["kick"], dirs: [...C, "forward"], F: [20, 120], mass: true },
+    { a: "swimmer", b: "wall", v: ["push"], dirs: ["backward", "east", "west"], F: [200, 900] },
+    { a: "runner", b: "ground", v: ["push"], dirs: ["backward"], F: [500, 1500] },
+    { a: "person", b: "ground", v: ["push"], dirs: ["backward"], F: [100, 400] },
+    { a: "monkey", b: "goat", v: ["push"], dirs: C, F: [20, 90], mass: true },
+    { a: "robot", b: "block", v: ["push"], dirs: [...C, "forward", "left", "right"], F: [5, 40], mass: true },
+    { a: "magnet", b: "nail", v: ["pull"], dirs: ["left", "right", "east", "west", "up"], F: [0.5, 5], mass: true },
+    { a: "hammer", b: "nail", v: ["hit"], dirs: ["down"], F: [200, 1500], mass: true },
+    { a: "rope", b: "bucket", v: ["pull"], dirs: ["up"], F: [20, 150] },
+    { a: "block", b: "table", v: ["push"], dirs: ["down"], F: [1, 20] },
+    { a: "table", b: "block", v: ["push"], dirs: ["up"], F: [1, 20] },
+    { a: "book", b: "shelf", v: ["press", "push"], dirs: ["down"], F: [4, 20] },
+    { a: "thumb", b: "button", v: ["press", "push"], dirs: ["down", "left", "right"], F: [1, 8] },
+    { a: "climber", b: "rope", v: ["pull"], dirs: ["down"], F: [400, 900] },
+    { a: "cable", b: "elevator", v: ["pull"], dirs: ["up"], F: [3000, 9000] },
+    { a: "dog", b: "leash", v: ["pull"], dirs: [...C, "forward"], F: [30, 200] },
+    { a: "boxer", b: "bag", v: ["hit"], dirs: ["forward", "left", "right"], F: [500, 3000], mass: true },
+    { a: "wind", b: "sail", v: ["push"], dirs: C, F: [200, 2000] },
+    { a: "hand", b: "door", v: ["push", "pull"], dirs: ["forward", "backward", ...C], F: [10, 60] },
+    { a: "Earth", b: "goat", v: ["pull"], dirs: ["down"], F: [290, 590], grav: true },
+    { a: "Earth", b: "apple", v: ["pull"], dirs: ["down"], F: [1, 2.5], grav: true },
+    { a: "Earth", b: "coin", v: ["pull"], dirs: ["down"], F: [0.03, 0.09], grav: true },
+    { a: "Earth", b: "Moon", v: ["pull"], dirs: [], F: [1.9e20, 2.1e20], grav: true, noNum: true },
+    { a: "Sun", b: "Earth", v: ["pull"], dirs: [], F: [3.4e22, 3.6e22], grav: true, noNum: true },
+  ];
+
+  // ------------------------------------------------------------------ helpers
+  function mulberry32(seed) {
+    return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
+  // a random value in [lo, hi] (log-uniform if the range is wide), rounded to 2 significant figures
+  function nice(r, lo, hi) {
+    const x = hi / lo > 4 ? Math.exp(Math.log(lo) + r() * (Math.log(hi) - Math.log(lo))) : lo + r() * (hi - lo);
+    return +x.toPrecision(2);
+  }
+  function fmtNum(x) {
+    const ax = Math.abs(x);
+    if (ax >= 1e7) {
+      const e = Math.floor(Math.log10(ax)), m = +(x / 10 ** e).toPrecision(2);
+      return `${m} × 10<sup>${e}</sup>`;
+    }
+    if (ax >= 10000) return Math.round(x).toLocaleString("en-US");
+    if (ax < 0.01) return String(+x.toPrecision(2));
+    return String(+x.toPrecision(3));
+  }
+  const fmtText = (x) => fmtNum(x).replace(/ × 10<sup>(-?\d+)<\/sup>/, "e$1");
+
+  // ------------------------------------------------------------------ generator
+  // tab: "words" | "numbers". diff: "easy" (no direction) | "hard" (with direction).
+  // opts.rng: a () => [0,1) function. opts.avoid: key of the previous problem.
+  function generate(opts) {
+    const r = opts.rng || Math.random;
+    const withDir = opts.diff === "hard", withNum = opts.tab === "numbers";
+    let pool = S.filter((s) => (!withDir || s.dirs.length) && (!withNum || !s.noNum));
+    let sc, key, tries = 0;
+    do { sc = pick(r, pool); key = sc.a + "|" + sc.b; tries++; } while (key === opts.avoid && tries < 20);
+    const verb = pick(r, sc.v);
+    const dir = withDir ? pick(r, sc.dirs) : null;
+    const F = withNum ? nice(r, sc.F[0], sc.F[1]) : null;
+    // mass distractor: about 45% of Numbers problems whose pair can carry one
+    let masses = null;
+    if (withNum && sc.mass && NOUNS[sc.a].m && NOUNS[sc.b].m && r() < 0.45) {
+      for (let k = 0; k < 20; k++) {
+        const ma = nice(r, ...NOUNS[sc.a].m), mb = nice(r, ...NOUNS[sc.b].m);
+        if (ma !== mb && ma !== F && mb !== F) { masses = [ma, mb]; break; }
+      }
+    }
+    // vertical push/pull/press sometimes in the reading's "pushes down on the table" form
+    const onForm = !!dir && (dir === "up" || dir === "down") && verb !== "hit" && verb !== "kick" && r() < 0.5;
+    const forceOf = r() < 0.35; // "with a force of 58 N" vs "with 58 N"
+    const p = { tab: opts.tab, diff: opts.diff, agent: sc.a, object: sc.b, verb, dir, F, masses, onForm, forceOf, grav: !!sc.grav, key };
+    p.prompt = sentence(p, false);
+    p.answer = sentence(p, true);
+    return p;
+  }
+
+  // Build the prompt (partner = false) or its partner (partner = true) as HTML.
+  // Nouns are wrapped in <span class="nX"> where X is 1 for the prompt's agent and 2 for its object,
+  // so each noun keeps its colour when the roles swap.
+  function sentence(p, partner) {
+    const A = partner ? p.object : p.agent, B = partner ? p.agent : p.object;
+    const cls = (n) => (n === p.agent ? "n1" : "n2");
+    const massOf = (n) => (p.masses && !partner ? (n === p.agent ? p.masses[0] : p.masses[1]) : null);
+    const np = (n, first) => {
+      const m = massOf(n);
+      let a = art(n);
+      if (m != null && a !== "") a = anNumber(m) ? "an" : "a";
+      const lead = a ? a + " " : "";
+      const mtxt = m != null ? `${fmtNum(m)} kg ` : "";
+      return { html: `${lead}${mtxt}<span class="${cls(n)}">${n}</span>`, text: `${lead}${mtxt.replace(/<[^>]+>/g, "")}${n}` };
+    };
+    const d = p.dir ? (partner ? OPP[p.dir] : p.dir) : null;
+    const v = VERB3[p.verb];
+    const a1 = np(A, true), b1 = np(B, false);
+    let midH, midT;
+    if (d && p.onForm) { midH = `${v} ${d} on ${b1.html}`; midT = `${v} ${d} on ${b1.text}`; }
+    else { midH = `${v} ${b1.html}${d ? " " + d : ""}`; midT = `${v} ${b1.text}${d ? " " + d : ""}`; }
+    let num = "", numT = "";
+    if (p.F != null) {
+      num = ` with ${p.forceOf ? "a force of " : ""}<span class="mag">${fmtNum(p.F)} N</span>`;
+      numT = ` with ${p.forceOf ? "a force of " : ""}${fmtText(p.F)} N`;
+    }
+    const html = cap1(a1.html) + " " + midH + num + ".";
+    const text = cap(a1.text) + " " + midT + numT + ".";
+    return { html, text };
+  }
+  // "an 800 kg horse", "an 18 kg dog", "an 11,000 kg ..."; otherwise "a"
+  function anNumber(x) {
+    const ip = String(Math.floor(Math.abs(x)));
+    if (ip === "0") return false;
+    if (ip[0] === "8") return true;
+    return (ip.startsWith("11") || ip.startsWith("18")) && ip.length % 3 === 2;
+  }
+  function cap1(h) { return h.replace(/^([a-z])/, (m) => m.toUpperCase()); }
+
+  // ------------------------------------------------------------------ grader
+  const FILLER = new Set(["the", "a", "an", "on", "upon", "onto", "with", "force", "forces", "of", "to", "toward", "towards", "in", "into",
+    "direction", "also", "and", "at", "against", "its", "his", "her", "their", "equal", "same", "size", "magnitude", "opposite", "exactly",
+    "pointing", "points", "that", "is", "are", "was", "gets", "being", "been", "by", "it", "s", "too", "as", "well", "amount", "strength",
+    "of", "newton", "newtons", "n", "kg", "has", "a", "total", "approximately", "about", "back"]);
+  const ACTION_WORDS = /\b(react\w*|reaction|response|in return|back at|later|afterwards?)\b/;
+
+  function normalize(s) {
+    return String(s || "")
+      .toLowerCase()
+      .replace(/[’‘`]/g, "'")
+      .replace(/'s\b/g, "")
+      .replace(/(\d),(?=\d{3}(?!\d))/g, "$1")
+      .replace(/×\s*10\^?\s*(-?\d+)/g, "e$1")
+      .replace(/\bx\s*10\^\s*(-?\d+)/g, "e$1")
+      .replace(/−/g, "-")
+      .replace(/(\d)(newtons?|n|kg)\b/g, "$1 $2")
+      .replace(/[^a-z0-9.\-\s]/g, " ")
+      .split(/\s+/)
+      .map((t) => (/^-?\d*\.?\d+(e-?\d+)?\.?$/.test(t) ? t.replace(/\.$/, "") : t.replace(/^[.\-]+|[.\-]+$/g, "")))
+      .filter(Boolean);
+  }
+
+  // all spellings a student might use for a noun in this problem
+  function aliasesFor(n, other) {
+    const words = n.toLowerCase().split(" ");
+    const out = [words];
+    const last = words[words.length - 1];
+    if (words.length > 1 && !other.toLowerCase().split(" ").includes(last)) out.push([last]);
+    // a stray plural ("carts") is a typo, not a physics mistake
+    for (const w of [...out]) out.push([...w.slice(0, -1), w[w.length - 1] + (/(s|x|ch|sh)$/.test(w[w.length - 1]) ? "es" : "s")]);
+    return out;
+  }
+  // find every occurrence of a noun; returns [{start,end}]
+  function findNoun(tokens, aliases, used) {
+    const hits = [];
+    const al = [...aliases].sort((x, y) => y.length - x.length);
+    for (let i = 0; i < tokens.length; i++) {
+      if (used[i]) continue;
+      for (const w of al) {
+        if (w.every((t, k) => tokens[i + k] === t && !used[i + k])) {
+          hits.push({ start: i, end: i + w.length - 1 });
+          for (let k = 0; k < w.length; k++) used[i + k] = true;
+          i += w.length - 1;
+          break;
+        }
+      }
+    }
+    return hits;
+  }
+  const ALL_NOUN_WORDS = (() => { const s = new Set(); for (const n of Object.keys(NOUNS)) { const w = n.toLowerCase().split(" "); s.add(w[w.length - 1]); if (w.length === 1) s.add(w[0]); } return s; })();
+
+  function the(n) { return (art(n) ? art(n) + " " : "") + n; }
+
+  // Grade a typed partner sentence against problem p.
+  // Returns { correct, parts: {agent, verb, object, dir, mag}, msg, note }
+  // part states: "ok" | "bad" | "na" (not asked for) | "" (couldn't judge yet)
+  function grade(p, input) {
+    const T = normalize(input);
+    const parts = { agent: "", verb: "", object: "", dir: p.dir ? "" : "na", mag: p.F != null ? "" : "na" };
+    const res = (msg) => ({ correct: false, parts, msg, note: "" });
+    if (!T.length) return res("Type the partner force in the box.");
+    const PA = p.object, PO = p.agent; // the partner's agent and object
+    const used = new Array(T.length).fill(false);
+    const hA = findNoun(T, aliasesFor(PA, PO), used);
+    const hO = findNoun(T, aliasesFor(PO, PA), used);
+
+    // 1. both nouns
+    if (!hA.length && !hO.length) { parts.agent = parts.object = "bad"; return res(`Use the same two nouns as the prompt: ${the(p.agent)} and ${the(p.object)}.`); }
+    if (!hA.length || !hO.length) {
+      const miss = !hA.length ? PA : PO;
+      parts[!hA.length ? "agent" : "object"] = "bad";
+      return res(`Your sentence is missing ${the(miss)}. A third-law pair is always between the same two nouns.`);
+    }
+    // 2. a third noun
+    const extra = T.find((t, i) => !used[i] && ALL_NOUN_WORDS.has(t) && !FILLER.has(t));
+    if (extra) return res(`A third-law pair has exactly two nouns, ${the(p.agent)} and ${the(p.object)}. The ${extra} doesn't belong in this one.`);
+
+    // 3. the verb
+    const verbIdx = [], otherIdx = [];
+    T.forEach((t, i) => { if (!used[i] && VERB_OF[t]) verbIdx.push(i); else if (!used[i] && OTHER_VERBS.includes(t)) otherIdx.push(i); });
+    const v3 = VERB3[p.verb];
+    if (hA.length > 1 || hO.length > 1 || verbIdx.length > 1)
+      return res("Write only the partner force: one sentence with two nouns and one verb.");
+    if (!verbIdx.length) {
+      parts.verb = "bad";
+      if (otherIdx.length) return res(`Keep the verb from the prompt. The partner of “${v3}” is also “${v3}”, not “${T[otherIdx[0]]}”.`);
+      return res(`Your sentence needs the verb from the prompt: ${v3}.`);
+    }
+    const vb = VERB_OF[T[verbIdx[0]]];
+    if (vb !== p.verb) {
+      parts.verb = "bad";
+      return res(`Keep the verb from the prompt. A ${p.verb} is answered by a ${p.verb}: the partner also ${v3}, not ${VERB3[vb]}.`);
+    }
+    parts.verb = "ok";
+
+    // 4. who is the agent?
+    const vi = verbIdx[0], a = hA[0], o = hO[0];
+    // passive: "the shopper is pushed by the cart"
+    const byIdx = T.indexOf("by");
+    let agentNoun = null;
+    const passive = byIdx > vi && /(ed|hit)$/.test(T[vi]) && [a, o].some((h) => h.start > byIdx);
+    if (passive) {
+      const afterBy = [a, o].filter((h) => h.start > byIdx).sort((x, y) => x.start - y.start)[0];
+      const beforeV = [a, o].find((h) => h.end < vi);
+      if (afterBy && beforeV) agentNoun = afterBy === a ? PA : PO;
+    } else {
+      const before = [a, o].filter((h) => h.end < vi), after = [a, o].filter((h) => h.start > vi);
+      if (before.length === 1 && after.length === 1) agentNoun = before[0] === a ? PA : PO;
+    }
+    if (!agentNoun) {
+      parts.agent = parts.object = "bad";
+      return res(`Write it as agent, verb, object, like the prompt: “${cap(the(PA))} ${v3} ${the(PO)}…”`);
+    }
+    if (agentNoun !== PA) {
+      parts.agent = parts.object = "bad";
+      return res(`That restates the original force. In the partner, the roles swap: ${the(PA)} is now the agent and ${the(PO)} is the object.`);
+    }
+    parts.agent = parts.object = "ok";
+
+    // 5. direction
+    // "back" counts as a direction only when no other direction word is there ("pushes back on the shopper south")
+    let dirs = [...new Set(T.filter((t, i) => !used[i] && DIR_OF[t] && t !== "back").map((t) => DIR_OF[t]))];
+    if (!dirs.length && T.includes("back")) dirs = ["backward"];
+    if (p.dir) {
+      const want = OPP[p.dir];
+      if (!dirs.length) { parts.dir = "bad"; return res(`Add a direction. The prompt force points ${p.dir}, so its partner needs a direction too.`); }
+      if (dirs.length > 1) { parts.dir = "bad"; return res(`Give the partner one direction. Yours has ${dirs.join(" and ")}.`); }
+      const d = dirs[0];
+      if (d === p.dir) { parts.dir = "bad"; return res(`The nouns are swapped, but the direction is still ${d}. Third-law partners always point in opposite directions.`); }
+      if (d !== want) { parts.dir = "bad"; return res(`Opposite means the other way along the same line. The opposite of ${p.dir} is not ${d}.`); }
+      parts.dir = "ok";
+    }
+
+    // 6. magnitude
+    if (p.F != null) {
+      const nums = [];
+      for (let i = 0; i < T.length; i++) {
+        if (!/^-?\d*\.?\d+(e-?\d+)?$/.test(T[i])) continue;
+        const u = T[i + 1];
+        const unit = u === "n" || u === "newton" || u === "newtons" ? "N" : u === "kg" ? "kg" : "";
+        nums.push({ x: parseFloat(T[i]), unit });
+      }
+      const same = (x, y) => Math.abs(x - y) <= 1e-9 * Math.max(1, Math.abs(y));
+      const isMass = (x) => p.masses && p.masses.some((m) => same(Math.abs(x), m));
+      const forces = nums.filter((n) => n.unit !== "kg" && !(n.unit === "" && isMass(n.x)));
+      const massLike = nums.filter((n) => n.unit === "kg" || (n.unit === "" && isMass(n.x)));
+      if (!forces.length) {
+        parts.mag = "bad";
+        if (massLike.some((n) => same(n.x, p.F))) return res(`Force is measured in newtons, not kilograms. Write the size as ${fmtText(p.F)} N.`);
+        if (massLike.length && nums.every((n) => n.unit !== "N")) return res(`That number is a mass. A third-law partner needs a force, in newtons.`);
+        return res("Add the size of the force, in newtons.");
+      }
+      if (forces.length > 1) { parts.mag = "bad"; return res("Give the partner one force value."); }
+      const f = forces[0];
+      if (f.x < 0) { parts.mag = "bad"; return res(p.dir ? "Write the size as a positive number. The direction word already says which way it points." : "Write the size as a positive number. A size is never negative."); }
+      if (!same(f.x, p.F)) {
+        parts.mag = "bad";
+        if (p.masses) return res(`Third-law partners are always the same size, whatever the masses are. The prompt force is ${fmtText(p.F)} N.`);
+        return res(`Third-law partners are always the same size. The prompt force is ${fmtText(p.F)} N.`);
+      }
+      if (f.unit !== "N") { parts.mag = "bad"; return res("The number is right. Add the unit: N."); }
+      parts.mag = "ok";
+    }
+
+    const note = ACTION_WORDS.test(T.join(" ")) ? "Both forces happen at the same instant. The partner isn't a reaction that comes afterward." : "";
+    return { correct: true, parts, msg: "", note };
+  }
+
+  return { NOUNS, S, VERB3, OPP, ARROW, DIR_OF, generate, sentence, grade, normalize, mulberry32, fmtNum, fmtText, the, cap };
+})();
+if (typeof module !== "undefined") module.exports = N3;
+
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const st = { tab: "words", diff: "easy", prob: null, tries: 0, solved: false, revealed: false, correct: 0, first: 0 };
+const HINT = {
+  "words-easy": "Easy: no directions", "words-hard": "Hard: every force has a direction",
+  "numbers-easy": "Easy: size only", "numbers-hard": "Hard: size and direction",
+};
+const PART_NAMES = [["agent", "Agent"], ["verb", "Verb"], ["object", "Object"], ["dir", "Direction"], ["mag", "Size"]];
+
+function newProblem() {
+  st.prob = N3.generate({ tab: st.tab, diff: st.diff, avoid: st.prob && st.prob.key });
+  st.tries = 0; st.solved = false; st.revealed = false;
+  render();
+}
+function render() {
+  const p = st.prob;
+  $("prompt").innerHTML = p.prompt.html;
+  $("modeChip").textContent = (st.tab === "words" ? "Words" : "Numbers") + " · " + (st.diff === "easy" ? "Easy" : "Hard");
+  $("diffHint").textContent = HINT[st.tab + "-" + st.diff];
+  // every control goes back to its opening state, every time
+  const a = $("answer");
+  a.value = ""; a.disabled = false; a.classList.remove("ok", "bad");
+  a.placeholder = placeholderFor(p);
+  $("checkBtn").hidden = false; $("checkBtn").disabled = false;
+  $("showBtn").disabled = false;
+  $("newBtn").disabled = true;
+  $("msg").textContent = ""; $("note").textContent = "";
+  $("pair").hidden = true; $("pair").classList.remove("revealed");
+  setParts(null);
+}
+function placeholderFor(p) {
+  if (st.tab === "numbers" && p.dir) return "noun verb noun direction with … N";
+  if (st.tab === "numbers") return "noun verb noun with … N";
+  if (p.dir) return "noun verb noun direction";
+  return "noun verb noun";
+}
+function setParts(parts) {
+  const p = st.prob;
+  $("parts").innerHTML = `<span class="lbl">Checked</span>` + PART_NAMES
+    .filter(([k]) => (k !== "dir" || p.dir) && (k !== "mag" || p.F != null))
+    .map(([k, label]) => `<span class="part ${parts && parts[k] ? parts[k] : ""}" data-part="${k}">${label}</span>`).join("");
+}
+function check() {
+  if (st.solved || st.revealed) return;
+  const g = N3.grade(st.prob, $("answer").value);
+  setParts(g.parts);
+  const a = $("answer");
+  if (!$("answer").value.trim()) { $("msg").textContent = g.msg; return; }
+  st.tries++;
+  if (g.correct) {
+    st.solved = true;
+    st.correct++; if (st.tries === 1) st.first++;
+    a.classList.remove("bad"); a.classList.add("ok"); a.disabled = true; a.scrollLeft = 0;
+    $("msg").textContent = ""; $("note").textContent = g.note;
+    showPair(false);
+    updateTally();
+  } else {
+    a.classList.add("bad");
+    $("msg").textContent = g.msg; $("note").textContent = "";
+  }
+}
+function arrowCell(dir, F) {
+  if (!dir && F == null) return "";
+  return `${dir ? `<b>${N3.ARROW[dir]}</b>${dir}` : ""}${dir && F != null ? " · " : ""}${F != null ? N3.fmtNum(F) + " N" : ""}`;
+}
+function showPair(revealed) {
+  const p = st.prob;
+  $("pair").hidden = false;
+  $("pair").classList.toggle("revealed", revealed);
+  $("verdict").textContent = revealed ? "The partner force:" : st.tries === 1 ? "✓ Correct, first try." : `✓ Correct, after ${st.tries} tries.`;
+  const dB = p.dir ? N3.OPP[p.dir] : null;
+  // the partner sentence never repeats the prompt's masses; strip them from Force A too so the two rows line up
+  const plainA = N3.sentence(Object.assign({}, p, { masses: null }), false).html;
+  $("pgrid").innerHTML =
+    `<span class="tag">Force A</span><span class="sent">${plainA}</span><span class="arrow">${arrowCell(p.dir, p.F)}</span>` +
+    `<span class="tag">Force B</span><span class="sent">${p.answer.html}</span><span class="arrow">${arrowCell(dB, p.F)}</span>`;
+  $("checkBtn").hidden = true; $("showBtn").disabled = true;
+  $("newBtn").disabled = false;
+  $("newBtn2").focus({ preventScroll: true });
+}
+function reveal() {
+  if (st.solved || st.revealed) return;
+  st.revealed = true;
+  $("answer").disabled = true; $("answer").classList.remove("bad");
+  $("msg").textContent = ""; $("note").textContent = "";
+  showPair(true);
+}
+function updateTally() { $("tCorrect").textContent = st.correct; $("tFirst").textContent = st.first; }
+
+// ------------------------------------------------------------- events
+$("answer").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); check(); } });
+// typing after a miss clears the red, but grading waits for Enter or Check
+$("answer").addEventListener("input", () => $("answer").classList.remove("bad"));
+$("checkBtn").addEventListener("click", check);
+$("showBtn").addEventListener("click", reveal);
+$("newBtn").addEventListener("click", () => { if (st.solved || st.revealed) { newProblem(); $("answer").focus({ preventScroll: true }); } });
+$("newBtn2").addEventListener("click", () => $("newBtn").click());
+document.querySelectorAll("#tabbar button").forEach((b) => b.addEventListener("click", () => {
+  st.tab = b.dataset.tab;
+  document.querySelectorAll("#tabbar button").forEach((x) => x.classList.toggle("active", x === b));
+  newProblem();
+}));
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => {
+  st.diff = b.dataset.diff;
+  document.querySelectorAll("#diffSeg button").forEach((x) => x.classList.toggle("active", x === b));
+  newProblem();
+}));
+
+// Test hook for the Playwright scripts. Harmless in class.
+window.__n3 = { st, N3, newProblem, check, reveal };
+newProblem();
+updateTally();
+</script>
+</body>
+</html>
