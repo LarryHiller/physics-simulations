@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Force Definitions</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:74ch; margin:0;}
+
+nav.catbar{display:flex; gap:8px; margin:22px 0 0; padding:6px; flex-wrap:wrap; background:var(--surface-alt); border:1px solid var(--line-strong); border-radius:14px;}
+nav.catbar button{font-family:inherit; font-weight:600; font-size:15.5px; padding:12px 18px; border-radius:10px; cursor:pointer; flex:1 1 180px; border:1px solid transparent; background:transparent; color:var(--ink-soft);}
+nav.catbar button .sub{display:block; font-family:"Fraunces",Georgia,serif; font-style:italic; font-size:15px; font-weight:500; opacity:.9; margin-top:3px;}
+nav.catbar button .sub sub{font-style:normal;}
+nav.catbar button.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+
+.toolbar{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:14px 0;}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.diffhint{font-size:13.5px; color:var(--ink-soft);}
+.btn{font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn.small{font-size:13.5px; padding:7px 12px;}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.btn:focus-visible, .seg button:focus-visible{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:2px;}
+.tally{margin-left:auto; display:flex; gap:16px; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); align-items:center;}
+.tally b{color:var(--ink); font-size:17px;}
+.tally .ck{color:var(--good);}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:18px 20px;}
+.panel + .panel{margin-top:14px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+sub{font-size:.72em; line-height:0;}
+.story{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-size:22px; line-height:1.55; margin:0; max-width:80ch; text-wrap:pretty;}
+.gv{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:.86em; white-space:nowrap; color:var(--ink);}
+
+.parts{display:flex; flex-direction:column;}
+.prow{display:grid; grid-template-columns:40px minmax(0,1fr) 60px; gap:8px 14px; align-items:center; padding:14px 0; border-top:1px solid var(--line);}
+.prow:first-child{border-top:none; padding-top:2px;}
+.prow.locked > :not(.lockmsg){opacity:.45;}
+.pnum{width:34px; height:34px; border-radius:50%; background:var(--surface-alt); border:1px solid var(--line-strong); font-weight:700; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; align-self:start; margin-top:4px;}
+.pbody{min-width:0;}
+.ask{font-family:"Fraunces",Georgia,serif; font-size:20px; line-height:1.45; margin:0 0 10px;}
+.ask .sym{font-style:italic; font-weight:600; margin-right:8px;}
+.ask .sym sub{font-style:normal;}
+.ctrls{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.ctrls input{font-family:"IBM Plex Mono",monospace; font-size:18px; width:150px; color:var(--ink); background:var(--surface); border:1.5px solid var(--line-strong); border-radius:9px; padding:8px 10px;}
+.ctrls select{font-family:"IBM Plex Mono",monospace; font-size:16px; color:var(--ink); background:var(--surface); border:1.5px solid var(--line-strong); border-radius:9px; padding:8px 8px; min-width:104px;}
+.ctrls input:focus, .ctrls select:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+.ctrls .ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 14%, var(--surface));}
+.ctrls .bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 11%, var(--surface));}
+.ctrls input:disabled, .ctrls select:disabled{opacity:1; color:var(--ink); -webkit-text-fill-color:var(--ink);}
+.pmsg{grid-column:2 / 4; font-size:15px; line-height:1.45; color:var(--critical);}
+.pmsg:empty{display:none;}
+.hintbox{grid-column:2 / 4; font-size:15.5px; line-height:1.55; color:var(--ink); background:color-mix(in srgb, var(--accent-warm) 9%, var(--surface)); border:1px solid color-mix(in srgb, var(--accent-warm) 45%, var(--line)); border-radius:10px; padding:9px 12px;}
+.hintbox[hidden]{display:none;}
+.hintbox i{font-family:"Fraunces",Georgia,serif;}
+.lockmsg{grid-column:2 / 4; font-size:14.5px; color:var(--ink-soft); margin:0;}
+.prow:not(.locked) .lockmsg{display:none;}
+.revealtag{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--accent-warm); font-weight:600;}
+
+.check{width:52px; height:52px; justify-self:center;}
+.check circle{fill:none; stroke:var(--line-strong); stroke-width:2; stroke-dasharray:4 5;}
+.check path{fill:none; stroke:transparent; stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
+.check.on circle{fill:var(--good); stroke:var(--good); stroke-dasharray:none;}
+.check.on path{stroke:#fff;}
+.check.shown circle{fill:var(--accent-warm); stroke:var(--accent-warm); stroke-dasharray:none;}
+.check.shown path{stroke:#fff;}
+@media (prefers-reduced-motion:no-preference){ .check.on{animation:pop .35s ease-out;} @keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}} }
+
+.done{margin-top:14px; padding:12px 16px; border-radius:12px; border:1.5px solid var(--good); background:color-mix(in srgb, var(--good) 9%, var(--surface)); font-weight:600; color:var(--good); display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.done.revealed{border-color:var(--accent-warm); color:var(--accent-warm); background:color-mix(in srgb, var(--accent-warm) 8%, var(--surface));}
+.done[hidden]{display:none;}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+.notebook .rule{font-family:"Fraunces",Georgia,serif; font-size:19px; color:var(--ink);}
+.notebook .rule sub{font-style:normal;}
+
+@media (max-width:700px){
+  .frame{padding:18px 16px 48px;}
+  h1{font-size:26px;}
+  .panel{padding:14px 12px;}
+  .story{font-size:19px;}
+  .ask{font-size:18px;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .prow{grid-template-columns:34px minmax(0,1fr) 48px;}
+  .check{width:44px; height:44px;}
+  .pmsg, .hintbox, .lockmsg{grid-column:1 / 4;}
+  .ctrls input{width:130px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 2 · Forces</div>
+    <h1>Force Definitions</h1>
+    <p class="desc">Practice with the four forces one at a time. Read the situation, decide whether it is accelerating, and find what's asked. Give a number and choose its unit.</p>
+  </header>
+
+  <nav class="catbar" id="tabbar" aria-label="Force">
+    <button data-tab="weight" class="active">Weight<span class="sub">F<sub>w</sub> = mg</span></button>
+    <button data-tab="normal">Normal force<span class="sub">F<sub>⊥</sub> = mg cos θ</span></button>
+    <button data-tab="friction">Friction<span class="sub">F<sub>F</sub> = μF<sub>⊥</sub></span></button>
+    <button data-tab="tension">Tension<span class="sub">the force in a string</span></button>
+  </nav>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <span class="diffhint" id="diffHint"></span>
+    <button class="btn" id="showBtn">Show answer</button>
+    <button class="btn primary" id="newBtn" disabled>New problem</button>
+    <div class="tally"><span class="ck">✓</span><span>Correct <b id="tCorrect">0</b></span><span>First try <b id="tFirst">0</b></span></div>
+  </div>
+
+  <section class="panel">
+    <h2>The situation</h2>
+    <p class="story" id="story"></p>
+  </section>
+
+  <section class="panel">
+    <h2 id="findTitle">Find</h2>
+    <div class="parts" id="parts"></div>
+    <div class="done" id="done" hidden><span id="doneTxt"></span><button class="btn primary" id="newBtn2">New problem</button></div>
+  </section>
+
+  <details class="notebook panel">
+    <summary>Lab notebook · the four definitions and discussion questions</summary>
+    <div class="body">
+      <p class="rule"><i>F</i><sub>w</sub> = <i>m g</i> &nbsp;·&nbsp; <i>F</i><sub>⊥</sub> = <i>m g</i> cos θ &nbsp;·&nbsp; <i>F</i><sub>∥</sub> = <i>m g</i> sin θ &nbsp;·&nbsp; <i>F</i><sub>F</sub> = μ<i>F</i><sub>⊥</sub> &nbsp;·&nbsp; Σ<i>F</i> = <i>m a</i></p>
+      <p>Tension has no formula of its own. It is whatever force the string needs to supply, and you find it from Σ<i>F</i> = 0 or Σ<i>F</i> = <i>m a</i>.</p>
+      <p>1. <i>g</i> can be written as 9.8 N/kg or as 9.8 m/s². Show that the two units are the same. When does each description make more sense?</p>
+      <p>2. A ball tossed straight up is stopped for an instant at the top. What is its acceleration there?</p>
+      <p>3. Why does the normal force on a block get smaller as a ramp gets steeper? What is it on a level floor? On a vertical wall?</p>
+      <p>4. μ<sub>s</sub>F<sub>⊥</sub> is the <i>most</i> static friction can be. If you push a heavy crate gently and it doesn't move, how big is the friction force?</p>
+      <p>5. Why is μ<sub>k</sub> usually smaller than μ<sub>s</sub>? Think about the “mountain ranges” in Reading 1.2.</p>
+      <p>6. An elevator cable lowers a car that is slowing down. Is the tension bigger or smaller than the car's weight? Does the direction of motion matter, or only the direction of the acceleration?</p>
+      <p>7. A box slides to a stop on a floor. Why doesn't its mass change how quickly it slows down?</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Force Definitions — model. Everything but the page: the situation families for the four tabs
+// (weight, normal force, friction, tension), the chained parts, the named mistakes, and the grader.
+// Inlined into the page by build.js. In Node: const FD = require("./model.js").
+const FD = (() => {
+  "use strict";
+  const G = 9.8;
+  const rad = (d) => (d * Math.PI) / 180, deg = (r) => (r * 180) / Math.PI;
+  const sin = (d) => Math.sin(rad(d)), cos = (d) => Math.cos(rad(d));
+  function mulberry32(seed) {
+    return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const pick = (r, a) => a[Math.floor(r() * a.length)];
+  // a random given, rounded to 2 significant figures (what the student sees is exactly what the answer uses)
+  const sf = (x, n = 2) => +(+x).toPrecision(n);
+  const nice = (r, lo, hi, n = 2) => sf(lo + r() * (hi - lo), n);
+  const mu2 = (r, lo, hi) => Math.round((lo + r() * (hi - lo)) * 100) / 100;
+  function fmt(x) {
+    if (!isFinite(x)) return String(x);
+    const a = Math.abs(x);
+    if (a >= 1000) return String(Math.round(x));
+    return String(+x.toPrecision(3));
+  }
+  const v = (x, u) => `<span class="gv">${fmt(x)}${u ? "&nbsp;" + u : ""}</span>`;
+  const vmu = (x) => `<span class="gv">${(+x).toFixed(2)}</span>`; // coefficients always show two decimals
+
+  // symbols (normal force is F with a ⊥ subscript; parallel force F with ∥)
+  const S = { w: "F<sub>w</sub>", n: "F<sub>⊥</sub>", p: "F<sub>∥</sub>", f: "F<sub>F</sub>", t: "F<sub>T</sub>", mus: "μ<sub>s</sub>", muk: "μ<sub>k</sub>", g: "<i>g</i>", m: "<i>m</i>", a: "<i>a</i>", th: "θ" };
+  const UNITS = ["N", "kg", "m/s²", "N/kg", "°", "none"];
+  const PLANETS = [["the Moon", 1.6], ["Mars", 3.7], ["Venus", 8.9], ["Jupiter", 25], ["Titan", 1.4], ["Europa", 1.3], ["Pluto", 0.62], ["the planet Zebes", 6.8], ["the planet Bryyo", 15]];
+  const OBJ = ["box", "crate", "toaster", "backpack", "rock", "suitcase", "robot"];
+  const gWord = (r) => (r() < 0.5 ? { phr: "gravitational field strength", unit: "N/kg" } : { phr: "acceleration due to gravity", unit: "m/s²" });
+
+  // a part: { label (symbol html), ask (html), unit, calc(prev) -> value, wrongs(prev) -> [{v, msg}], hint (html), kind }
+  // prev: the values of the earlier parts (the true ones, or the student's own accepted entries).
+  const P = (o) => Object.assign({ kind: "num", wrongs: () => [] }, o);
+  const Fams = [];
+  // weight: how often this family is picked within its pool (tension tab asks mostly for tension)
+  const fam = (tab, diff, eq, id, make, weight = 1) => Fams.push({ tab, diff, eq, id, make, weight });
+
+  // common mistakes, reused across tabs
+  const radMsg = "Is your calculator in radians? Switch it to degrees.";
+  const forgotG = "You multiplied by the mass but not by g.";
+
+  // ============================================================== WEIGHT
+  fam("weight", "easy", true, "w-scale", (r) => {
+    const m = nice(r, 0.5, 40), o = pick(r, OBJ);
+    return { desc: `A ${v(m, "kg")} ${o} hangs at rest from a spring scale on Earth.`, parts: [P({ label: S.w, ask: "What does the scale read? (the weight)", unit: "N", calc: () => m * G,
+      wrongs: () => [{ v: m, msg: "That's the mass. The scale reads a force: the weight, m·g." }, { v: m / G, msg: "Weight is mass times g, not mass divided by g." }],
+      hint: `${S.w} = ${S.m}${S.g}. On Earth, ${S.g} = 9.8 N/kg, so ${S.w} = (${fmt(m)} kg)(9.8 N/kg).` })] };
+  });
+  fam("weight", "easy", true, "w-mass", (r) => {
+    const W = nice(r, 20, 900), o = pick(r, ["student", "dog", "suitcase", "crate"]);
+    return { desc: `A ${o} stands still on a bathroom scale on Earth. The scale reads ${v(W, "N")}.`, parts: [P({ label: S.m, ask: `What is the ${o}'s mass?`, unit: "kg", calc: () => W / G,
+      wrongs: () => [{ v: W * G, msg: "Solve F<sub>w</sub> = m·g for m: divide the weight by g." }, { v: W, msg: "That's the weight, in newtons. Mass is in kilograms: divide by g." }],
+      hint: `${S.w} = ${S.m}${S.g}, so ${S.m} = ${S.w} / ${S.g} = (${fmt(W)} N) / (9.8 N/kg).` })] };
+  });
+  fam("weight", "easy", true, "w-g", (r) => {
+    const [pl, g] = pick(r, PLANETS), m = nice(r, 2, 60), W = sf(m * g), gw = gWord(r);
+    return { desc: `On ${pl}, a ${v(m, "kg")} probe rests on a scale that reads ${v(W, "N")}.`, parts: [P({ label: S.g, ask: `What is the ${gw.phr} on ${pl}?`, unit: gw.unit, calc: () => W / m,
+      wrongs: () => [{ v: W * m, msg: "Solve F<sub>w</sub> = m·g for g: divide the weight by the mass." }, { v: m / W, msg: "Upside down: g = F<sub>w</sub> / m." }, { v: G, msg: "9.8 is Earth's value. Use this planet's numbers." }],
+      hint: `${S.w} = ${S.m}${S.g}, so ${S.g} = ${S.w} / ${S.m} = (${fmt(W)} N) / (${fmt(m)} kg).` })] };
+  });
+  fam("weight", "easy", false, "w-fall-W", (r) => {
+    const [pl, g] = pick(r, PLANETS.filter((p) => p[1] !== 8.9)), m = nice(r, 0.2, 20);
+    return { desc: `A ${v(m, "kg")} rock is dropped on ${pl}. With only its weight acting on it, it falls with an acceleration of ${v(g, "m/s²")}.`, parts: [P({ label: S.w, ask: `What is the rock's weight on ${pl}?`, unit: "N", calc: () => m * g,
+      wrongs: () => [{ v: m * G, msg: `That uses Earth's g. On ${pl}, the rock's free-fall acceleration is its g.` }, { v: m, msg: "That's the mass. Weight is m·g." }, { v: m / g, msg: "Weight is mass times g, not divided by it." }],
+      hint: `In free fall the only force is the weight, so Σ<i>F</i> = ${S.m}${S.a} gives ${S.w} = ${S.m}${S.g} with ${S.g} = ${fmt(g)} m/s² = ${fmt(g)} N/kg.` })] };
+  });
+  fam("weight", "easy", false, "w-fall-a", (r) => {
+    const [pl, g] = pick(r, PLANETS.filter((p) => p[1] !== 8.9)), m = nice(r, 0.2, 20), W = sf(m * g);
+    return { desc: `A ${v(m, "kg")} hammer weighs ${v(W, "N")} on ${pl}. An astronaut drops it.`, parts: [P({ label: S.a, ask: "What is the hammer's acceleration as it falls? (Nothing but its weight acts on it.)", unit: "m/s²", calc: () => W / m,
+      wrongs: () => [{ v: G, msg: `That's Earth's g. On ${pl}, a = F<sub>w</sub> / m.` }, { v: W * m, msg: "Σ<i>F</i> = m·a, so a = F<sub>w</sub> / m." }],
+      hint: `Only the weight acts, so Σ<i>F</i> = ${S.m}${S.a} becomes ${S.w} = ${S.m}${S.a}: ${S.a} = (${fmt(W)} N) / (${fmt(m)} kg).` })] };
+  });
+  fam("weight", "easy", false, "w-fall-m", (r) => {
+    const [pl, g] = pick(r, PLANETS.filter((p) => p[1] !== 8.9)), W = nice(r, 2, 200);
+    return { desc: `A rock that weighs ${v(W, "N")} on ${pl} is dropped and falls with an acceleration of ${v(g, "m/s²")}.`, parts: [P({ label: S.m, ask: "What is the rock's mass?", unit: "kg", calc: () => W / g,
+      wrongs: () => [{ v: W / G, msg: `That uses Earth's g. Use the acceleration on ${pl}.` }, { v: W * g, msg: "Divide the weight by g." }],
+      hint: `${S.w} = ${S.m}${S.g}, so ${S.m} = (${fmt(W)} N) / (${fmt(g)} m/s²).` })] };
+  });
+  // Hard
+  fam("weight", "hard", true, "wh-moon", (r) => {
+    const m = nice(r, 2, 90), o = pick(r, ["astronaut's backpack", "rover wheel", "toolbox"]), [pl, g] = pick(r, PLANETS.slice(0, 6));
+    return { desc: `A ${v(m, "kg")} ${o} hangs at rest from a spring scale on Earth. Later it is taken to ${pl}, where g = ${v(g, "N/kg")}, and hung from the same scale.`, parts: [
+      P({ label: S.w, ask: "What does the scale read on Earth?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "That's the mass. Multiply by g." }], hint: `${S.w} = ${S.m}${S.g} = (${fmt(m)} kg)(9.8 N/kg).` }),
+      P({ label: S.m, ask: `What is its mass on ${pl}?`, unit: "kg", calc: () => m, wrongs: (p) => [{ v: (p[0] || m * G) / g, msg: "Mass is the amount of stuff. It doesn't change when the object moves to another planet." }, { v: m * g / G, msg: "Mass doesn't depend on g. Only weight does." }], hint: "Mass is the amount of stuff in the object. Does going to another planet change that?" }),
+      P({ label: S.w, ask: `What does the scale read on ${pl}?`, unit: "N", calc: (p) => p[1] * g, wrongs: (p) => [{ v: p[0], msg: "That's its weight on Earth. Use this planet's g." }, { v: p[1], msg: "That's the mass. Multiply by this planet's g." }], hint: `${S.w} = ${S.m}${S.g} with ${S.g} = ${fmt(g)} N/kg.` }),
+    ] };
+  });
+  fam("weight", "hard", true, "wh-planet", (r) => {
+    const [pl, g] = pick(r, PLANETS), m = nice(r, 2, 40), W = sf(m * g), m2 = nice(r, 50, 95), gw = gWord(r);
+    return { desc: `On ${pl}, a ${v(m, "kg")} probe rests on a scale that reads ${v(W, "N")}. Then a ${v(m2, "kg")} astronaut stands on the same scale.`, parts: [
+      P({ label: S.g, ask: `What is the ${gw.phr} on ${pl}?`, unit: gw.unit, calc: () => W / m, wrongs: () => [{ v: W * m, msg: "Divide the weight by the mass." }, { v: G, msg: "9.8 is Earth's value." }], hint: `${S.g} = ${S.w} / ${S.m} = (${fmt(W)} N) / (${fmt(m)} kg).` }),
+      P({ label: S.w, ask: "What does the scale read for the astronaut?", unit: "N", calc: (p) => m2 * p[0], wrongs: () => [{ v: m2 * G, msg: "That's the astronaut's weight on Earth. Use this planet's g." }, { v: m2, msg: "That's the mass. Multiply by g." }], hint: `${S.w} = ${S.m}${S.g} = (${fmt(m2)} kg)(your ${S.g}).` }),
+    ] };
+  });
+  fam("weight", "hard", false, "wh-fall", (r) => {
+    const [pl, g] = pick(r, PLANETS.filter((p) => p[1] !== 8.9)), m = nice(r, 0.5, 20), W = sf(m * g);
+    return { desc: `On ${pl}, a ${v(m, "kg")} hammer hangs from a spring scale that reads ${v(W, "N")}. Then the hammer is dropped.`, parts: [
+      P({ label: S.g, ask: `What is the gravitational field strength on ${pl}?`, unit: "N/kg", calc: () => W / m, wrongs: () => [{ v: W * m, msg: "Divide the weight by the mass." }, { v: G, msg: "9.8 is Earth's value." }], hint: `${S.g} = ${S.w} / ${S.m}.` }),
+      P({ label: S.a, ask: "What is the hammer's acceleration as it falls?", unit: "m/s²", calc: (p) => p[0], wrongs: () => [{ v: G, msg: "That's Earth's. Only the weight acts, so a = F<sub>w</sub> / m." }, { v: 0, msg: "It's falling and speeding up, so it is accelerating." }], hint: `Only the weight acts, so ${S.w} = ${S.m}${S.a}. Compare that with ${S.w} = ${S.m}${S.g}.` }),
+    ] };
+  });
+  fam("weight", "hard", false, "wh-earth-fall", (r) => {
+    const W = nice(r, 1, 60);
+    return { desc: `A ball weighs ${v(W, "N")} on Earth. It is tossed straight up and is still on its way up. Ignore air resistance.`, parts: [
+      P({ label: S.m, ask: "What is the ball's mass?", unit: "kg", calc: () => W / G, wrongs: () => [{ v: W * G, msg: "Divide the weight by g." }, { v: W, msg: "That's the weight. Mass is in kg." }], hint: `${S.m} = ${S.w} / ${S.g} = (${fmt(W)} N) / (9.8 N/kg).` }),
+      P({ label: S.a, ask: "What is the size of its acceleration while it is rising?", unit: "m/s²", calc: (p) => W / p[0], wrongs: () => [{ v: 0, msg: "It's slowing down on the way up, so it is accelerating. Only its weight acts on it." }], hint: `Only the weight acts: ${S.w} = ${S.m}${S.a}, so ${S.a} = ${S.w} / ${S.m}.` }),
+    ] };
+  });
+
+  // ============================================================== NORMAL FORCE
+  // angles: 0 (level), and none so close to 0 that cos θ ≈ 1 hides a missing cos, nor near 45 where sin ≈ cos
+  const ANG = [20, 25, 30, 35, 55, 60, 65];
+  const angOf = (r, allowZero) => (allowZero && r() < 0.2 ? 0 : pick(r, ANG));
+  const rampTxt = (th) => (th === 0 ? "a level floor (a 0° ramp)" : `a ramp tilted ${th}° above the horizontal`);
+  const nWrongs = (m, g, th) => [{ v: m * g, msg: th ? "That's the whole weight. On a ramp, only part of it presses into the surface: multiply by cos θ." : "" }, { v: m * g * sin(th), msg: "That uses sin θ. The normal force goes with cos θ; sin θ gives the parallel force." },
+    { v: m * g * Math.cos(th), msg: radMsg }, { v: m * cos(th), msg: forgotG }].filter((w) => w.msg);
+  fam("normal", "easy", true, "n-N", (r) => {
+    const th = angOf(r, true), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block rests on ${rampTxt(th)}.`, parts: [P({ label: S.n, ask: "What is the normal force on the block?", unit: "N", calc: () => m * G * cos(th), wrongs: () => nWrongs(m, G, th),
+      hint: `${S.n} = ${S.m}${S.g} cos θ = (${fmt(m)} kg)(9.8 N/kg) cos ${th}°.` })] };
+  });
+  fam("normal", "easy", true, "n-theta", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40), N = sf(m * G * cos(th));
+    return { desc: `A ${v(m, "kg")} block rests on a ramp on Earth. The ramp pushes on it with a normal force of ${v(N, "N")}.`, parts: [P({ label: S.th, ask: "What angle does the ramp make with the horizontal?", unit: "°", kind: "angle", calc: () => deg(Math.acos(N / (m * G))),
+      wrongs: () => [{ v: deg(Math.asin(N / (m * G))), msg: "That uses sin⁻¹. The normal force is m·g·cos θ, so use cos⁻¹." }, { v: Math.acos(N / (m * G)), msg: "That angle is in radians. Switch your calculator to degrees." }, { v: N / (m * G), msg: "That's cos θ. Take the inverse cosine to get the angle." }],
+      hint: `cos θ = ${S.n} / (${S.m}${S.g}) = (${fmt(N)} N) / ((${fmt(m)} kg)(9.8 N/kg)). Then take cos⁻¹.` })] };
+  });
+  fam("normal", "easy", true, "n-g", (r) => {
+    const [pl, g] = pick(r, PLANETS), th = pick(r, ANG), m = nice(r, 2, 40), N = sf(m * g * cos(th)), gw = gWord(r);
+    return { desc: `On ${pl}, a ${v(m, "kg")} crate rests on a ramp tilted ${th}°. The normal force on it is ${v(N, "N")}.`, parts: [P({ label: S.g, ask: `What is the ${gw.phr} on ${pl}?`, unit: gw.unit, calc: () => N / (m * cos(th)),
+      wrongs: () => [{ v: N / m, msg: "On a ramp the normal force is m·g·cos θ. Divide by cos θ too." }, { v: N / (m * sin(th)), msg: "That uses sin θ. The normal force goes with cos θ." }, { v: N / (m * Math.cos(th)), msg: radMsg }],
+      hint: `${S.n} = ${S.m}${S.g} cos θ, so ${S.g} = ${S.n} / (${S.m} cos θ).` })] };
+  });
+  fam("normal", "easy", true, "n-par", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block is held at rest on ${rampTxt(th)}.`, parts: [P({ label: S.p, ask: "What is the parallel force on the block (the part of its weight along the ramp)?", unit: "N", calc: () => m * G * sin(th),
+      wrongs: () => [{ v: m * G * cos(th), msg: "That uses cos θ, which gives the normal force. The parallel force goes with sin θ." }, { v: m * G, msg: "That's the whole weight. Only part of it acts along the ramp: multiply by sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }],
+      hint: `${S.p} = ${S.m}${S.g} sin θ = (${fmt(m)} kg)(9.8 N/kg) sin ${th}°.` })] };
+  });
+  fam("normal", "easy", true, "n-mass", (r) => {
+    const th = angOf(r, true), N = nice(r, 10, 300);
+    return { desc: `A block rests on ${rampTxt(th)} on Earth. The normal force on it is ${v(N, "N")}.`, parts: [P({ label: S.m, ask: "What is the block's mass?", unit: "kg", calc: () => N / (G * cos(th)),
+      wrongs: () => [{ v: N / G, msg: th ? "On a ramp, F<sub>⊥</sub> = m·g·cos θ. Divide by cos θ too." : "" }, { v: N / (G * sin(th)), msg: "That uses sin θ. The normal force goes with cos θ." }, { v: N * G * cos(th), msg: "Solve for m: divide by g·cos θ." }].filter((w) => w.msg),
+      hint: `${S.n} = ${S.m}${S.g} cos θ, so ${S.m} = ${S.n} / (${S.g} cos θ).` })] };
+  });
+  fam("normal", "easy", false, "n-slide-par", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block slides down a frictionless ramp tilted ${th}°, speeding up as it goes.`, parts: [P({ label: S.p, ask: "What is the parallel force on the block?", unit: "N", calc: () => m * G * sin(th),
+      wrongs: () => [{ v: m * G * cos(th), msg: "That's the normal force (cos θ). The parallel force goes with sin θ." }, { v: m * G, msg: "That's the whole weight. Multiply by sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }],
+      hint: `${S.p} = ${S.m}${S.g} sin θ.` })] };
+  });
+  fam("normal", "easy", false, "n-slide-a", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block slides down a frictionless ramp tilted ${th}°.`, parts: [P({ label: S.a, ask: "What is the block's acceleration?", unit: "m/s²", calc: () => G * sin(th),
+      wrongs: () => [{ v: G * cos(th), msg: "That uses cos θ. The parallel force, m·g·sin θ, is what accelerates it." }, { v: m * G * sin(th), msg: "That's the parallel force in newtons. Divide by the mass to get a." }, { v: G, msg: "That's free fall. On the ramp only the parallel part of the weight accelerates it." }],
+      hint: `Σ<i>F</i> = ${S.m}${S.a}, and the net force is ${S.p} = ${S.m}${S.g} sin θ. So ${S.a} = ${S.g} sin θ.` })] };
+  });
+  fam("normal", "easy", false, "n-slide-N", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block slides down a frictionless ramp tilted ${th}°, speeding up.`, parts: [P({ label: S.n, ask: "What is the normal force on the block while it slides?", unit: "N", calc: () => m * G * cos(th), wrongs: () => nWrongs(m, G, th),
+      hint: `It isn't accelerating into or out of the ramp, so ${S.n} = ${S.m}${S.g} cos θ, the same as if it were at rest.` })] };
+  });
+  fam("normal", "easy", false, "n-slide-theta", (r) => {
+    const th = pick(r, ANG), a = sf(G * sin(th));
+    return { desc: `A block slides down a frictionless ramp on Earth with an acceleration of ${v(a, "m/s²")}.`, parts: [P({ label: S.th, ask: "What angle does the ramp make with the horizontal?", unit: "°", kind: "angle", calc: () => deg(Math.asin(a / G)),
+      wrongs: () => [{ v: deg(Math.acos(a / G)), msg: "That uses cos⁻¹. The acceleration is g·sin θ, so use sin⁻¹." }, { v: Math.asin(a / G), msg: "That angle is in radians. Switch to degrees." }],
+      hint: `${S.a} = ${S.g} sin θ, so sin θ = ${S.a} / ${S.g}. Then take sin⁻¹.` })] };
+  });
+  // Hard
+  fam("normal", "hard", true, "nh-both", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} crate is held at rest on a ramp tilted ${th}° by a rope parallel to the ramp.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the crate?", unit: "N", calc: () => m * G * cos(th), wrongs: () => nWrongs(m, G, th), hint: `${S.n} = ${S.m}${S.g} cos θ.` }),
+      P({ label: S.p, ask: "What is the parallel force on the crate?", unit: "N", calc: () => m * G * sin(th), wrongs: () => [{ v: m * G * cos(th), msg: "That's cos θ again. The parallel force goes with sin θ." }, { v: m * G, msg: "Multiply the weight by sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }], hint: `${S.p} = ${S.m}${S.g} sin θ.` }),
+    ] };
+  });
+  fam("normal", "hard", true, "nh-angle", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40), N = sf(m * G * cos(th));
+    return { desc: `A ${v(m, "kg")} block rests on a ramp on Earth. The normal force on it is ${v(N, "N")}.`, parts: [
+      P({ label: S.th, ask: "What angle does the ramp make with the horizontal?", unit: "°", kind: "angle", calc: () => deg(Math.acos(N / (m * G))), wrongs: () => [{ v: deg(Math.asin(N / (m * G))), msg: "Use cos⁻¹: the normal force goes with cos θ." }, { v: Math.acos(N / (m * G)), msg: "That's in radians. Switch to degrees." }], hint: `cos θ = ${S.n} / (${S.m}${S.g}).` }),
+      P({ label: S.p, ask: "What is the parallel force on the block?", unit: "N", calc: (p) => m * G * sin(p[0]), wrongs: (p) => [{ v: N, msg: "That's the normal force. The parallel force goes with sin θ." }, { v: m * G * Math.sin(p[0]), msg: radMsg }], hint: `${S.p} = ${S.m}${S.g} sin θ, with your θ.` }),
+    ] };
+  });
+  fam("normal", "hard", true, "nh-planet", (r) => {
+    const [pl, g] = pick(r, PLANETS), th = pick(r, ANG), m = nice(r, 2, 40), N = sf(m * g * cos(th)), gw = gWord(r);
+    return { desc: `On ${pl}, a ${v(m, "kg")} crate is held still on a ramp tilted ${th}°. The normal force on it is ${v(N, "N")}.`, parts: [
+      P({ label: S.g, ask: `What is the ${gw.phr} on ${pl}?`, unit: gw.unit, calc: () => N / (m * cos(th)), wrongs: () => [{ v: N / m, msg: "Divide by cos θ too." }, { v: N / (m * sin(th)), msg: "The normal force goes with cos θ." }], hint: `${S.g} = ${S.n} / (${S.m} cos θ).` }),
+      P({ label: S.p, ask: "What is the parallel force on the crate?", unit: "N", calc: (p) => m * p[0] * sin(th), wrongs: (p) => [{ v: m * G * sin(th), msg: `That uses Earth's g. Use your g for ${pl}.` }, { v: m * p[0] * cos(th), msg: "That's cos θ. The parallel force goes with sin θ." }], hint: `${S.p} = ${S.m}${S.g} sin θ with your ${S.g}.` }),
+    ] };
+  });
+  fam("normal", "hard", false, "nh-slide", (r) => {
+    const th = pick(r, ANG), m = nice(r, 1, 40);
+    return { desc: `A ${v(m, "kg")} block slides down a frictionless ramp tilted ${th}°.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the block?", unit: "N", calc: () => m * G * cos(th), wrongs: () => nWrongs(m, G, th), hint: `${S.n} = ${S.m}${S.g} cos θ.` }),
+      P({ label: S.p, ask: "What is the parallel force on the block?", unit: "N", calc: () => m * G * sin(th), wrongs: () => [{ v: m * G * cos(th), msg: "The parallel force goes with sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }], hint: `${S.p} = ${S.m}${S.g} sin θ.` }),
+      P({ label: S.a, ask: "What is the block's acceleration?", unit: "m/s²", calc: (p) => p[1] / m, wrongs: (p) => [{ v: p[1], msg: "That's the net force in newtons. Divide by the mass." }, { v: G, msg: "That's free fall. Only the parallel force accelerates it: a = F<sub>∥</sub>/m." }], hint: `Σ<i>F</i> = ${S.m}${S.a}, and the net force is ${S.p}. So ${S.a} = ${S.p} / ${S.m}.` }),
+    ] };
+  });
+  fam("normal", "hard", false, "nh-planet-slide", (r) => {
+    const [pl, g] = pick(r, PLANETS), th = pick(r, ANG), m = nice(r, 1, 30), a = sf(g * sin(th));
+    return { desc: `On ${pl}, a ${v(m, "kg")} block slides down a frictionless ramp tilted ${th}° with an acceleration of ${v(a, "m/s²")}.`, parts: [
+      P({ label: S.g, ask: `What is the acceleration due to gravity on ${pl}?`, unit: "m/s²", calc: () => a / sin(th), wrongs: () => [{ v: a / cos(th), msg: "The acceleration along the ramp is g·sin θ, so divide by sin θ." }, { v: a, msg: "That's the acceleration along the ramp. Free fall would be faster: divide by sin θ." }], hint: `${S.a} = ${S.g} sin θ, so ${S.g} = ${S.a} / sin θ.` }),
+      P({ label: S.n, ask: "What is the normal force on the block?", unit: "N", calc: (p) => m * p[0] * cos(th), wrongs: (p) => [{ v: m * G * cos(th), msg: `That uses Earth's g. Use your g for ${pl}.` }, { v: m * p[0] * sin(th), msg: "The normal force goes with cos θ." }, { v: m * p[0], msg: "Multiply by cos θ." }], hint: `${S.n} = ${S.m}${S.g} cos θ with your ${S.g}.` }),
+    ] };
+  });
+
+  // ============================================================== FRICTION (level floors: F⊥ = m·g)
+  const fWrongs = (m, mu, other, which) => [{ v: mu * m, msg: "That's μ times the mass. Friction is μ times the normal force, m·g." }, { v: m * G, msg: "That's the normal force. Multiply it by μ." },
+    ...(other ? [{ v: other * m * G, msg: which === "k" ? "That uses μ<sub>s</sub>. The box is sliding, so use μ<sub>k</sub>." : "That uses μ<sub>k</sub>. It isn't sliding yet, so use μ<sub>s</sub>." }] : [])];
+  const muPair = (r) => { const ms = mu2(r, 0.35, 0.8); return [ms, mu2(r, 0.15, ms - 0.12)]; };
+  fam("friction", "easy", true, "f-kin", (r) => {
+    const m = nice(r, 2, 60), [ms, mk] = muPair(r);
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor at a constant speed. Between the box and the floor, μ<sub>s</sub> = ${vmu(ms)} and μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => mk * m * G, wrongs: () => fWrongs(m, mk, ms, "k"),
+      hint: `It's sliding, so it's kinetic friction: ${S.f} = ${S.muk}${S.n}, and on a level floor ${S.n} = ${S.m}${S.g}.` })] };
+  });
+  fam("friction", "easy", true, "f-max", (r) => {
+    const m = nice(r, 2, 60), [ms, mk] = muPair(r);
+    return { desc: `A ${v(m, "kg")} crate sits on a level floor. μ<sub>s</sub> = ${vmu(ms)} and μ<sub>k</sub> = ${vmu(mk)}. Someone pushes sideways on it, slowly pushing harder and harder.`, parts: [P({ label: S.f, ask: "What is the friction force at the instant just before the crate starts to slide?", unit: "N", calc: () => ms * m * G, wrongs: () => fWrongs(m, ms, mk, "s"),
+      hint: `Just before it slips, static friction is at its maximum: ${S.f} = ${S.mus}${S.n}, with ${S.n} = ${S.m}${S.g}.` })] };
+  });
+  fam("friction", "easy", true, "f-below", (r) => {
+    const m = nice(r, 5, 60), [ms, mk] = muPair(r), Pp = sf(ms * m * G * (0.25 + r() * 0.5));
+    return { desc: `A ${v(m, "kg")} crate sits on a level floor. μ<sub>s</sub> = ${vmu(ms)} and μ<sub>k</sub> = ${vmu(mk)}. Someone pushes sideways on it with ${v(Pp, "N")}, and it doesn't move.`, parts: [P({ label: S.f, ask: "What is the friction force on the crate?", unit: "N", calc: () => Pp,
+      wrongs: () => [{ v: ms * m * G, msg: "That's the most static friction can be. The crate isn't about to slip, so friction only matches the push." }, { v: mk * m * G, msg: "That's kinetic friction, but the crate isn't sliding. It isn't accelerating, so friction balances the push." }, { v: m * G, msg: "That's the normal force." }],
+      hint: `The crate isn't accelerating, so Σ<i>F</i> = 0 sideways: the friction force balances the push. μ<sub>s</sub>${S.n} is only the most it could be.` })] };
+  });
+  fam("friction", "easy", true, "f-muk", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.6), Pp = sf(mk * m * G);
+    return { desc: `It takes a steady push of ${v(Pp, "N")} to slide a ${v(m, "kg")} box across a level floor at a constant speed.`, parts: [P({ label: S.muk, ask: "What is the coefficient of kinetic friction?", unit: "none", kind: "mu", calc: () => Pp / (m * G),
+      wrongs: () => [{ v: Pp / m, msg: "Divide by the normal force, m·g, not just the mass." }, { v: (m * G) / Pp, msg: "Upside down: μ = F<sub>F</sub> / F<sub>⊥</sub>." }],
+      hint: `Constant speed, so ${S.f} equals the push. Then ${S.muk} = ${S.f} / ${S.n}, with ${S.n} = ${S.m}${S.g}.` })] };
+  });
+  fam("friction", "easy", true, "f-mus", (r) => {
+    const m = nice(r, 2, 60), ms = mu2(r, 0.3, 0.8), Pp = sf(ms * m * G);
+    return { desc: `A ${v(m, "kg")} crate sits on a level floor. A sideways push is slowly increased, and the crate just starts to slide when the push reaches ${v(Pp, "N")}.`, parts: [P({ label: S.mus, ask: "What is the coefficient of static friction?", unit: "none", kind: "mu", calc: () => Pp / (m * G),
+      wrongs: () => [{ v: Pp / m, msg: "Divide by the normal force, m·g." }, { v: (m * G) / Pp, msg: "Upside down: μ = F<sub>F</sub> / F<sub>⊥</sub>." }],
+      hint: `Right at the start of sliding, static friction is at its max and equals the push: ${S.mus} = ${S.f} / ${S.n}.` })] };
+  });
+  fam("friction", "easy", true, "f-N", (r) => {
+    const mk = mu2(r, 0.15, 0.6), N = nice(r, 20, 600), Pp = sf(mk * N);
+    return { desc: `A crate slides across the floor at a constant speed while being pushed with ${v(Pp, "N")}. The coefficient of kinetic friction is ${vmu(mk)}.`, parts: [P({ label: S.n, ask: "What is the normal force on the crate?", unit: "N", calc: () => Pp / mk,
+      wrongs: () => [{ v: Pp * mk, msg: "Solve F<sub>F</sub> = μF<sub>⊥</sub> for F<sub>⊥</sub>: divide by μ." }, { v: Pp, msg: "That's the friction force (it equals the push). Divide by μ." }],
+      hint: `Constant speed, so ${S.f} equals the push. ${S.f} = ${S.muk}${S.n}, so ${S.n} = ${S.f} / ${S.muk}.` })] };
+  });
+  fam("friction", "easy", false, "f-acc-F", (r) => {
+    const m = nice(r, 2, 40), mk = mu2(r, 0.15, 0.5), Pp = sf(mk * m * G * (1.4 + r()));
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor with ${v(Pp, "N")} and speeds up. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => mk * m * G,
+      wrongs: () => [{ v: Pp, msg: "The box is speeding up, so friction doesn't balance the push. Kinetic friction is μ<sub>k</sub>F<sub>⊥</sub>." }, ...fWrongs(m, mk)],
+      hint: `Kinetic friction depends only on μ<sub>k</sub> and the normal force: ${S.f} = ${S.muk}${S.m}${S.g}, whatever the push is.` })] };
+  });
+  fam("friction", "easy", false, "f-acc-a", (r) => {
+    const m = nice(r, 2, 40), mk = mu2(r, 0.15, 0.5), Pp = sf(mk * m * G * (1.4 + r()));
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor with ${v(Pp, "N")}. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.a, ask: "What is the box's acceleration?", unit: "m/s²", calc: () => (Pp - mk * m * G) / m,
+      wrongs: () => [{ v: Pp / m, msg: "That ignores friction. Use the net force: push minus friction." }, { v: (Pp + mk * m * G) / m, msg: "Friction opposes the push, so subtract it." }, { v: Pp - mk * m * G, msg: "That's the net force. Divide by the mass." }],
+      hint: `Σ<i>F</i> = push − ${S.f} = ${S.m}${S.a}, with ${S.f} = ${S.muk}${S.m}${S.g}.` })] };
+  });
+  fam("friction", "easy", false, "f-slow-a", (r) => {
+    const m = nice(r, 0.5, 30), mk = mu2(r, 0.1, 0.6);
+    return { desc: `A ${v(m, "kg")} box was shoved and is now sliding across a level floor, slowing down. Nothing pushes it anymore. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.a, ask: "What is the size of its acceleration?", unit: "m/s²", calc: () => mk * G,
+      wrongs: () => [{ v: mk, msg: "Multiply μ by g: a = F<sub>F</sub>/m = μ<sub>k</sub>g." }, { v: mk * m * G, msg: "That's the friction force. Divide by the mass." }, { v: 0, msg: "It's slowing down, so it is accelerating." }],
+      hint: `Friction is the only sideways force: ${S.f} = ${S.m}${S.a}, and ${S.f} = ${S.muk}${S.m}${S.g}.` })] };
+  });
+  fam("friction", "easy", false, "f-slow-mu", (r) => {
+    const mk = mu2(r, 0.1, 0.6), a = sf(mk * G);
+    return { desc: `A puck slides across a level floor, slowing down at ${v(a, "m/s²")}. Only friction acts on it sideways.`, parts: [P({ label: S.muk, ask: "What is the coefficient of kinetic friction?", unit: "none", kind: "mu", calc: () => a / G,
+      wrongs: () => [{ v: a, msg: "Divide the acceleration by g: μ<sub>k</sub> = a/g." }, { v: G / a, msg: "Upside down: μ<sub>k</sub> = a/g." }],
+      hint: `${S.f} = ${S.m}${S.a} and ${S.f} = ${S.muk}${S.m}${S.g}. The mass cancels: ${S.muk} = ${S.a}/${S.g}.` })] };
+  });
+  fam("friction", "easy", false, "f-acc-from-a", (r) => {
+    const m = nice(r, 2, 40), mk = mu2(r, 0.15, 0.5), a = nice(r, 0.8, 4), Pp = sf(mk * m * G + m * a);
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor with ${v(Pp, "N")} and speeds up at ${v(a, "m/s²")}.`, parts: [P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => Pp - m * a,
+      wrongs: () => [{ v: Pp, msg: "It's accelerating, so friction doesn't balance the push. Use push − F<sub>F</sub> = m·a." }, { v: m * a, msg: "That's the net force. Friction is the push minus the net force." }],
+      hint: `Σ<i>F</i> = push − ${S.f} = ${S.m}${S.a}, so ${S.f} = push − ${S.m}${S.a}.` })] };
+  });
+  // Hard
+  fam("friction", "hard", true, "fh-kin", (r) => {
+    const m = nice(r, 2, 60), [ms, mk] = muPair(r);
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor at a constant speed. μ<sub>s</sub> = ${vmu(ms)} and μ<sub>k</sub> = ${vmu(mk)}.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the box?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "That's the mass. On a level floor F<sub>⊥</sub> = m·g." }], hint: `On a level floor, ${S.n} = ${S.m}${S.g}.` }),
+      P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: (p) => mk * p[0], wrongs: (p) => [{ v: ms * p[0], msg: "It's sliding, so use μ<sub>k</sub>." }, { v: mk * m, msg: "Multiply μ by the normal force, not the mass." }], hint: `${S.f} = ${S.muk}${S.n}.` }),
+      P({ label: "push", ask: "How hard is the box being pushed?", unit: "N", calc: (p) => p[1], wrongs: (p) => [{ v: ms * p[0], msg: "It's moving at a constant speed, so the push only has to balance kinetic friction." }, { v: p[0], msg: "That's the normal force." }], hint: "Constant speed means Σ<i>F</i> = 0 sideways: the push balances friction." }),
+    ] };
+  });
+  fam("friction", "hard", true, "fh-slip", (r) => {
+    const m = nice(r, 3, 60), ms = mu2(r, 0.35, 0.8), Pp = sf(ms * m * G), P2 = sf(Pp * (0.3 + r() * 0.4));
+    return { desc: `A ${v(m, "kg")} crate sits on a level floor. A sideways push is slowly increased, and the crate just starts to slide when the push reaches ${v(Pp, "N")}.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the crate?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "That's the mass. F<sub>⊥</sub> = m·g." }], hint: `${S.n} = ${S.m}${S.g}.` }),
+      P({ label: S.mus, ask: "What is the coefficient of static friction?", unit: "none", kind: "mu", calc: (p) => Pp / p[0], wrongs: (p) => [{ v: p[0] / Pp, msg: "Upside down: μ = F<sub>F</sub>/F<sub>⊥</sub>." }, { v: Pp / m, msg: "Divide by the normal force, not the mass." }], hint: `At the start of sliding, ${S.f} = ${S.mus}${S.n} equals the push.` }),
+      P({ label: S.f, ask: `On another try, someone pushes with only ${fmt(P2)} N. What is the friction force then?`, unit: "N", calc: () => P2, wrongs: (p) => [{ v: Pp, msg: "That's the maximum static friction. With a smaller push, friction only matches the push." }, { v: p[1] * p[0], msg: "μ<sub>s</sub>F<sub>⊥</sub> is the most static friction can be. Here it just balances the push." }], hint: "The crate doesn't move, so Σ<i>F</i> = 0: friction balances the push." }),
+    ] };
+  });
+  fam("friction", "hard", true, "fh-mu", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.6), Pp = sf(mk * m * G);
+    return { desc: `A ${v(m, "kg")} box slides across a level floor at a constant speed while someone pushes it with ${v(Pp, "N")}.`, parts: [
+      P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => Pp, wrongs: () => [{ v: 0, msg: "It's sliding, so there is friction. Constant speed means friction balances the push." }, { v: m * G, msg: "That's the normal force." }], hint: "Constant speed: Σ<i>F</i> = 0, so friction balances the push." }),
+      P({ label: S.n, ask: "What is the normal force on the box?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "Multiply the mass by g." }], hint: `${S.n} = ${S.m}${S.g} on a level floor.` }),
+      P({ label: S.muk, ask: "What is the coefficient of kinetic friction?", unit: "none", kind: "mu", calc: (p) => p[0] / p[1], wrongs: (p) => [{ v: p[1] / p[0], msg: "Upside down: μ = F<sub>F</sub>/F<sub>⊥</sub>." }, { v: p[0] / m, msg: "Divide by the normal force, not the mass." }], hint: `${S.muk} = ${S.f} / ${S.n}.` }),
+    ] };
+  });
+  fam("friction", "hard", false, "fh-acc", (r) => {
+    const m = nice(r, 2, 40), mk = mu2(r, 0.15, 0.5), Pp = sf(mk * m * G * (1.4 + r()));
+    return { desc: `A ${v(m, "kg")} box is pushed across a level floor with ${v(Pp, "N")}. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the box?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "Multiply the mass by g." }], hint: `${S.n} = ${S.m}${S.g}.` }),
+      P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: (p) => mk * p[0], wrongs: () => [{ v: Pp, msg: "The box is speeding up, so friction doesn't balance the push. It's μ<sub>k</sub>F<sub>⊥</sub>." }, { v: mk * m, msg: "Multiply μ by the normal force." }], hint: `${S.f} = ${S.muk}${S.n}.` }),
+      P({ label: S.a, ask: "What is the box's acceleration?", unit: "m/s²", calc: (p) => (Pp - p[1]) / m, wrongs: (p) => [{ v: Pp / m, msg: "Use the net force: push minus friction." }, { v: Pp - p[1], msg: "That's the net force. Divide by the mass." }, { v: (Pp + p[1]) / m, msg: "Friction opposes the push, so subtract it." }], hint: `Σ<i>F</i> = push − ${S.f} = ${S.m}${S.a}.` }),
+    ] };
+  });
+  fam("friction", "hard", false, "fh-slow", (r) => {
+    const m = nice(r, 0.5, 30), mk = mu2(r, 0.1, 0.6);
+    return { desc: `A ${v(m, "kg")} box was shoved and now slides across a level floor, slowing down. Nothing pushes it anymore. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [
+      P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => mk * m * G, wrongs: () => fWrongs(m, mk), hint: `${S.f} = ${S.muk}${S.n} = ${S.muk}${S.m}${S.g}.` }),
+      P({ label: S.a, ask: "What is the size of its acceleration?", unit: "m/s²", calc: (p) => p[0] / m, wrongs: (p) => [{ v: p[0], msg: "That's the friction force. Divide by the mass." }, { v: 0, msg: "It's slowing down, so it is accelerating." }], hint: `Friction is the net force: ${S.f} = ${S.m}${S.a}.` }),
+    ] };
+  });
+
+  // ============================================================== TENSION
+  const LIFT = ["crate", "piano", "steel beam", "elevator car"];
+  fam("tension", "easy", true, "t-hang", (r) => {
+    const m = nice(r, 0.5, 60), o = pick(r, ["lamp", "bucket", "sign", "piñata"]), mv = r() < 0.5 ? "hangs at rest from" : "is lowered at a constant speed on";
+    return { desc: `A ${v(m, "kg")} ${o} ${mv} a rope.`, parts: [P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "That's the mass. The tension balances the weight, m·g." }],
+      hint: `It isn't accelerating, so the tension balances the weight: ${S.t} = ${S.w} = ${S.m}${S.g}.` })] };
+  }, 3);
+  fam("tension", "easy", true, "t-drag", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.6);
+    return { desc: `A ${v(m, "kg")} box is dragged across a level floor at a constant speed by a horizontal rope. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: () => mk * m * G,
+      wrongs: () => [{ v: m * G, msg: "The rope pulls sideways, so it balances friction, not the weight." }, { v: mk * m, msg: "Friction is μ times the normal force, m·g." }],
+      hint: `Constant speed: the tension balances friction, ${S.t} = ${S.f} = ${S.muk}${S.m}${S.g}.` })] };
+  }, 3);
+  fam("tension", "easy", true, "t-ramp", (r) => {
+    const m = nice(r, 1, 40), th = pick(r, ANG);
+    return { desc: `A ${v(m, "kg")} cart is held at rest on a frictionless ramp tilted ${th}° by a rope parallel to the ramp.`, parts: [P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: () => m * G * sin(th),
+      wrongs: () => [{ v: m * G * cos(th), msg: "That's the normal force (cos θ). The rope balances the parallel force, m·g·sin θ." }, { v: m * G, msg: "The rope only has to hold the part of the weight along the ramp: m·g·sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }],
+      hint: `Along the ramp, the tension balances the parallel force: ${S.t} = ${S.p} = ${S.m}${S.g} sin θ.` })] };
+  }, 3);
+  fam("tension", "easy", true, "t-mass", (r) => {
+    const T = nice(r, 10, 600);
+    return { desc: `A rope holds a hanging bucket at rest on Earth. The tension in the rope is ${v(T, "N")}.`, parts: [P({ label: S.m, ask: "What is the bucket's mass?", unit: "kg", calc: () => T / G,
+      wrongs: () => [{ v: T, msg: "That's the tension, a force. Divide by g to get the mass." }, { v: T * G, msg: "Divide by g." }], hint: `${S.t} = ${S.m}${S.g} (it isn't accelerating), so ${S.m} = ${S.t} / ${S.g}.` })] };
+  });
+  fam("tension", "easy", true, "t-fric", (r) => {
+    const T = nice(r, 10, 400);
+    return { desc: `A sled is pulled across level snow at a constant speed by a horizontal rope with a tension of ${v(T, "N")}.`, parts: [P({ label: S.f, ask: "What is the friction force on the sled?", unit: "N", calc: () => T,
+      wrongs: () => [{ v: 0, msg: "It's sliding, so there is friction. Constant speed means it balances the tension." }], hint: "Constant speed: Σ<i>F</i> = 0 along the snow, so friction balances the tension." })] };
+  });
+  fam("tension", "easy", false, "t-lift", (r) => {
+    const m = nice(r, 2, 400), a = nice(r, 0.6, 4), o = pick(r, LIFT);
+    return { desc: `A ${v(m, "kg")} ${o} is lifted by a cable. It is speeding up as it rises, with an acceleration of ${v(a, "m/s²")}.`, parts: [P({ label: S.t, ask: "What is the tension in the cable?", unit: "N", calc: () => m * (G + a),
+      wrongs: () => [{ v: m * G, msg: "That would be right if it weren't accelerating. The tension has to be bigger than the weight to speed it up." }, { v: m * (G - a), msg: "It accelerates upward, so the tension is bigger than the weight: T − m·g = m·a." }, { v: m * a, msg: "That's the net force. The tension is the weight plus the net force." }],
+      hint: `Σ<i>F</i> = ${S.t} − ${S.m}${S.g} = ${S.m}${S.a}, so ${S.t} = ${S.m}${S.g} + ${S.m}${S.a}.` })] };
+  }, 3);
+  fam("tension", "easy", false, "t-lower", (r) => {
+    const m = nice(r, 2, 400), a = nice(r, 0.6, 4), o = pick(r, LIFT), slow = r() < 0.5;
+    const up = slow; // lowering + slowing down = accelerating upward
+    return { desc: `A ${v(m, "kg")} ${o} is being lowered on a cable. It is ${slow ? "slowing down" : "speeding up"} as it goes down, with an acceleration of ${v(a, "m/s²")}.`, parts: [P({ label: S.t, ask: "What is the tension in the cable?", unit: "N", calc: () => m * (G + (up ? a : -a)),
+      wrongs: () => [{ v: m * G, msg: "That would be right if it weren't accelerating." }, { v: m * (G + (up ? -a : a)), msg: slow ? "Moving down and slowing down means the acceleration points up, so the tension is bigger than the weight." : "Moving down and speeding up means the acceleration points down, so the tension is smaller than the weight." }, { v: m * a, msg: "That's the net force." }],
+      hint: `Which way does it accelerate? ${slow ? "Moving down and slowing down: the acceleration points up." : "Moving down and speeding up: the acceleration points down."} Then Σ<i>F</i> = ${S.m}${S.a}.` })] };
+  }, 2);
+  fam("tension", "easy", false, "t-drag-a", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.5), a = nice(r, 0.6, 3);
+    return { desc: `A ${v(m, "kg")} box is pulled across a level floor by a horizontal rope, speeding up at ${v(a, "m/s²")}. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: () => mk * m * G + m * a,
+      wrongs: () => [{ v: mk * m * G, msg: "That's only friction. To speed it up, the rope must pull harder: T − F<sub>F</sub> = m·a." }, { v: m * a, msg: "That's the net force. Add friction." }, { v: mk * m * G - m * a, msg: "It speeds up in the direction of the pull, so the tension is bigger than friction." }],
+      hint: `Σ<i>F</i> = ${S.t} − ${S.f} = ${S.m}${S.a}, with ${S.f} = ${S.muk}${S.m}${S.g}.` })] };
+  }, 2);
+  fam("tension", "easy", false, "t-ramp-a", (r) => {
+    const m = nice(r, 1, 40), th = pick(r, ANG), a = nice(r, 0.6, 3);
+    return { desc: `A ${v(m, "kg")} cart is pulled up a frictionless ramp tilted ${th}° by a rope parallel to the ramp. It speeds up at ${v(a, "m/s²")}.`, parts: [P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: () => m * G * sin(th) + m * a,
+      wrongs: () => [{ v: m * G * sin(th), msg: "That would hold it still. To speed it up the slope, add m·a." }, { v: m * G * cos(th) + m * a, msg: "The parallel force uses sin θ, not cos θ." }, { v: m * a, msg: "That's the net force. Add the parallel force." }],
+      hint: `Σ<i>F</i> = ${S.t} − ${S.p} = ${S.m}${S.a}, with ${S.p} = ${S.m}${S.g} sin θ.` })] };
+  }, 2);
+  fam("tension", "easy", false, "t-a", (r) => {
+    const m = nice(r, 2, 200), a = nice(r, 0.6, 4), T = sf(m * (G + a), 3);
+    return { desc: `A cable lifts a ${v(m, "kg")} crate. The tension in the cable is ${v(T, "N")}.`, parts: [P({ label: S.a, ask: "What is the crate's acceleration?", unit: "m/s²", calc: () => (T - m * G) / m,
+      wrongs: () => [{ v: T / m, msg: "Use the net force: tension minus weight." }, { v: T - m * G, msg: "That's the net force. Divide by the mass." }], hint: `Σ<i>F</i> = ${S.t} − ${S.m}${S.g} = ${S.m}${S.a}.` })] };
+  });
+  // Hard
+  fam("tension", "hard", false, "th-lift", (r) => {
+    const m = nice(r, 2, 400), a = nice(r, 0.6, 4), o = pick(r, LIFT);
+    return { desc: `A ${v(m, "kg")} ${o} is lifted by a cable, speeding up as it rises at ${v(a, "m/s²")}.`, parts: [
+      P({ label: S.w, ask: `What is the ${o}'s weight?`, unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "Multiply by g." }], hint: `${S.w} = ${S.m}${S.g}.` }),
+      P({ label: S.t, ask: "What is the tension in the cable?", unit: "N", calc: (p) => p[0] + m * a, wrongs: (p) => [{ v: p[0], msg: "It's accelerating, so the tension isn't equal to the weight." }, { v: p[0] - m * a, msg: "It accelerates upward, so the tension is bigger than the weight." }, { v: m * a, msg: "That's the net force." }], hint: `${S.t} − ${S.w} = ${S.m}${S.a}.` }),
+    ] };
+  }, 2);
+  fam("tension", "hard", true, "th-drag", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.6);
+    return { desc: `A ${v(m, "kg")} box is dragged across a level floor at a constant speed by a horizontal rope. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [
+      P({ label: S.n, ask: "What is the normal force on the box?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "Multiply by g." }], hint: `${S.n} = ${S.m}${S.g}.` }),
+      P({ label: S.f, ask: "What is the friction force?", unit: "N", calc: (p) => mk * p[0], wrongs: () => [{ v: mk * m, msg: "Multiply μ by the normal force." }], hint: `${S.f} = ${S.muk}${S.n}.` }),
+      P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: (p) => p[1], wrongs: (p) => [{ v: p[0], msg: "The rope pulls sideways; it balances friction, not the weight." }], hint: "Constant speed: the tension balances friction." }),
+    ] };
+  }, 2);
+  fam("tension", "hard", true, "th-ramp", (r) => {
+    const m = nice(r, 1, 40), th = pick(r, ANG);
+    return { desc: `A ${v(m, "kg")} cart is held at rest on a frictionless ramp tilted ${th}° by a rope parallel to the ramp.`, parts: [
+      P({ label: S.p, ask: "What is the parallel force on the cart?", unit: "N", calc: () => m * G * sin(th), wrongs: () => [{ v: m * G * cos(th), msg: "The parallel force goes with sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }], hint: `${S.p} = ${S.m}${S.g} sin θ.` }),
+      P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: (p) => p[0], wrongs: () => [{ v: m * G, msg: "It only has to balance the parallel force." }], hint: "At rest: the tension balances the parallel force." }),
+      P({ label: S.n, ask: "What is the normal force on the cart?", unit: "N", calc: () => m * G * cos(th), wrongs: () => nWrongs(m, G, th), hint: `${S.n} = ${S.m}${S.g} cos θ.` }),
+    ] };
+  });
+  fam("tension", "hard", false, "th-ramp-a", (r) => {
+    const m = nice(r, 1, 40), th = pick(r, ANG), a = nice(r, 0.6, 3);
+    return { desc: `A ${v(m, "kg")} cart is pulled up a frictionless ramp tilted ${th}° by a rope parallel to the ramp, speeding up at ${v(a, "m/s²")}.`, parts: [
+      P({ label: S.p, ask: "What is the parallel force on the cart?", unit: "N", calc: () => m * G * sin(th), wrongs: () => [{ v: m * G * cos(th), msg: "The parallel force goes with sin θ." }, { v: m * G * Math.sin(th), msg: radMsg }], hint: `${S.p} = ${S.m}${S.g} sin θ.` }),
+      P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: (p) => p[0] + m * a, wrongs: (p) => [{ v: p[0], msg: "That would only hold it still. Add m·a to speed it up." }, { v: m * a, msg: "That's the net force. Add the parallel force." }], hint: `${S.t} − ${S.p} = ${S.m}${S.a}.` }),
+    ] };
+  }, 2);
+  fam("tension", "hard", false, "th-drag-a", (r) => {
+    const m = nice(r, 2, 60), mk = mu2(r, 0.15, 0.5), a = nice(r, 0.6, 3);
+    return { desc: `A ${v(m, "kg")} box is pulled across a level floor by a horizontal rope, speeding up at ${v(a, "m/s²")}. μ<sub>k</sub> = ${vmu(mk)}.`, parts: [
+      P({ label: S.f, ask: "What is the friction force on the box?", unit: "N", calc: () => mk * m * G, wrongs: () => fWrongs(m, mk), hint: `${S.f} = ${S.muk}${S.m}${S.g}.` }),
+      P({ label: S.t, ask: "What is the tension in the rope?", unit: "N", calc: (p) => p[0] + m * a, wrongs: (p) => [{ v: p[0], msg: "It's speeding up, so the rope pulls harder than friction." }, { v: m * a, msg: "That's the net force. Add friction." }], hint: `${S.t} − ${S.f} = ${S.m}${S.a}.` }),
+    ] };
+  });
+  fam("tension", "hard", false, "th-find-a", (r) => {
+    const m = nice(r, 2, 200), a = nice(r, 0.6, 4), T = sf(m * (G + a), 3);
+    return { desc: `A cable lifts a ${v(m, "kg")} crate. The tension in the cable is ${v(T, "N")}.`, parts: [
+      P({ label: S.w, ask: "What is the crate's weight?", unit: "N", calc: () => m * G, wrongs: () => [{ v: m, msg: "Multiply by g." }], hint: `${S.w} = ${S.m}${S.g}.` }),
+      P({ label: S.a, ask: "What is the crate's acceleration?", unit: "m/s²", calc: (p) => (T - p[0]) / m, wrongs: (p) => [{ v: T / m, msg: "Use the net force: tension minus weight." }, { v: T - p[0], msg: "That's the net force. Divide by the mass." }], hint: `${S.t} − ${S.w} = ${S.m}${S.a}.` }),
+    ] };
+  });
+  fam("tension", "hard", true, "th-hang", (r) => {
+    const T = nice(r, 10, 600), o = pick(r, ["lamp", "sign", "bucket"]);
+    return { desc: `A ${o} hangs at rest from a rope on Earth. The tension in the rope is ${v(T, "N")}.`, parts: [
+      P({ label: S.w, ask: `What is the ${o}'s weight?`, unit: "N", calc: () => T, wrongs: () => [{ v: T / G, msg: "That's the mass. The weight is a force, and at rest it equals the tension." }], hint: "At rest, the tension balances the weight." }),
+      P({ label: S.m, ask: `What is the ${o}'s mass?`, unit: "kg", calc: (p) => p[0] / G, wrongs: (p) => [{ v: p[0] * G, msg: "Divide the weight by g." }], hint: `${S.m} = ${S.w} / ${S.g}.` }),
+    ] };
+  });
+
+  // ============================================================== generator
+  const TABS = ["weight", "normal", "friction", "tension"];
+  function wpick(r, arr) { const tot = arr.reduce((s, f) => s + f.weight, 0); let x = r() * tot; for (const f of arr) { x -= f.weight; if (x < 0) return f; } return arr[arr.length - 1]; }
+  // Build a problem; regenerate the numbers until every named mistake is clearly separated from the answer
+  // (so a mistake is never accepted, and its message never fires on a right answer).
+  function generate(opts) {
+    const r = opts.rng || Math.random;
+    const eq = r() < 0.5;
+    const pool = Fams.filter((f) => f.tab === opts.tab && f.diff === opts.diff && f.eq === eq);
+    let fm, tries = 0; do { fm = wpick(r, pool); tries++; } while (fm.id === opts.avoid && tries < 30 && pool.length > 1);
+    let p, k = 0;
+    do { p = fm.make(r); k++; } while (k < 60 && !separated(p));
+    Object.assign(p, { tab: opts.tab, diff: opts.diff, eq, family: fm.id });
+    p.answers = [];
+    p.parts.forEach((pt, i) => p.answers.push(pt.calc(p.answers.slice(0, i))));
+    return p;
+  }
+  function separated(p) {
+    const ans = [];
+    for (let i = 0; i < p.parts.length; i++) {
+      const pt = p.parts[i], val = pt.calc(ans.slice());
+      if (!isFinite(val) || val <= 0) return false;
+      // compare sizes: a radians slip can land on minus the answer, and "make it positive" would then pass it
+      for (const w of pt.wrongs(ans.slice())) if (isFinite(w.v) && close(pt, Math.abs(w.v), val, 2)) return false;
+      ans.push(val);
+    }
+    return true;
+  }
+
+  // ============================================================== grader
+  // close: rounding allowed. Numbers: within 3%, or exactly the answer rounded to 2 sig figs (the worst
+  // 2-sig-fig rounding error is 4.76%). Angles: within 1°. μ: within 0.01 or 3%. `slack` widens for the
+  // separation check (a mistake must be more than twice the tolerance away).
+  function close(pt, x, val, slack = 1) {
+    if (pt.kind === "angle") return Math.abs(x - val) <= 1 * slack;
+    if (pt.kind === "mu") return Math.abs(x - val) <= Math.max(0.01, 0.03 * Math.abs(val)) * slack;
+    if (Math.abs(x - val) <= 0.03 * Math.abs(val) * slack) return true;
+    return slack === 1 && Math.abs(x - +val.toPrecision(2)) <= 1e-9 * Math.max(1, Math.abs(val));
+  }
+  function parseNum(s) {
+    const t = String(s || "").trim().replace(/,/g, "").replace(/\s+/g, "").replace(/×10\^?/, "e").replace(/x10\^/, "e").replace(/−/g, "-");
+    if (!t) return { empty: true };
+    if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(t)) return { bad: true };
+    return { x: parseFloat(t) };
+  }
+  const UNIT_MSG = (want, got) => {
+    if (want === "N/kg" && got === "m/s²") return "Same number, but this question asks for a field strength, so the unit is N/kg.";
+    if (want === "m/s²" && got === "N/kg") return "Same number, but this question asks for an acceleration, so the unit is m/s².";
+    if (want === "none") return "A coefficient of friction has no units. Choose “none”.";
+    if (got === "none") return "This quantity has a unit. Choose one.";
+    if (want === "N") return "The number is right. A force is measured in newtons, N.";
+    if (want === "kg") return "The number is right. Mass is measured in kilograms, kg.";
+    if (want === "°") return "The number is right. Angles here are in degrees.";
+    return `The number is right. The unit should be ${want}.`;
+  };
+  // input: {num: string, unit: string}. prevTrue: true earlier answers. prevMine: the student's own accepted earlier entries.
+  function gradePart(p, i, input, prevMine) {
+    const pt = p.parts[i], val = p.answers[i];
+    const n = parseNum(input.num);
+    if (n.empty) return { state: "", msg: "" };
+    if (n.bad) return { state: "bad", msg: "Type a number, like 12.5 or 3.4e3.", numBad: true };
+    const x = n.x;
+    const carried = prevMine && prevMine.length ? pt.calc(prevMine.slice(0, i)) : val;
+    const numOK = close(pt, x, val) || close(pt, x, carried);
+    const unitOK = input.unit === pt.unit;
+    if (numOK && unitOK) return { state: "ok", msg: "" };
+    if (numOK) return { state: input.unit ? "bad" : "", msg: input.unit ? UNIT_MSG(pt.unit, input.unit) : "Choose a unit.", numOK: true, unitBad: !!input.unit };
+    const prevForWrongs = prevMine && prevMine.length ? prevMine.slice(0, i) : p.answers.slice(0, i);
+    for (const w of [...pt.wrongs(p.answers.slice(0, i)), ...pt.wrongs(prevForWrongs)]) if (isFinite(w.v) && close(pt, x, w.v)) return { state: "bad", msg: w.msg, numBad: true, named: true };
+    if (x < 0 && close(pt, -x, val)) return { state: "bad", msg: "Give the size as a positive number.", numBad: true };
+    return { state: "bad", msg: "Not quite. Check the equation and your arithmetic, or use the hint.", numBad: true };
+  }
+  function answerText(p, i) { const pt = p.parts[i], val = p.answers[i]; return { num: pt.kind === "angle" ? String(Math.round(val * 10) / 10) : pt.kind === "mu" ? String(Math.round(val * 1000) / 1000) : String(+val.toPrecision(3)), unit: pt.unit }; }
+
+  return { G, TABS, UNITS, Fams, generate, gradePart, answerText, close, parseNum, mulberry32, fmt, S };
+})();
+if (typeof module !== "undefined") module.exports = FD;
+
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const CHECK_SVG = `<svg class="check" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25"/><path d="M16 29 l8 8 l16 -18"/></svg>`;
+const UNIT_LABEL = { "N": "N", "kg": "kg", "m/s²": "m/s²", "N/kg": "N/kg", "°": "°", "none": "no unit" };
+const st = { tab: "weight", diff: "easy", prob: null, done: [], mine: [], missed: false, solved: false, revealed: false, correct: 0, first: 0 };
+
+function newProblem() {
+  st.prob = FD.generate({ tab: st.tab, diff: st.diff, avoid: st.prob && st.prob.family });
+  st.done = st.prob.parts.map(() => false); st.mine = [];
+  st.missed = false; st.solved = false; st.revealed = false;
+  render();
+}
+function render() {
+  const p = st.prob;
+  $("story").innerHTML = p.desc;
+  $("diffHint").textContent = st.diff === "easy" ? "Easy: one question per situation" : "Hard: two or three questions, in order";
+  $("findTitle").textContent = p.parts.length === 1 ? "Find" : `Find, in order · ${p.parts.length} parts`;
+  $("parts").innerHTML = p.parts.map((pt, i) => `
+    <div class="prow" data-i="${i}">
+      <span class="pnum">${i + 1}</span>
+      <div class="pbody">
+        <p class="ask"><span class="sym">${pt.label}</span>${pt.ask}</p>
+        <div class="ctrls">
+          <input class="num" data-k="num${i}" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="number" aria-label="Part ${i + 1} number">
+          <select class="unit" data-k="unit${i}" aria-label="Part ${i + 1} unit"><option value="">unit</option>${FD.UNITS.map((u) => `<option value="${u}">${UNIT_LABEL[u]}</option>`).join("")}</select>
+          <button class="btn small hintbtn">Hint</button>
+          <span class="revealtag" hidden>shown</span>
+        </div>
+      </div>
+      ${CHECK_SVG}
+      <div class="pmsg" aria-live="polite"></div>
+      <div class="hintbox" hidden>${pt.hint}</div>
+      <p class="lockmsg">Answer part ${i} first.</p>
+    </div>`).join("");
+  // every control back to its opening state
+  $("done").hidden = true; $("done").classList.remove("revealed");
+  $("newBtn").disabled = true; $("showBtn").disabled = false;
+  updateLocks();
+}
+function row(i) { return document.querySelector(`.prow[data-i="${i}"]`); }
+function current() { return st.done.findIndex((d) => !d); }
+function updateLocks() {
+  const cur = current();
+  st.prob.parts.forEach((_, i) => {
+    const rw = row(i), locked = cur >= 0 && i > cur;
+    rw.classList.toggle("locked", locked);
+    rw.querySelectorAll("input,select,button").forEach((e) => (e.disabled = locked || st.done[i] || st.revealed));
+  });
+}
+
+// ------------------------------------------------------------- grading
+// full: show red too. Grading waits for Enter, a unit choice, or leaving the box, never a keystroke.
+function grade(i, full) {
+  if (st.done[i] || st.revealed || i !== current()) return;
+  const rw = row(i), num = rw.querySelector(".num"), unit = rw.querySelector(".unit");
+  const g = FD.gradePart(st.prob, i, { num: num.value, unit: unit.value }, st.mine);
+  num.classList.toggle("ok", g.state === "ok" || !!g.numOK); unit.classList.toggle("ok", g.state === "ok");
+  num.classList.toggle("bad", full && !!g.numBad); unit.classList.toggle("bad", full && !!g.unitBad);
+  rw.querySelector(".pmsg").innerHTML = full ? g.msg : "";
+  if (g.state === "bad" && full) st.missed = true;
+  if (g.state === "ok") {
+    st.done[i] = true; st.mine[i] = FD.parseNum(num.value).x;
+    rw.querySelector(".check").classList.add("on");
+    rw.querySelector(".pmsg").innerHTML = "";
+    updateLocks();
+    const nx = current();
+    if (nx < 0) finish(); else row(nx).querySelector(".num").focus({ preventScroll: false });
+  }
+}
+function finish() {
+  st.solved = true; st.correct++; if (!st.missed) st.first++;
+  $("doneTxt").textContent = st.missed ? "✓ Correct." : "✓ Correct, first try.";
+  $("done").hidden = false; $("newBtn").disabled = false; $("showBtn").disabled = true;
+  updateTally(); $("newBtn2").focus({ preventScroll: true });
+}
+function reveal() {
+  if (st.solved || st.revealed) return;
+  st.revealed = true;
+  st.prob.parts.forEach((_, i) => {
+    if (st.done[i]) return;
+    const rw = row(i), a = FD.answerText(st.prob, i);
+    rw.querySelector(".num").value = a.num; rw.querySelector(".unit").value = a.unit;
+    rw.querySelector(".num").classList.remove("bad"); rw.querySelector(".unit").classList.remove("bad");
+    rw.querySelector(".pmsg").innerHTML = ""; rw.querySelector(".revealtag").hidden = false;
+    rw.querySelector(".check").classList.add("shown");
+  });
+  updateLocks();
+  st.prob.parts.forEach((_, i) => row(i).classList.remove("locked"));
+  $("doneTxt").textContent = "The answer, shown. This one isn't counted.";
+  $("done").hidden = false; $("done").classList.add("revealed");
+  $("newBtn").disabled = false; $("showBtn").disabled = true;
+  $("newBtn2").focus({ preventScroll: true });
+}
+function updateTally() { $("tCorrect").textContent = st.correct; $("tFirst").textContent = st.first; }
+
+// ------------------------------------------------------------- events
+const pi = (e) => { const rw = e.target.closest(".prow"); return rw ? +rw.dataset.i : -1; };
+$("parts").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.classList.contains("num")) { e.preventDefault(); grade(pi(e), true); } });
+$("parts").addEventListener("change", (e) => { if (e.target.classList.contains("unit")) grade(pi(e), true); });
+$("parts").addEventListener("focusout", (e) => { if (e.target.classList.contains("num") && e.target.value.trim()) { const i = pi(e); const u = row(i).querySelector(".unit").value; if (u) grade(i, true); } });
+$("parts").addEventListener("input", (e) => { if (e.target.classList.contains("num")) { e.target.classList.remove("bad"); } });
+$("parts").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("hintbtn")) return;
+  const rw = e.target.closest(".prow"), box = rw.querySelector(".hintbox");
+  box.hidden = !box.hidden; if (!box.hidden) st.missed = true; // a hint means it isn't a first try
+});
+$("showBtn").addEventListener("click", reveal);
+$("newBtn").addEventListener("click", () => { if (st.solved || st.revealed) { newProblem(); row(0).querySelector(".num").focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+$("newBtn2").addEventListener("click", () => $("newBtn").click());
+for (const [sel, key, data] of [["#tabbar button", "tab", "tab"], ["#diffSeg button", "diff", "diff"]]) document.querySelectorAll(sel).forEach((b) => b.addEventListener("click", () => {
+  st[key] = b.dataset[data];
+  document.querySelectorAll(sel).forEach((x) => x.classList.toggle("active", x === b));
+  newProblem();
+}));
+
+// Test hook for the Playwright scripts. Harmless in class.
+window.__fd = { st, FD, newProblem, grade, reveal };
+newProblem();
+updateTally();
+</script>
+</body>
+</html>
