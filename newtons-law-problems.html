@@ -1,0 +1,1663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Newton's Law Problems</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef3f0; --surface:#ffffff; --surface-alt:#e2eae5;
+  --ink:#142523; --ink-soft:#4c625d; --ink-muted:#83948e;
+  --line:#c9d6d0; --line-strong:#a9bcb5;
+  --accent:#3163b0; --accent-ink:#ffffff; --accent-warm:#c4791e;
+  --shadow:rgba(20,37,34,.14);
+  --good:#0ca30c; --warning:#c98500; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+    --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+    --line:#24322f; --line-strong:#35473f;
+    --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+    --shadow:rgba(0,0,0,.45);
+    --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1716; --surface:#16211f; --surface-alt:#1c2926;
+  --ink:#e7efec; --ink-soft:#b6cbc5; --ink-muted:#91a9a3;
+  --line:#24322f; --line-strong:#35473f;
+  --accent:#5c86d6; --accent-ink:#0c1413; --accent-warm:#c97f22;
+  --shadow:rgba(0,0,0,.45);
+  --good:#2fbf4f; --warning:#e0a83a; --critical:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:28px 28px;
+}
+.frame{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+header{border-bottom:1px solid var(--line-strong); padding-bottom:14px;}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-muted);}
+h1{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-weight:600; font-size:30px; margin:4px 0 6px;}
+.desc{color:var(--ink-soft); font-size:15px; max-width:74ch; margin:0;}
+
+.toolbar{display:flex; align-items:center; gap:10px 14px; flex-wrap:wrap; background:var(--surface-alt); border-radius:12px; padding:8px 12px; margin:18px 0 14px;}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;}
+.seg button{font-family:inherit; font-size:14px; font-weight:600; padding:9px 18px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer;}
+.seg button.active{background:var(--accent); color:var(--accent-ink);}
+.diffhint{font-size:13.5px; color:var(--ink-soft);}
+.btn{font-family:inherit; font-size:14.5px; font-weight:600; padding:10px 18px; border-radius:9px; border:1px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer;}
+.btn.primary{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.btn.small{font-size:13.5px; padding:7px 12px;}
+.btn[disabled]{opacity:.45; cursor:not-allowed;}
+.btn:focus-visible, .seg button:focus-visible{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset:2px;}
+.tally{margin-left:auto; display:flex; gap:16px; font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-soft); align-items:center;}
+.tally b{color:var(--ink); font-size:17px;}
+.tally .ck{color:var(--good);}
+
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:0 1px 2px var(--shadow); padding:18px 20px;}
+.panel + .panel{margin-top:14px;}
+.panel h2{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-muted); margin:0 0 12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+.panel.locked .stagebody{opacity:.45; pointer-events:none;}
+.lockmsg{font-size:14.5px; color:var(--ink-soft); margin:0 0 10px;}
+.panel:not(.locked) .lockmsg{display:none;}
+sub{font-size:.72em; line-height:0;}
+.story{font-family:"Fraunces",Georgia,"Iowan Old Style",serif; font-size:21px; line-height:1.55; margin:0; max-width:82ch; text-wrap:pretty;}
+.story sub{font-style:normal;}
+.gv{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:.86em; white-space:nowrap; color:var(--ink);}
+
+/* object identity colours for arrows */
+:root{--c1:#1a8f7b; --c2:#c4791e; --c3:#3163b0; --c4:#b23d6b; --c5:#7f9930; --c6:#6e4c9e;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--c1:#229b86; --c2:#c97f22; --c3:#5c86d6; --c4:#d45f8c; --c5:#7a9530; --c6:#9478c7;} }
+:root[data-theme="dark"]{--c1:#229b86; --c2:#c97f22; --c3:#5c86d6; --c4:#d45f8c; --c5:#7a9530; --c6:#9478c7;}
+
+/* ---------- FBDs */
+.fbds{display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px;}
+.fbd{border:1px solid var(--line); border-radius:14px; padding:12px; background:var(--surface);}
+.fbd.ok{border-color:var(--good);}
+.fbd h3{font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin:0 0 8px; display:flex; justify-content:space-between; align-items:center;}
+.fbd h3 .okmark{color:var(--good); font-size:18px;}
+.board{width:100%; max-width:400px; height:auto; display:block; margin:0 auto; border-radius:12px; background:var(--surface-alt); border:1px solid var(--line-strong); touch-action:none; user-select:none; -webkit-user-select:none; cursor:crosshair;}
+.board .grid{stroke:var(--line-strong); stroke-width:1; opacity:.55;}
+.board .surface{stroke:var(--ink-muted); stroke-width:2.5; stroke-dasharray:9 7;}
+.board .surftxt{fill:var(--ink-soft); font:600 14px "IBM Plex Mono",monospace;}
+.board .dot{fill:var(--ink);}
+.board .shaft{stroke-width:4.5; stroke-linecap:round;}
+.board .badge text{fill:#fff; font:700 13px "IBM Plex Sans",sans-serif; text-anchor:middle; dominant-baseline:central;}
+.board .sym{font:italic 600 20px "Fraunces",Georgia,serif;}
+.board .sym .sb{font-size:14px; font-style:normal;}
+.board .hint{fill:var(--ink-muted); font:500 14px "IBM Plex Sans",sans-serif; text-anchor:middle;}
+.arows{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+.arow{display:grid; grid-template-columns:30px minmax(0,1fr) auto 28px; gap:6px 8px; align-items:center; padding:7px 8px; border-radius:11px; border:1px solid var(--line); background:var(--surface);}
+.arow.ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 8%, var(--surface));}
+.arow.bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 7%, var(--surface));}
+.num{width:26px; height:26px; border-radius:50%; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center;}
+.arow input.agent{min-width:0; width:100%; font-family:"Fraunces",Georgia,serif; font-size:17px; color:var(--ink); background:var(--surface); border:1.5px solid var(--line-strong); border-radius:8px; padding:6px 8px;}
+.arow input.agent::placeholder{color:var(--ink-muted); font-style:italic; font-size:15px;}
+.arow input:disabled{opacity:1; -webkit-text-fill-color:var(--ink);}
+.arow .del{border:none; background:transparent; color:var(--ink-muted); font-size:20px; cursor:pointer; line-height:1;}
+.arow .del:hover{color:var(--critical);}
+.arow .rmsg{grid-column:2 / 5; font-size:14px; line-height:1.4; color:var(--critical);}
+.arow .rmsg:empty{display:none;}
+.fmsg{font-size:15px; color:var(--critical); margin:10px 0 0; line-height:1.45;}
+.fmsg:empty{display:none;}
+.emptyrows{font-size:14px; color:var(--ink-muted); margin:6px 2px;}
+
+/* ---------- pickers (subscripts need a custom menu) */
+.pick{position:relative; display:inline-block;}
+.pbtn{font-family:"Fraunces",Georgia,serif; font-style:italic; font-size:19px; min-width:84px; text-align:left; padding:5px 28px 5px 10px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer; position:relative; white-space:nowrap;}
+.pbtn::after{content:"▾"; font-style:normal; font-family:"IBM Plex Sans",sans-serif; font-size:13px; color:var(--ink-muted); position:absolute; right:9px; top:50%; transform:translateY(-50%);}
+.pbtn .ph{font-family:"IBM Plex Sans",sans-serif; font-style:normal; font-size:14px; color:var(--ink-muted);}
+.pbtn sub, .pmenu sub{font-style:normal; font-size:.66em;}
+.pbtn:disabled{cursor:default;}
+.pbtn:disabled::after{display:none;}
+.pbtn.ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 13%, var(--surface));}
+.pbtn.bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 10%, var(--surface));}
+.pbtn:focus-visible{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+.pmenu{position:absolute; z-index:30; top:calc(100% + 4px); left:0; display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:var(--surface); border:1px solid var(--line-strong); border-radius:12px; box-shadow:0 6px 18px var(--shadow); width:max-content; max-width:300px;}
+.pmenu[hidden]{display:none;}
+.pmenu button{font-family:"Fraunces",Georgia,serif; font-style:italic; font-size:19px; padding:5px 10px; border-radius:8px; border:1px solid var(--line-strong); background:var(--surface-alt); color:var(--ink); cursor:pointer; white-space:nowrap;}
+.pmenu button:hover, .pmenu button:focus-visible{border-color:var(--accent); outline:2px solid color-mix(in srgb, var(--accent) 40%, transparent);}
+
+/* ---------- work columns */
+.cols{display:grid; grid-template-columns:repeat(var(--ncol,1), minmax(0,1fr)); gap:18px;}
+.col{border:1px solid var(--line); border-radius:14px; padding:14px; min-width:0;}
+.col h3{font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin:0 0 10px;}
+.setup{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+select{font-family:inherit; font-size:15px; color:var(--ink); background:var(--surface); border:1.5px solid var(--line-strong); border-radius:8px; padding:7px 8px;}
+select:focus, input:focus{outline:3px solid color-mix(in srgb, var(--accent) 45%, transparent);}
+select:disabled, input:disabled{opacity:1; color:var(--ink); -webkit-text-fill-color:var(--ink);}
+select.ok, input.ok{border-color:var(--good); background:color-mix(in srgb, var(--good) 13%, var(--surface));}
+select.bad, input.bad{border-color:var(--critical); background:color-mix(in srgb, var(--critical) 10%, var(--surface));}
+.line{margin-top:12px; padding-top:12px; border-top:1px dashed var(--line-strong);}
+.line[hidden]{display:none;}
+.lhead{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;}
+.lname{font-family:"IBM Plex Mono",monospace; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-muted);}
+.lmark{width:26px; height:26px; border-radius:50%; border:2px dashed var(--line-strong); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px;}
+.lmark.on{background:var(--good); border:2px solid var(--good);}
+.lmark.shown{background:var(--accent-warm); border:2px solid var(--accent-warm);}
+.law{font-family:"Fraunces",Georgia,serif; font-size:24px; margin:10px 0 0; display:flex; align-items:center; gap:12px;}
+.law[hidden]{display:none;}
+.law sub{font-style:normal;}
+.eq{display:flex; flex-wrap:wrap; align-items:center; gap:8px 6px; font-family:"Fraunces",Georgia,serif; font-size:20px;}
+.eq .term{display:inline-flex; align-items:center; gap:4px; padding:4px; border-radius:10px; background:var(--surface-alt); border:1px solid var(--line);}
+.eq .term select.sg{font-family:"IBM Plex Mono",monospace; font-size:17px; font-weight:700; width:52px; padding:5px 4px;}
+.eq .rm{border:none; background:transparent; color:var(--ink-muted); font-size:17px; cursor:pointer; padding:0 2px; line-height:1;}
+.eq .addt{font-family:inherit; font-size:13.5px; font-weight:600; padding:7px 10px; border-radius:9px; border:1.5px dashed var(--line-strong); background:transparent; color:var(--ink-soft); cursor:pointer;}
+.eq .rhs{white-space:nowrap;}
+.eq .sgtext{font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:19px; padding:0 2px;}
+.slot{display:inline-flex; align-items:center; gap:3px;}
+.slot .par{font-family:"Fraunces",Georgia,serif; font-size:24px; font-weight:300; color:var(--ink-soft); line-height:1;}
+.slot input{font-family:"IBM Plex Mono",monospace; font-size:15.5px; width:74px; padding:5px 6px; border:1.5px solid var(--line-strong); border-radius:7px; background:var(--surface); color:var(--ink);}
+.slot select{font-family:"IBM Plex Mono",monospace; font-size:14px; padding:5px 4px;}
+.slot.unk{display:inline; font-style:italic; padding:0 3px;}
+.trigslot{display:inline-flex; align-items:center; white-space:nowrap;}
+.slot.unk sub{font-style:normal;}
+.trig{font-style:normal; margin-right:1px;}
+.lmsg{font-size:14.5px; color:var(--critical); margin:8px 0 0; line-height:1.45;}
+.lmsg:empty{display:none;}
+.lfoot{display:flex; gap:10px; align-items:center; margin-top:10px;}
+
+/* ---------- answers */
+.arowA{display:grid; grid-template-columns:minmax(0,1fr) 56px; gap:6px 14px; align-items:center; padding:10px 0; border-top:1px solid var(--line);}
+.arowA:first-child{border-top:none;}
+.arowA .q{font-family:"Fraunces",Georgia,serif; font-size:22px; margin:0 4px 0 0; white-space:nowrap;}
+.arowA .q sub{font-style:normal;}
+.arowA .ctrl{display:flex; gap:8px; flex-wrap:nowrap; align-items:center;}
+.arowA input{font-family:"IBM Plex Mono",monospace; font-size:18px; width:150px; padding:8px 10px; border:1.5px solid var(--line-strong); border-radius:9px; background:var(--surface); color:var(--ink);}
+.arowA .amsg{grid-column:1 / 3; font-size:15px; color:var(--critical);}
+.arowA .amsg:empty{display:none;}
+.check{width:50px; height:50px; justify-self:center;}
+.check circle{fill:none; stroke:var(--line-strong); stroke-width:2; stroke-dasharray:4 5;}
+.check path{fill:none; stroke:transparent; stroke-width:6; stroke-linecap:round; stroke-linejoin:round;}
+.check.on circle{fill:var(--good); stroke:var(--good); stroke-dasharray:none;}
+.check.shown circle{fill:var(--accent-warm); stroke:var(--accent-warm); stroke-dasharray:none;}
+.check.on path, .check.shown path{stroke:#fff;}
+
+.done{margin-top:14px; padding:12px 16px; border-radius:12px; border:1.5px solid var(--good); background:color-mix(in srgb, var(--good) 9%, var(--surface)); font-weight:600; color:var(--good); display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+.done.revealed{border-color:var(--accent-warm); color:var(--accent-warm); background:color-mix(in srgb, var(--accent-warm) 8%, var(--surface));}
+.done[hidden]{display:none;}
+
+.notebook{margin-top:22px; padding:0;}
+.notebook summary{cursor:pointer; font-weight:600; padding:14px 18px; color:var(--ink-soft);}
+.notebook[open] summary{border-bottom:1px solid var(--line);}
+.notebook .body{padding:16px 18px; color:var(--ink-soft); font-size:15px; line-height:1.6;}
+.notebook .body p{margin:0 0 10px;}
+.notebook .rule{font-family:"Fraunces",Georgia,serif; font-size:19px; color:var(--ink);}
+.notebook .rule sub{font-style:normal;}
+
+@media (max-width:860px){ .cols{grid-template-columns:minmax(0,1fr);} }
+@media (max-width:700px){
+  .frame{padding:18px 16px 48px;}
+  h1{font-size:26px;}
+  .panel{padding:14px 10px;}
+  .story{font-size:18.5px;}
+  .tally{margin-left:0; flex-basis:100%;}
+  .fbds{grid-template-columns:minmax(0,1fr);}
+  .arow{grid-template-columns:28px minmax(0,1fr) 26px;}
+  .arow .pick{grid-column:2 / 3;}
+  .arow .rmsg{grid-column:1 / 4;}
+  .col{padding:10px;}
+  .slot input{width:62px;}
+  .arowA input{width:88px;}
+  .arowA select{max-width:84px;}
+  .arowA{grid-template-columns:minmax(0,1fr) 44px; gap:6px 8px;}
+  .arowA .q{font-size:19px;}
+}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="eyebrow">AP Physics · Unit 2 · Forces</div>
+    <h1>Newton's Law Problems</h1>
+    <p class="desc">Draw and label the free body diagram, choose Newton's first or second law in one direction, then build the equation one line at a time: symbols, expressions, numbers. Solve for what's asked.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="seg" id="diffSeg">
+      <button data-diff="easy" class="active">Easy</button>
+      <button data-diff="hard">Hard</button>
+    </div>
+    <span class="diffhint" id="diffHint"></span>
+    <button class="btn" id="showBtn">Show answer</button>
+    <button class="btn primary" id="newBtn" disabled>New problem</button>
+    <div class="tally"><span class="ck">✓</span><span>Correct <b id="tCorrect">0</b></span><span>First try <b id="tFirst">0</b></span></div>
+  </div>
+
+  <section class="panel">
+    <h2>The situation</h2>
+    <p class="story" id="story"></p>
+  </section>
+
+  <section class="panel" id="p1">
+    <h2 id="fbdTitle">1 · Free body diagram</h2>
+    <div class="stagebody">
+      <p class="lockmsg"></p>
+      <div class="fbds" id="fbds"></div>
+      <div class="lfoot"><button class="btn primary" id="fbdCheck">Check diagram<span id="fbdCheckPl"></span></button></div>
+    </div>
+  </section>
+
+  <section class="panel locked" id="p2">
+    <h2>2 · Newton's laws</h2>
+    <p class="lockmsg">Finish the free body diagram first.</p>
+    <div class="stagebody"><div class="cols" id="cols"></div></div>
+  </section>
+
+  <section class="panel locked" id="p3">
+    <h2 id="ansTitle">3 · Answer</h2>
+    <p class="lockmsg">Finish the numbers line first.</p>
+    <div class="stagebody"><div id="answers"></div></div>
+    <div class="done" id="done" hidden><span id="doneTxt"></span><button class="btn primary" id="newBtn2">New problem</button></div>
+  </section>
+
+  <details class="notebook panel">
+    <summary>Lab notebook · the steps and discussion questions</summary>
+    <div class="body">
+      <p class="rule">1st law: Σ<i>F</i> = 0 &nbsp;·&nbsp; 2nd law: Σ<i>F</i> = <i>m a</i> &nbsp;·&nbsp; <i>F</i><sub>w</sub> = <i>gm</i> &nbsp;·&nbsp; <i>F</i><sub>⊥</sub> = <i>gm</i> cos θ &nbsp;·&nbsp; <i>F</i><sub>//</sub> = <i>gm</i> sin θ &nbsp;·&nbsp; <i>F</i><sub>F</sub> = μ<i>F</i><sub>⊥</sub></p>
+      <p>The steps: draw the diagram; pick a direction where something you need appears; decide whether the object accelerates in that direction; write the forces along it as symbols; replace each symbol with its expression; put in the numbers; solve.</p>
+      <p>1. Why is a block on a ramp easier to handle along the ramp than horizontally?</p>
+      <p>2. A box moves at a constant speed. Which law do you use, and why isn't that a contradiction?</p>
+      <p>3. In an Atwood machine, why is the tension less than the heavier block's weight but more than the lighter block's?</p>
+      <p>4. You chose “positive” to point the opposite way from the acceleration. What happens to the sign of <i>a</i>? Does the final answer change?</p>
+      <p>5. For the sign on two strings, why do you need both the x and the y equations? When can you solve one of them first, without substituting?</p>
+      <p>6. In an elevator, why can't you replace F<sub>⊥</sub> with <i>gm</i>?</p>
+    </div>
+  </details>
+</div>
+
+<script>
+// Free Body Diagrams — model. Everything but the page: the situation bank (with honest
+// Newton's-law magnitudes), the label graders for both notations, and the drawn-diagram grader.
+// Inlined into the page by build.js. In Node: const FB = require("./model.js").
+const FB = (() => {
+  "use strict";
+  const g = 9.8;
+  const rad = (d) => (d * Math.PI) / 180;
+  const deg = (r) => (r * 180) / Math.PI;
+  const norm = (a) => ((a % 360) + 360) % 360;
+  const angDiff = (a, b) => { const d = Math.abs(norm(a) - norm(b)); return Math.min(d, 360 - d); };
+
+  function mulberry32(seed) {
+    return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const pick = (r, a) => a[Math.floor(r() * a.length)];
+  const uni = (r, lo, hi) => lo + r() * (hi - lo);
+  const r2 = (x) => +x.toPrecision(2);
+
+  // ------------------------------------------------------------------ agents
+  // Every agent is a concrete noun. Aliases are the words a student may use for it.
+  const AGENTS = {
+    earth: { name: "Earth", words: ["earth", "planet"] },
+    floor: { name: "the floor", words: ["floor", "ground"] },
+    table: { name: "the table", words: ["table", "tabletop"] },
+    ramp: { name: "the ramp", words: ["ramp", "incline", "slope", "hill"] },
+    ice: { name: "the ice", words: ["ice", "rink"] },
+    scale: { name: "the scale", words: ["scale"] },
+    air: { name: "the air", words: ["air", "atmosphere"] },
+    // A rope or string is never an agent: it only carries the pull. These words are kept so the
+    // parser can recognise "the rope pulls…" and point the student to what's on the other end.
+    rope: { name: "the rope", words: ["rope", "string", "cable", "wire", "cord", "chain", "line", "leash"], notAgent: true },
+    // what's on the other end of a string
+    ceiling: { name: "the ceiling", words: ["ceiling", "roof"] },
+    wall: { name: "the wall", words: ["wall"] },
+    worker: { name: "the worker", words: ["worker", "person", "man", "woman", "student", "someone", "he", "she"] },
+    kid: { name: "the kid", words: ["kid", "child", "boy", "girl", "person", "someone"] },
+    crane: { name: "the crane", words: ["crane"] },
+    post: { name: "the post", words: ["post", "pole", "stake", "hook"] },
+    // another block, told apart by a distinguishing word
+    blockL: { name: "block 1", words: ["block", "mass", "box"], dist: ["left", "1", "one"] },
+    blockR: { name: "block 2", words: ["block", "mass", "box"], dist: ["right", "2", "two"] },
+    blockHang: { name: "the hanging block", words: ["block", "mass", "box"], dist: ["hanging", "hangs", "dangling"] },
+    blockTable: { name: "the block on the table", words: ["block", "mass", "box"], dist: ["table"] },
+    blockRamp: { name: "the block on the ramp", words: ["block", "mass", "box"], dist: ["ramp", "incline", "slope"] },
+  };
+  // concepts that are forces, not things
+  const CONCEPTS = [
+    [/\bair\s+resistance\b|\bdrag\b/, "Air resistance is the force, not the agent. The agent is the air: “air pushes the …”."],
+    [/\bgravit\w*/, "Gravity is the force, not the agent. Name the thing doing the pulling: Earth."],
+    [/\bfriction\w*/, "Friction is the force, not the agent. Name the surface that rubs on the object."],
+    [/\btension\b/, "Tension is the force, not the agent. Name the rope (or string or cable) doing the pulling."],
+    [/\bnormal\b/, "“Normal” is the kind of force, not the agent. Name the surface doing the pushing."],
+    [/\bweight\b/, "Weight is the force, not the agent. Name the thing doing the pulling: Earth."],
+    [/\b(inertia|momentum|motion|acceleration|velocity|speed|mass)\b/, "That's a property of motion, not a thing. An agent is a concrete noun: Earth, the floor, a rope, the air…"],
+  ];
+  const VERBS = { pull: ["pull", "pulls", "pulled", "pulling", "tugs", "tug"], push: ["push", "pushes", "pushed", "pushing", "presses", "press"], rub: ["rub", "rubs", "rubbed", "rubbing", "scrapes"] };
+  const VERB_OF = {}; for (const [b, fs] of Object.entries(VERBS)) for (const f of fs) VERB_OF[f] = b;
+  const OTHER_VERBS = ["supports", "support", "holds", "hold", "lifts", "lift", "attracts", "attract", "drags", "drag", "slows", "resists", "stops",
+    "carries", "keeps", "acts", "exerts", "applies", "accelerates", "falls", "hangs", "sits", "moves", "has", "is", "gives"];
+  // which verbs fit which force type
+  const VERB_OK = { w: ["pull"], t: ["pull"], n: ["push"], f: ["push", "rub"] };
+  const TYPE_NAME = { w: "weight", n: "normal force", f: "friction", t: "tension" };
+  // formal symbols. The normal force is F with a ⊥ subscript (house rule: no N subscript).
+  const SYM = { w: "F<sub>w</sub>", n: "F<sub>⊥</sub>", f: "F<sub>F</sub>", t: "F<sub>T</sub>", t1: "F<sub>T1</sub>", t2: "F<sub>T2</sub>" };
+
+  // ------------------------------------------------------------------ bodies
+  const BODIES = {
+    lamp: ["lamp", "light"], bucket: ["bucket", "pail"], crate: ["crate", "box"], box: ["box", "crate"], block: ["block", "box", "mass"],
+    sign: ["sign"], ball: ["ball"], skydiver: ["skydiver", "diver", "jumper", "person", "she", "her"], man: ["man", "guy", "person", "him", "he"],
+    puck: ["puck"], book: ["book"], piñata: ["piñata", "pinata", "duck"], sled: ["sled"],
+  };
+
+  // ------------------------------------------------------------------ forces + situations
+  // a force: {type: w|n|f|t, agent: key of AGENTS, ang: degrees (0 = right, 90 = up), mag: newtons, rope: 1|2 for two-rope problems}
+  const F = (type, agent, ang, mag, extra) => Object.assign({ type, agent, ang: norm(ang), mag }, extra || {});
+  const W = (m) => F("w", "earth", 270, m * g);
+
+  // Ramp geometry: the ramp rises toward `side` ("right" or "left") at theta degrees.
+  function rampDirs(theta, side) {
+    const up = side === "right" ? theta : 180 - theta;        // up the slope
+    return { up, down: up + 180, normal: side === "right" ? 90 + theta : 90 - theta };
+  }
+  const sideWord = (s) => s;
+  const H = { right: 0, left: 180 };
+
+  // Each family: { id, diff, eq (true = no acceleration), make(r) -> {desc, body, forces, acc (angle or null)} }
+  const FAM = [];
+  const fam = (id, diff, eq, make) => FAM.push({ id, diff, eq, make });
+
+  // ---------- Easy, no acceleration
+  fam("hang1", "easy", true, (r) => {
+    const body = pick(r, ["lamp", "bucket", "sign"]), m = r2(uni(r, 2, 12));
+    return { desc: `A ${m} kg ${body} hangs at rest from a single rope tied to the ceiling.`, body, forces: [W(m), F("t", "ceiling", 90, m * g)], acc: null };
+  });
+  fam("floorRest", "easy", true, (r) => {
+    const m = r2(uni(r, 5, 40));
+    return { desc: `A ${m} kg box sits at rest on the floor.`, body: "box", forces: [W(m), F("n", "floor", 90, m * g)], acc: null };
+  });
+  fam("tableRest", "easy", true, (r) => {
+    const m = r2(uni(r, 0.5, 3));
+    return { desc: `A ${m} kg book lies still on a table.`, body: "book", forces: [W(m), F("n", "table", 90, m * g)], acc: null };
+  });
+  fam("scaleRest", "easy", true, (r) => {
+    const m = r2(uni(r, 50, 95));
+    return { desc: `A ${m} kg man stands still on a bathroom scale.`, body: "man", forces: [W(m), F("n", "scale", 90, m * g)], acc: null };
+  });
+  fam("iceSlide", "easy", true, (r) => {
+    const side = pick(r, ["right", "left"]);
+    return { desc: `A hockey puck slides to the ${side} across perfectly frictionless ice at a constant speed.`, body: "puck", forces: [W(0.17), F("n", "ice", 90, 0.17 * g)], acc: null };
+  });
+  fam("terminal", "easy", true, (r) => {
+    const m = r2(uni(r, 55, 90));
+    return { desc: `A ${m} kg skydiver falls straight down at a constant speed. Do not ignore the air.`, body: "skydiver", forces: [W(m), F("f", "air", 90, m * g)], acc: null };
+  });
+  fam("lowerConst", "easy", true, (r) => {
+    const m = r2(uni(r, 3, 15));
+    return { desc: `A worker lowers a ${m} kg bucket into a well on a rope at a constant speed.`, body: "bucket", forces: [W(m), F("t", "worker", 90, m * g)], acc: null };
+  });
+
+  // ---------- Easy, accelerating
+  fam("dropped", "easy", false, (r) => {
+    const m = r2(uni(r, 0.1, 0.6));
+    return { desc: `A ${m} kg ball has been dropped and is falling. Ignore air resistance.`, body: "ball", forces: [W(m)], acc: 270 };
+  });
+  fam("tossedUp", "easy", false, (r) => {
+    const m = r2(uni(r, 0.1, 0.6));
+    return { desc: `A ${m} kg ball has been tossed straight up and is still on its way up. Ignore air resistance.`, body: "ball", forces: [W(m)], acc: 270 };
+  });
+  fam("topFlight", "easy", false, (r) => {
+    const m = r2(uni(r, 0.1, 0.6));
+    return { desc: `A ${m} kg ball tossed straight up is at the very top of its path, stopped for an instant. Ignore air resistance.`, body: "ball", forces: [W(m)], acc: 270 };
+  });
+  fam("skydiverSpeed", "easy", false, (r) => {
+    const m = r2(uni(r, 55, 90)), fr = uni(r, 0.3, 0.6);
+    return { desc: `A ${m} kg skydiver has just jumped and is falling faster and faster. Do not ignore the air.`, body: "skydiver", forces: [W(m), F("f", "air", 90, fr * m * g)], acc: 270 };
+  });
+  fam("liftSpeed", "easy", false, (r) => {
+    const m = r2(uni(r, 20, 200)), a = uni(r, 3.4, 5);
+    return { desc: `A ${m} kg crate hangs from a crane cable and is speeding up as it rises.`, body: "crate", forces: [W(m), F("t", "crane", 90, m * (g + a))], acc: 90 };
+  });
+  fam("lowerSlow", "easy", false, (r) => {
+    const m = r2(uni(r, 3, 15)), a = uni(r, 3.4, 5);
+    return { desc: `A worker is lowering a ${m} kg bucket on a rope. The bucket is slowing down as it goes down.`, body: "bucket", forces: [W(m), F("t", "worker", 90, m * (g + a))], acc: 90 };
+  });
+  fam("lowerSpeed", "easy", false, (r) => {
+    const m = r2(uni(r, 3, 15)), a = uni(r, 2.5, 4.5);
+    return { desc: `A worker is lowering a ${m} kg bucket on a rope. The bucket is speeding up as it goes down.`, body: "bucket", forces: [W(m), F("t", "worker", 90, m * (g - a))], acc: 270 };
+  });
+
+  // ---------- Hard, no acceleration
+  const THETAS = [20, 25, 30, 35, 40];
+  fam("rampRest", "hard", true, (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), d = rampDirs(th, side);
+    return { desc: `A ${m} kg block sits at rest on a rough ramp. The ramp rises to the ${sideWord(side)} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, m * g * Math.cos(rad(th))), F("f", "ramp", d.up, m * g * Math.sin(rad(th)))], acc: null };
+  });
+  fam("rampConst", "hard", true, (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), d = rampDirs(th, side);
+    return { desc: `A ${m} kg block slides down a rough ramp at a constant speed. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, m * g * Math.cos(rad(th))), F("f", "ramp", d.up, m * g * Math.sin(rad(th)))], acc: null };
+  });
+  fam("rampRope", "hard", true, (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), d = rampDirs(th, side);
+    return { desc: `A ${m} kg block is held still on a frictionless ramp by a rope tied to a post at the top of the ramp, parallel to its surface. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, m * g * Math.cos(rad(th))), F("t", "post", d.up, m * g * Math.sin(rad(th)))], acc: null };
+  });
+  fam("rampPullConst", "hard", true, (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), mu = uni(r, 0.25, 0.45), d = rampDirs(th, side);
+    const N = m * g * Math.cos(rad(th)), f = mu * N;
+    return { desc: `A worker pulls a ${m} kg block up a rough ramp at a constant speed with a rope parallel to the ramp. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, N), F("t", "worker", d.up, m * g * Math.sin(rad(th)) + f), F("f", "ramp", d.down, f)], acc: null };
+  });
+  fam("sign2", "hard", true, (r) => {
+    const m = r2(uni(r, 5, 30)), body = pick(r, ["sign", "piñata"]);
+    let a, b; do { a = pick(r, [30, 45, 60]); b = pick(r, [30, 45, 60]); } while (false);
+    const s = Math.sin(rad(a + b)), T1 = (m * g * Math.cos(rad(b))) / s, T2 = (m * g * Math.cos(rad(a))) / s;
+    const same = a === b ? `Both ropes make ${a}° with the horizontal.` : `The left rope makes ${a}° with the horizontal and the right rope makes ${b}°.`;
+    return { desc: `A ${m} kg ${body} hangs at rest from two ropes tied to the ceiling, one on each side. ${same} Call the left rope rope 1 and the right rope rope 2.`, body, twoRopes: true,
+      forces: [W(m), F("t", "ceiling", 180 - a, T1, { rope: 1 }), F("t", "ceiling", b, T2, { rope: 2 })], acc: null };
+  });
+  fam("signH", "hard", true, (r) => {
+    const m = r2(uni(r, 5, 30)), b = pick(r, [30, 45, 60]), flip = r() < 0.5;
+    const T2 = (m * g) / Math.sin(rad(b)), T1 = (m * g) / Math.tan(rad(b));
+    // flip: the horizontal rope is on the right instead
+    const desc = flip
+      ? `A ${m} kg sign hangs at rest from two ropes. The right rope runs straight sideways to a wall. The left rope runs up to the ceiling at ${b}° above the horizontal. Call the left rope rope 1 and the right rope rope 2.`
+      : `A ${m} kg sign hangs at rest from two ropes. The left rope runs straight sideways to a wall. The right rope runs up to the ceiling at ${b}° above the horizontal. Call the left rope rope 1 and the right rope rope 2.`;
+    const forces = flip
+      ? [W(m), F("t", "ceiling", 180 - b, T2, { rope: 1 }), F("t", "wall", 0, T1, { rope: 2 })]
+      : [W(m), F("t", "wall", 180, T1, { rope: 1 }), F("t", "ceiling", b, T2, { rope: 2 })];
+    return { desc, body: "sign", twoRopes: true, forces, acc: null };
+  });
+  fam("dragConst", "hard", true, (r) => {
+    const side = pick(r, ["right", "left"]), m = r2(uni(r, 5, 40)), mu = uni(r, 0.3, 0.5);
+    return { desc: `A worker drags a ${m} kg box to the ${side} across a rough floor at a constant speed, pulling it with a horizontal rope.`, body: "box",
+      forces: [W(m), F("n", "floor", 90, m * g), F("t", "worker", H[side], mu * m * g), F("f", "floor", H[side] + 180, mu * m * g)], acc: null };
+  });
+  fam("dragAngleConst", "hard", true, (r) => {
+    const side = pick(r, ["right", "left"]), m = r2(uni(r, 5, 40)), mu = uni(r, 0.3, 0.5), phi = pick(r, [15, 30, 45]);
+    const T = (mu * m * g) / (Math.cos(rad(phi)) + mu * Math.sin(rad(phi))), N = m * g - T * Math.sin(rad(phi));
+    const ang = side === "right" ? phi : 180 - phi;
+    return { desc: `A kid pulls a ${m} kg sled to the ${side} across rough ground at a constant speed. The kid's rope is angled ${phi}° above the horizontal.`, body: "sled",
+      forces: [W(m), F("n", "floor", 90, N), F("t", "kid", ang, T), F("f", "floor", H[side] + 180, mu * N)], acc: null };
+  });
+  fam("elevConst", "hard", true, (r) => {
+    const m = r2(uni(r, 50, 95)), dir = pick(r, ["up", "down"]);
+    return { desc: `A ${m} kg man stands on a bathroom scale in an elevator. The elevator is moving ${dir} at a constant speed.`, body: "man", forces: [W(m), F("n", "scale", 90, m * g)], acc: null };
+  });
+  fam("atwoodEqual", "hard", true, (r) => {
+    const m = r2(uni(r, 1, 5)), which = pick(r, ["left", "right"]), dir = which === "left" ? pick(r, ["up", "down"]) : pick(r, ["up", "down"]);
+    return { desc: `Two identical ${m} kg blocks, block 1 on the left and block 2 on the right, hang from the ends of a string that passes over a frictionless pulley (an Atwood machine). After a nudge, block ${which === "left" ? 1 : 2} moves ${dir} at a constant speed. Draw the diagram for block ${which === "left" ? 1 : 2}.`, body: "block", who: `block ${which === "left" ? 1 : 2}`, objLabel: `block ${which === "left" ? 1 : 2}`,
+      forces: [W(m), F("t", which === "left" ? "blockR" : "blockL", 90, m * g)], acc: null };
+  });
+
+  // ---------- Hard, accelerating
+  fam("rampSlide", "hard", false, (r) => {
+    const th = pick(r, [25, 30, 35, 40]), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), d = rampDirs(th, side);
+    return { desc: `A ${m} kg block slides down a frictionless ramp. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, m * g * Math.cos(rad(th)))], acc: d.down };
+  });
+  fam("rampSlideRough", "hard", false, (r) => {
+    const th = pick(r, [30, 35, 40]), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), d = rampDirs(th, side);
+    const N = m * g * Math.cos(rad(th)), muMax = Math.tan(rad(th)) - 0.25 / Math.cos(rad(th)), mu = uni(r, 0.12, Math.max(0.15, muMax));
+    return { desc: `A ${m} kg block slides down a rough ramp, speeding up as it goes. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, N), F("f", "ramp", d.up, mu * N)], acc: d.down };
+  });
+  fam("rampPullSpeed", "hard", false, (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = r2(uni(r, 2, 20)), mu = uni(r, 0.2, 0.4), a = uni(r, 3, 5), d = rampDirs(th, side);
+    const N = m * g * Math.cos(rad(th)), f = mu * N;
+    return { desc: `A worker pulls a ${m} kg block up a rough ramp with a rope parallel to the ramp, and the block is speeding up. The ramp rises to the ${side} at ${th}°.`, body: "block", theta: th, side,
+      forces: [W(m), F("n", "ramp", d.normal, N), F("t", "worker", d.up, m * g * Math.sin(rad(th)) + f + m * a), F("f", "ramp", d.down, f)], acc: d.up };
+  });
+  fam("elev", "hard", false, (r) => {
+    const m = r2(uni(r, 50, 95)), a = uni(r, 3.4, 4.5);
+    const v = pick(r, [["moving up and speeding up", 90], ["moving up and slowing down", 270], ["moving down and speeding up", 270], ["moving down and slowing down", 90]]);
+    return { desc: `A ${m} kg man stands on a bathroom scale in an elevator. The elevator is ${v[0]}.`, body: "man",
+      forces: [W(m), F("n", "scale", 90, m * (g + (v[1] === 90 ? a : -a)))], acc: v[1] };
+  });
+  fam("atwood", "hard", false, (r) => {
+    let m1, m2; do { m1 = r2(uni(r, 1, 6)); m2 = r2(uni(r, 1, 6)); } while (Math.max(m1, m2) / Math.min(m1, m2) < 2.2);
+    const which = pick(r, ["left", "right"]), T = (2 * m1 * m2 * g) / (m1 + m2), m = which === "left" ? m1 : m2, other = which === "left" ? m2 : m1;
+    return { desc: `In an Atwood machine, block 1 (${m1} kg, on the left) and block 2 (${m2} kg, on the right) hang from the ends of a string over a frictionless pulley. They are released from rest. Draw the diagram for block ${which === "left" ? 1 : 2}.`, body: "block", who: `block ${which === "left" ? 1 : 2}`, objLabel: `block ${which === "left" ? 1 : 2}`,
+      forces: [W(m), F("t", which === "left" ? "blockR" : "blockL", 90, T)], acc: m < other ? 90 : 270 };
+  });
+  fam("halfAtwoodTable", "hard", false, (r) => {
+    const side = pick(r, ["right", "left"]), rough = r() < 0.5;
+    let mt, mh, mu, a; do { mt = r2(uni(r, 1, 6)); mh = r2(uni(r, 1, 8)); mu = rough ? uni(r, 0.15, 0.35) : 0; a = ((mh - mu * mt) * g) / (mt + mh); } while (a < 2.6);
+    const T = mt * a + mu * mt * g, fs = [W(mt), F("n", "table", 90, mt * g), F("t", "blockHang", H[side], T)];
+    if (rough) fs.push(F("f", "table", H[side] + 180, mu * mt * g));
+    return { desc: `A ${mt} kg block sits on a ${rough ? "rough" : "frictionless"} table. A string runs from it over a pulley at the ${side} edge of the table to a ${mh} kg block hanging below. The blocks are released from rest. Draw the diagram for the block on the table.`, body: "block", who: "block on the table",
+      forces: fs, acc: H[side] };
+  });
+  fam("halfAtwoodHang", "hard", false, (r) => {
+    const side = pick(r, ["right", "left"]);
+    let mt, mh, a; do { mt = r2(uni(r, 1, 6)); mh = r2(uni(r, 1, 8)); a = (mh * g) / (mt + mh); } while (a < 2.6 || a > g - 2.6);
+    return { desc: `A ${mt} kg block sits on a frictionless table. A string runs from it over a pulley at the ${side} edge of the table to a ${mh} kg block hanging below. The blocks are released from rest. Draw the diagram for the hanging block.`, body: "block", who: "hanging block",
+      forces: [W(mh), F("t", "blockTable", 90, mh * (g - a))], acc: 270 };
+  });
+  fam("dragSpeed", "hard", false, (r) => {
+    const side = pick(r, ["right", "left"]), m = r2(uni(r, 5, 40)), mu = uni(r, 0.3, 0.5), a = uni(r, 2.5, 4);
+    return { desc: `A worker pulls a ${m} kg box to the ${side} across a rough floor with a horizontal rope, and the box is speeding up.`, body: "box",
+      forces: [W(m), F("n", "floor", 90, m * g), F("t", "worker", H[side], mu * m * g + m * a), F("f", "floor", H[side] + 180, mu * m * g)], acc: H[side] };
+  });
+  fam("puckSlow", "hard", false, (r) => {
+    const side = pick(r, ["right", "left"]), m = r2(uni(r, 1, 10)), mu = uni(r, 0.3, 0.5);
+    return { desc: `A ${m} kg box was shoved and is now sliding to the ${side} across a rough floor, slowing down. Nothing is pushing it anymore.`, body: "box",
+      forces: [W(m), F("n", "floor", 90, m * g), F("f", "floor", H[side] + 180, mu * m * g)], acc: H[side] + 180 };
+  });
+
+  // ------------------------------------------------------------------ generator
+  // opts: {diff: "easy"|"hard", notation: "mixed"|"agent"|"formal", rng, avoid}
+  function generate(opts) {
+    const r = opts.rng || Math.random;
+    const eq = r() < 0.5; // half no acceleration, half accelerating
+    const pool = FAM.filter((f) => f.diff === opts.diff && f.eq === eq);
+    let fm, tries = 0; do { fm = pick(r, pool); tries++; } while (fm.id === opts.avoid && tries < 20);
+    // every arrow must be readable at scale: the smallest force is at least 1 grid unit when the biggest is 4
+    let p, k = 0;
+    do { p = fm.make(r); k++; } while (k < 200 && Math.min(...p.forces.map((f) => f.mag)) < 0.25 * Math.max(...p.forces.map((f) => f.mag)));
+    p.family = fm.id; p.diff = opts.diff; p.eq = fm.eq; p.key = fm.id;
+    p.notation = opts.notation === "agent" || opts.notation === "formal" ? opts.notation : r() < 0.5 ? "agent" : "formal";
+    p.bodyWords = BODIES[p.body];
+    // draw scale: the biggest force is 4 grid units long
+    const max = Math.max(...p.forces.map((f) => f.mag));
+    p.forces.forEach((f, i) => { f.len = (4 * f.mag) / max; f.id = i; });
+    p.order = shuffle(r, p.forces.map((f) => f.id)); // display order for the Label mode arrows
+    p.snaps = snapAngles(p);
+    p.formalOptions = p.twoRopes ? ["w", "n", "f", "t1", "t2"] : ["w", "n", "f", "t"];
+    return p;
+  }
+  function shuffle(r, a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  // angles a drawn arrow snaps to: every 15°, plus every true force angle and its relatives
+  // (so ramp and rope angles like 20° or 35° are reachable), plus the ramp's own family.
+  function snapAngles(p) {
+    const special = new Set();
+    if (p.theta) for (const k of [0, 90, 180, 270]) { special.add(norm(p.theta + k)); special.add(norm(-p.theta + k)); }
+    for (const f of p.forces) for (const k of [0, 90, 180, 270]) special.add(norm(f.ang + k));
+    const out = new Set([...special].map((a) => Math.round(a * 1000) / 1000));
+    // the 15° grid, minus any grid angle that crowds a special angle (so 25° isn't squeezed by 30°)
+    for (let a = 0; a < 360; a += 15) if (![...special].some((s) => FB_ANG(s, a) > 0.001 && FB_ANG(s, a) < 7)) out.add(a);
+    return [...out].sort((x, y) => x - y);
+  }
+  function FB_ANG(a, b) { return angDiff(a, b); }
+  function snapAngle(p, a) {
+    let best = 0, bd = 1e9;
+    for (const s of p.snaps) { const d = angDiff(s, a); if (d < bd) { bd = d; best = s; } }
+    return best;
+  }
+
+  // ------------------------------------------------------------------ text helpers
+  function tokens(s) {
+    return String(s || "").toLowerCase().replace(/[’‘`]/g, "'").replace(/'s\b/g, "").replace(/[^a-zñ0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+  }
+  const theBody = (p) => "the " + p.body;
+  const agentName = (k) => AGENTS[k].name;
+
+  // Parse an agent/object label. Returns {err} or {agentKey(s), verb, objOk}
+  // agentKeys: every agent in this problem that the words could name.
+  function parseAgent(p, text) {
+    const T = tokens(text), joined = T.join(" ");
+    if (!T.length) return { err: "Type a label: agent, verb, object.", part: "empty" };
+    const vi = T.findIndex((t) => VERB_OF[t]);
+    const oi = T.findIndex((t) => OTHER_VERBS.includes(t));
+    const vIdx = vi >= 0 ? vi : oi;
+    const pre = vIdx >= 0 ? T.slice(0, vIdx) : T, post = vIdx >= 0 ? T.slice(vIdx + 1) : [];
+    const preJ = pre.join(" ");
+    for (const [re, msg] of CONCEPTS) if (re.test(preJ) || (vIdx < 0 && re.test(joined))) return { err: msg, part: "agent" };
+    if (vi < 0) {
+      if (oi >= 0) return { err: `Use pushes or pulls as the verb, not “${T[oi]}”. Surfaces push, and Earth and ropes pull.`, part: "verb" };
+      return { err: "A label needs a verb: agent pushes object, or agent pulls object.", part: "verb" };
+    }
+    const verb = VERB_OF[T[vi]];
+    const inWords = (arr, words) => arr.some((t) => words.includes(t));
+    // which agents in this problem do the words before the verb name?
+    const present = [...new Set(p.forces.map((f) => f.agent))];
+    let keys = present.filter((k) => inWords(pre, AGENTS[k].words));
+    const distKeys = keys.filter((k) => AGENTS[k].dist);
+    if (distKeys.length) { // "the block" alone could be either block: ask which
+      const hit = distKeys.filter((k) => AGENTS[k].dist.some((w) => pre.includes(w)));
+      if (!hit.length && keys.length === distKeys.length && inWords(post, p.bodyWords)) {
+        const names = distKeys.map((k) => AGENTS[k].name).join(" or ");
+        // they named a block, just the wrong one (often the object itself)
+        const namedOther = Object.values(AGENTS).some((a) => a.dist && a.dist.some((w) => pre.includes(w)));
+        return { err: namedOther ? `The agent is the block on the other end of the string: ${names}.` : `Say which block: ${names}.`, part: "agent" };
+      }
+      keys = keys.filter((k) => !AGENTS[k].dist || hit.includes(k));
+    }
+    const bodyBefore = inWords(pre, p.bodyWords);
+    // words after the verb that name some other agent (not just the object's own name again)
+    const postOther = post.filter((t) => !p.bodyWords.includes(t));
+    const anyAgentAfter = Object.keys(AGENTS).some((k) => inWords(postOther, AGENTS[k].words));
+    if (!keys.length) {
+      if (inWords(pre, AGENTS.rope.words)) return { err: `A rope or string only carries the pull. Name what is on the other end of it, pulling the ${p.body}.`, part: "agent" };
+      if (bodyBefore && inWords(post, p.bodyWords) && !anyAgentAfter) return { err: `The ${p.body} can't be its own agent. Name the thing that pushes or pulls on it.`, part: "agent" };
+      if (bodyBefore && anyAgentAfter) return { err: `That's a force the ${p.body} exerts on something else. A free body diagram shows only forces on the ${p.body}, so the ${p.body} is always the object.`, part: "agent" };
+      const named = Object.keys(AGENTS).find((k) => inWords(pre, AGENTS[k].words));
+      if (named) return { err: `Nothing in this situation is ${agentName(named).replace(/^the /, "a ")} touching the ${p.body}. Reread the description.`, part: "agent" };
+      if (bodyBefore) return { err: `The ${p.body} can't be its own agent. Name the thing that pushes or pulls on it.`, part: "agent" };
+      return { err: "Start with the agent: a concrete noun from the situation, like Earth, the floor, the ramp, a rope, the scale or the air.", part: "agent" };
+    }
+    if (!inWords(post, p.bodyWords)) return { err: `End with the object: “… ${VERBS[verb][1]} ${p.objLabel || theBody(p)}”.`, part: "object", keys, verb };
+    return { keys, verb };
+  }
+
+  // candidates: the forces in p this agent label could be. Returns {cands} or {err}
+  function agentCandidates(p, text) {
+    const a = parseAgent(p, text);
+    if (a.err) return a;
+    const byAgent = p.forces.filter((f) => a.keys.includes(f.agent));
+    const ok = byAgent.filter((f) => VERB_OK[f.type].includes(a.verb));
+    if (!ok.length) {
+      const k = a.keys[0];
+      if (k === "earth") return { err: "Earth pulls. It never pushes.", part: "verb" };
+      if (byAgent.every((f) => f.type === "t")) return { err: `${cap(agentName(k))} pulls on the ${p.body} through a string, and a string can only pull.`, part: "verb" };
+      if (a.verb === "pull") return { err: `Surfaces push; they never pull. ${cap(agentName(k))} pushes on the ${p.body}.`, part: "verb" };
+      return { err: "That verb doesn't fit this agent.", part: "verb" };
+    }
+    return { cands: ok.map((f) => f.id) };
+  }
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  function formalCandidates(p, sym) {
+    if (!sym) return { err: "Choose a symbol.", part: "empty" };
+    const type = sym === "t1" || sym === "t2" ? "t" : sym;
+    const c = p.forces.filter((f) => f.type === type && (!p.twoRopes || type !== "t" || f.rope === (sym === "t1" ? 1 : 2)));
+    if (!c.length) {
+      if (type === "f") return { err: hintNoFriction(p), part: "type" };
+      if (type === "n") return { err: `Nothing is pressing against the ${p.body}'s surface, so there is no normal force.`, part: "type" };
+      if (type === "t") return { err: `No rope or string pulls on the ${p.body}.`, part: "type" };
+    }
+    return { cands: c.map((f) => f.id) };
+  }
+  function hintNoFriction(p) {
+    if (p.forces.some((f) => f.agent === "air")) return "";
+    if (/frictionless/.test(p.desc)) return "The surface is frictionless, so there is no friction.";
+    if (/Ignore air/.test(p.desc)) return "Air resistance is being ignored, and nothing else rubs on it, so there is no friction.";
+    if (/hangs|lifted|lowered|Atwood/.test(p.desc)) return `Nothing rubs against the ${p.body}, so there is no friction.`;
+    return `Nothing is sliding or trying to slide against the ${p.body}, so there is no friction.`;
+  }
+
+  // a hint that points at an arrow's geometry without naming its label
+  function geomHint(p, f) {
+    if (f.type === "w") return "This arrow points straight down. Which force always does that, and what is its agent?";
+    if (f.type === "n") return `This arrow is perpendicular to the surface the ${p.body} touches, pushing away from it.`;
+    if (f.type === "f") return f.agent === "air" ? `This arrow opposes the ${p.body}'s motion through something it is moving through.` : `This arrow runs along the surface the ${p.body} touches.`;
+    if (p.twoRopes) return `This arrow runs along one of the ropes. Which one, left (1) or right (2), and what is at its other end?`;
+    return "This arrow points along a rope or string, away from the object. What is at the other end, pulling?";
+  }
+
+  // ------------------------------------------------------------------ Label mode: one arrow
+  // value: the typed text (agent notation) or the chosen symbol key (formal).
+  function gradeLabel(p, forceId, value) {
+    const f = p.forces[forceId];
+    const res = p.notation === "agent" ? agentCandidates(p, value) : formalCandidates(p, value);
+    if (res.err !== undefined) {
+      if (res.part === "empty") return { ok: false, msg: res.err, empty: true };
+      if (res.err === "") return { ok: false, msg: geomHint(p, f) };
+      return { ok: false, msg: res.err };
+    }
+    if (res.cands.includes(f.id)) return { ok: true, msg: "" };
+    return { ok: false, msg: "That force is in this situation, but this isn't its arrow. " + geomHint(p, f) };
+  }
+
+  // ------------------------------------------------------------------ Draw mode
+  const DIR_TOL = 4;        // degrees; arrows snap to the true angles, so this only absorbs rounding
+  const TOL = { eq: 0.18, minNet: 0.14, netAng: 25 }; // measured in test.js (see build notes)
+  function vec(a, l) { return [l * Math.cos(rad(a)), l * Math.sin(rad(a))]; }
+  function dirWords(a) {
+    const n = norm(a);
+    const names = [[0, "to the right"], [45, "up and to the right"], [90, "up"], [135, "up and to the left"], [180, "to the left"], [225, "down and to the left"], [270, "down"], [315, "down and to the right"], [360, "to the right"]];
+    let best = names[0], bd = 999; for (const nm of names) { const d = Math.abs(n - nm[0]); if (d < bd) { bd = d; best = nm; } } return best[1];
+  }
+  function dirHint(p, f) {
+    if (f.type === "w") return "Weight always points straight down, toward Earth's center.";
+    if (f.type === "n") return `A normal force is perpendicular to the surface, pushing the ${p.body} away from it.`;
+    if (f.type === "t") return `Tension pulls along the rope, away from the ${p.body}.`;
+    if (f.agent === "air") return `The air pushes against the direction the ${p.body} is moving.`;
+    return `Friction runs along the surface, opposite the way the ${p.body} slides or would slide.`;
+  }
+
+  // arrows: [{ang, len, label}] (label: text or symbol key). Returns
+  // {correct, rows: [{state: "ok"|"bad"|"", msg}], msg, stage}
+  function gradeDraw(p, arrows) {
+    const rows = arrows.map(() => ({ state: "", msg: "" }));
+    const out = (msg, stage) => ({ correct: false, rows, msg, stage });
+    if (!arrows.length) return out(`Draw each force: drag outward from the dot. The ${p.body} is the dot.`, "empty");
+    // 1. labels
+    let anyBad = false;
+    const cands = arrows.map((a, i) => {
+      const res = p.notation === "agent" ? agentCandidates(p, a.label) : formalCandidates(p, a.label);
+      if (res.err !== undefined) { rows[i] = { state: "bad", msg: res.err || "There is no friction on this object." }; anyBad = true; return null; }
+      return res.cands;
+    });
+    if (anyBad) return out(arrows.some((a) => !String(a.label || "").trim()) ? "Label every arrow." : "Fix the labels marked in red.", "labels");
+    // 2. match arrows to forces: prefer a candidate whose direction matches
+    const used = new Map(); // force id -> arrow index
+    const assign = new Array(arrows.length).fill(null);
+    arrows.forEach((a, i) => {
+      const c = cands[i], good = c.find((id) => angDiff(p.forces[id].ang, a.ang) <= DIR_TOL && !used.has(id));
+      const pickId = good !== undefined ? good : c.find((id) => !used.has(id));
+      if (pickId === undefined) { rows[i] = { state: "bad", msg: "Another arrow already shows this force. Each force gets one arrow." }; anyBad = true; return; }
+      used.set(pickId, i); assign[i] = pickId;
+    });
+    if (anyBad) return out("Two arrows show the same force.", "dupes");
+    // 3. directions
+    arrows.forEach((a, i) => {
+      const f = p.forces[assign[i]];
+      if (angDiff(f.ang, a.ang) > DIR_TOL) { rows[i] = { state: "bad", msg: "Check the direction. " + dirHint(p, f) }; anyBad = true; }
+      else rows[i] = { state: "ok", msg: "" };
+    });
+    // 4. missing forces
+    const missing = p.forces.filter((f) => !used.has(f.id));
+    if (missing.length) {
+      const n = p.forces.length, k = arrows.length;
+      return out(`Your diagram has ${k} force${k === 1 ? "" : "s"}. The ${p.body} has ${n}. What else touches it or pulls on it?` + (anyBad ? " Also fix the directions marked in red." : ""), "missing");
+    }
+    if (anyBad) return out("Fix the directions marked in red.", "dirs");
+    // 5. lengths
+    const lens = gradeLengths(p, arrows.map((a) => ({ ang: a.ang, len: a.len })));
+    if (!lens.ok) return out(lens.msg, "lengths");
+    return { correct: true, rows, msg: "", stage: "done" };
+  }
+  function netOf(arrs) {
+    let x = 0, y = 0, max = 0;
+    for (const a of arrs) { const [dx, dy] = vec(a.ang, a.len); x += dx; y += dy; max = Math.max(max, a.len); }
+    return { x, y, mag: Math.hypot(x, y), max, ang: norm(deg(Math.atan2(y, x))) };
+  }
+  function gradeLengths(p, arrs) {
+    const n = netOf(arrs);
+    if (p.forces.length === 1) return { ok: true };
+    if (p.eq) {
+      if (n.mag <= TOL.eq * n.max) return { ok: true };
+      return { ok: false, msg: `The ${p.body} isn't accelerating, so the forces on it must balance. Your arrows add up to a net force pointing ${dirWords(n.ang)}. Adjust the lengths.` };
+    }
+    if (n.mag < TOL.minNet * n.max) return { ok: false, msg: `The ${p.body} is accelerating, so the forces on it can't balance. Which way is it accelerating? Make the arrows add up that way.` };
+    if (angDiff(n.ang, p.acc) > TOL.netAng) return { ok: false, msg: `Your arrows add up to a net force pointing ${dirWords(n.ang)}, but the ${p.body} accelerates ${dirWords(p.acc)}. Adjust the lengths.` };
+    return { ok: true };
+  }
+
+  // answer labels, for Show answer and the tests
+  function answerLabel(p, f) {
+    if (p.notation === "formal") return p.twoRopes && f.type === "t" ? "t" + f.rope : f.type;
+    const verb = f.type === "w" || f.type === "t" ? "pulls" : "pushes";
+    return cap(agentName(f.agent)) + " " + verb + " " + (p.objLabel || theBody(p));
+  }
+  function symHtml(k) { return SYM[k] || ""; }
+
+  return { g, FAM, AGENTS, SYM, TYPE_NAME, TOL, DIR_TOL, generate, snapAngle, gradeLabel, gradeDraw, gradeLengths, agentCandidates, formalCandidates,
+    answerLabel, symHtml, netOf, angDiff, norm, mulberry32, dirWords, tokens };
+})();
+if (typeof module !== "undefined") module.exports = FB;
+
+</script>
+<script>
+// Newton's Law Problems — model. Everything but the page:
+//   situations (Easy: one object, one unknown, one direction; Hard: two unknowns, two columns,
+//   sometimes two objects), each object's forces from real Newton's-law solutions;
+//   the FBD grader (both notations on every arrow, built on the Free Body Diagrams model);
+//   the law/direction choice; the symbol line, the expression line, the numbers line, final answers.
+// Uses FB (fbd-model.js), which build.js inlines first. In Node: const NP = require("./model.js").
+const NP = (() => {
+  "use strict";
+  const FBm = typeof FB !== "undefined" ? FB : require("./fbd-model.js");
+  // a road is an agent here (braking cars)
+  FBm.AGENTS.road = { name: "the road", words: ["road", "pavement", "street", "asphalt", "ground"] };
+
+  const G = 9.8;
+  const rad = (d) => (d * Math.PI) / 180;
+  const sin = (d) => Math.sin(rad(d)), cos = (d) => Math.cos(rad(d));
+  const norm = FBm.norm, angDiff = FBm.angDiff;
+  const pick = (r, a) => a[Math.floor(r() * a.length)];
+  const sf = (x, n = 2) => +(+x).toPrecision(n);
+  const nice = (r, lo, hi, n = 2) => sf(lo + r() * (hi - lo), n);
+  const mu2 = (r, lo, hi) => Math.round((lo + r() * (hi - lo)) * 100) / 100;
+  function fmt(x) { const a = Math.abs(x); if (a >= 1000) return String(Math.round(x)); return String(+x.toPrecision(3)); }
+  const v = (x, u) => `<span class="gv">${fmt(x)}${u ? (u === "°" ? "" : "&nbsp;") + u : ""}</span>`;
+  const vmu = (x) => `<span class="gv">${(+x).toFixed(2)}</span>`;
+  const H = { right: 0, left: 180 };
+  // "block 1" needs no article; "the hanging block" does
+  const theWho = (o) => (/^block \d$/.test(o.who) ? o.who : "the " + o.who);
+  const capWho = (o) => { const t = theWho(o); return t.charAt(0).toUpperCase() + t.slice(1); };
+  function rampDirs(theta, side) { const up = side === "right" ? theta : 180 - theta; return { up, down: up + 180, normal: side === "right" ? 90 + theta : 90 - theta }; }
+
+  // ------------------------------------------------------------------ symbols and expressions
+  const SYM = { w: "F<sub>w</sub>", n: "F<sub>⊥</sub>", f: "F<sub>F</sub>", t: "F<sub>T</sub>", t1: "F<sub>T1</sub>", t2: "F<sub>T2</sub>", p: "F<sub>//</sub>" };
+  function symHtml(key, o) {
+    if (SYM[key]) return SYM[key];
+    const m = /^(t1|t2)([cs])$/.exec(key); // components of an angled rope
+    if (m) { const f = o && o.forces.find((x) => x.sym === m[1]); return `${SYM[m[1]]} ${m[2] === "c" ? "cos" : "sin"} ${f ? f.phi : "φ"}°`; }
+    return key;
+  }
+  // expressions a symbol can be replaced with. tokens: the quantities that appear (for the numbers line)
+  const EXPR = {
+    gm: { html: "<i>gm</i>", tokens: ["g", "m"] },
+    gmsin: { html: "<i>gm</i> sin θ", tokens: ["g", "m", "th"], trig: "sin" },
+    gmcos: { html: "<i>gm</i> cos θ", tokens: ["g", "m", "th"], trig: "cos" },
+    mugm: { html: "μ<i>gm</i>", tokens: ["mu", "g", "m"] },
+    mugmcos: { html: "μ<i>gm</i> cos θ", tokens: ["mu", "g", "m", "th"], trig: "cos" },
+    muN: { html: "μF<sub>⊥</sub>", tokens: ["mu", "n"] },
+    N: { html: "F<sub>⊥</sub>", tokens: ["n"] },
+    FF: { html: "F<sub>F</sub>", tokens: ["ff"] },
+    T: { html: "F<sub>T</sub>", tokens: ["t"] },
+    T1: { html: "F<sub>T1</sub>", tokens: ["t1"] },
+    T2: { html: "F<sub>T2</sub>", tokens: ["t2"] },
+  };
+  for (const s of ["t1", "t2"]) for (const c of ["c", "s"]) EXPR[s + c] = { html: null, tokens: [s], comp: s + c };
+  const TOKEN_HTML = { g: "<i>g</i>", m: "<i>m</i>", th: "θ", mu: "μ", n: "F<sub>⊥</sub>", t: "F<sub>T</sub>", t1: "F<sub>T1</sub>", t2: "F<sub>T2</sub>", a: "<i>a</i>", ff: "F<sub>F</sub>" };
+  const TOKEN_UNIT = { g: ["N/kg", "m/s²"], m: ["kg"], th: ["°"], mu: ["none"], n: ["N"], t: ["N"], t1: ["N"], t2: ["N"], a: ["m/s²"], ff: ["N"] };
+  const UNITS = ["N", "kg", "m/s²", "N/kg", "°", "none"];
+  function exprHtml(key, o) { const e = EXPR[key]; return e.comp ? symHtml(e.comp, o) : e.html; }
+
+  // ------------------------------------------------------------------ objects
+  const F = (type, agent, ang, mag, sym, extra) => Object.assign({ type, agent, ang: norm(ang), mag, sym }, extra || {});
+  const W = (m) => F("w", "earth", 270, m * G, "w");
+  const BODY = { block: ["block", "box", "mass", "crate"], box: ["box", "crate", "block"], car: ["car", "vehicle", "auto"], man: ["man", "guy", "person", "him", "he"], crate: ["crate", "box", "load"], sign: ["sign"] };
+  // o: {name, who, forces, acc (angle or null), aMag, m, mu, theta, side, nDef ("gm" | "gmcos" | null), nVal}
+  function finishObj(o, desc) {
+    o.body = o.name; o.bodyWords = BODY[o.name] || [o.name]; o.desc = desc; o.eq = o.acc == null;
+    o.twoRopes = o.forces.some((f) => f.sym === "t1");
+    o.forces.forEach((f, i) => { f.id = i; if (f.sym === "t1") f.rope = 1; if (f.sym === "t2") f.rope = 2; });
+    const max = Math.max(...o.forces.map((f) => f.mag));
+    o.forces.forEach((f) => (f.len = (4 * f.mag) / max));
+    o.formalOptions = o.twoRopes ? ["w", "n", "f", "t1", "t2"] : ["w", "n", "f", "t"];
+    // snap angles: every 15°, plus every true angle and its relatives, minus grid angles that crowd them
+    const special = new Set();
+    if (o.theta) for (const k of [0, 90, 180, 270]) { special.add(norm(o.theta + k)); special.add(norm(-o.theta + k)); }
+    for (const f of o.forces) for (const k of [0, 90, 180, 270]) special.add(norm(f.ang + k));
+    const out = new Set([...special].map((a) => Math.round(a * 1000) / 1000));
+    for (let a = 0; a < 360; a += 15) if (![...special].some((s) => angDiff(s, a) > 0.001 && angDiff(s, a) < 7)) out.add(a);
+    o.snaps = [...out].sort((x, y) => x - y);
+    return o;
+  }
+
+  // ------------------------------------------------------------------ situations
+  const Fams = [];
+  const fam = (diff, id, make, weight = 1) => Fams.push({ diff, id, make, weight });
+  const U = (id, label, unit, value, kind = "num") => ({ id, label, unit, value, kind });
+  const THETAS = [20, 25, 30, 35, 40];
+
+  // ---------- Easy: one object, one unknown, one direction
+  fam("easy", "floorPull", (r) => {
+    const side = pick(r, ["right", "left"]), m = nice(r, 2, 40), mu = mu2(r, 0.25, 0.5), findA = r() < 0.5;
+    let T, a;
+    if (findA) { T = sf(mu * m * G + m * (2.6 + r() * 2)); a = (T - mu * m * G) / m; } else { a = nice(r, 2.6, 4.5); T = mu * m * G + m * a; }
+    const o = { name: "box", who: "box", m, mu, nDef: "gm", nVal: m * G, acc: H[side],
+      forces: [W(m), F("n", "floor", 90, m * G, "n"), F("t", "worker", H[side], T, "t"), F("f", "floor", H[side] + 180, mu * m * G, "f")] };
+    const desc = `A worker pulls a ${v(m, "kg")} box to the ${side} across a rough floor with a horizontal rope. μ<sub>k</sub> = ${vmu(mu)}. ` +
+      (findA ? `The tension in the rope is ${v(T, "N")}. Find the box's acceleration.` : `The box speeds up at ${v(a, "m/s²")}. Find the tension in the rope.`);
+    return { desc, objects: [o], known: findA ? { t: T } : { a }, unknowns: [findA ? U("a", "<i>a</i>", "m/s²", a) : U("t", SYM.t, "N", T)] };
+  }, 2);
+  fam("easy", "floorConst", (r) => {
+    const side = pick(r, ["right", "left"]), m = nice(r, 2, 40), mu = mu2(r, 0.25, 0.6), findMu = r() < 0.5;
+    const T = findMu ? sf(mu * m * G) : mu * m * G, muv = findMu ? T / (m * G) : mu;
+    const o = { name: "box", who: "box", m, mu: muv, nDef: "gm", nVal: m * G, acc: null,
+      forces: [W(m), F("n", "floor", 90, m * G, "n"), F("t", "worker", H[side], T, "t"), F("f", "floor", H[side] + 180, T, "f")] };
+    const desc = `A worker pulls a ${v(m, "kg")} box to the ${side} across a rough floor at a constant speed with a horizontal rope. ` +
+      (findMu ? `The tension in the rope is ${v(T, "N")}. Find the coefficient of kinetic friction.` : `μ<sub>k</sub> = ${vmu(mu)}. Find the tension in the rope.`);
+    return { desc, objects: [o], known: findMu ? { t: T } : {}, unknowns: [findMu ? U("mu", "μ<sub>k</sub>", "none", muv, "mu") : U("t", SYM.t, "N", T)] };
+  });
+  fam("easy", "carBrake", (r) => {
+    const side = pick(r, ["right", "left"]), m = nice(r, 900, 2200), mu = mu2(r, 0.3, 0.8), findA = r() < 0.6;
+    const a = findA ? mu * G : nice(r, 3, 7.5), muv = findA ? mu : a / G;
+    const o = { name: "car", who: "car", m, mu: muv, nDef: "gm", nVal: m * G, acc: H[side] + 180,
+      forces: [W(m), F("n", "road", 90, m * G, "n"), F("f", "road", H[side] + 180, muv * m * G, "f")] };
+    const desc = `A ${v(m, "kg")} car is driving to the ${side} on a level road. The driver slams on the brakes and the car skids with its wheels locked, slowing down. ` +
+      (findA ? `μ<sub>k</sub> = ${vmu(mu)}. Find the size of the car's acceleration.` : `It slows down at ${v(a, "m/s²")}. Find the coefficient of kinetic friction between the tires and the road.`);
+    return { desc, objects: [o], known: findA ? {} : { a }, unknowns: [findA ? U("a", "<i>a</i>", "m/s²", a) : U("mu", "μ<sub>k</sub>", "none", muv, "mu")] };
+  });
+  fam("easy", "rampSlide", (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = nice(r, 1, 30), d = rampDirs(th, side);
+    const o = { name: "block", who: "block", m, theta: th, side, nDef: "gmcos", nVal: m * G * cos(th), acc: d.down,
+      forces: [W(m), F("n", "ramp", d.normal, m * G * cos(th), "n")] };
+    return { desc: `A ${v(m, "kg")} block slides down a frictionless ramp. The ramp rises to the ${side} at ${v(th, "°")}. Find the block's acceleration.`, objects: [o], known: {}, unknowns: [U("a", "<i>a</i>", "m/s²", G * sin(th))] };
+  });
+  fam("easy", "rampRough", (r) => {
+    const th = pick(r, [35, 40]), side = pick(r, ["right", "left"]), m = nice(r, 1, 30), d = rampDirs(th, side), findA = r() < 0.5;
+    let mu = mu2(r, 0.3, Math.tan(rad(th)) - 0.16), a = G * (sin(th) - mu * cos(th));
+    if (!findA) { a = sf(a); mu = (sin(th) - a / G) / cos(th); }
+    const o = { name: "block", who: "block", m, mu, theta: th, side, nDef: "gmcos", nVal: m * G * cos(th), acc: d.down,
+      forces: [W(m), F("n", "ramp", d.normal, m * G * cos(th), "n"), F("f", "ramp", d.up, mu * m * G * cos(th), "f")] };
+    const desc = `A ${v(m, "kg")} block slides down a rough ramp, speeding up. The ramp rises to the ${side} at ${v(th, "°")}. ` +
+      (findA ? `μ<sub>k</sub> = ${vmu(mu)}. Find the block's acceleration.` : `Its acceleration is ${v(a, "m/s²")}. Find the coefficient of kinetic friction.`);
+    return { desc, objects: [o], known: findA ? {} : { a }, unknowns: [findA ? U("a", "<i>a</i>", "m/s²", a) : U("mu", "μ<sub>k</sub>", "none", mu, "mu")] };
+  });
+  fam("easy", "rampConst", (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = nice(r, 1, 30), d = rampDirs(th, side), mu = Math.tan(rad(th));
+    const o = { name: "block", who: "block", m, mu, theta: th, side, nDef: "gmcos", nVal: m * G * cos(th), acc: null,
+      forces: [W(m), F("n", "ramp", d.normal, m * G * cos(th), "n"), F("f", "ramp", d.up, m * G * sin(th), "f")] };
+    return { desc: `A ${v(m, "kg")} block slides down a rough ramp at a constant speed. The ramp rises to the ${side} at ${v(th, "°")}. Find the coefficient of kinetic friction.`, objects: [o], known: {}, unknowns: [U("mu", "μ<sub>k</sub>", "none", mu, "mu")] };
+  });
+  fam("easy", "rampPull", (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), m = nice(r, 1, 30), d = rampDirs(th, side), rough = r() < 0.5, mu = rough ? mu2(r, 0.35, 0.55) : 0;
+    const mode = pick(r, ["const", "accT", "accA"]);
+    const Fp = m * G * sin(th), Ff = mu * m * G * cos(th);
+    let T, a = 0;
+    if (mode === "const") T = Fp + Ff; else if (mode === "accT") { a = nice(r, 2.6, 4.5); T = Fp + Ff + m * a; } else { T = sf(Fp + Ff + m * (2.6 + r() * 2)); a = (T - Fp - Ff) / m; }
+    const fs = [W(m), F("n", "ramp", d.normal, m * G * cos(th), "n"), F("t", "worker", d.up, T, "t")];
+    if (rough) fs.push(F("f", "ramp", d.down, Ff, "f"));
+    const o = { name: "block", who: "block", m, mu: rough ? mu : undefined, theta: th, side, nDef: "gmcos", nVal: m * G * cos(th), acc: mode === "const" ? null : d.up, forces: fs };
+    const surf = rough ? `a rough ramp (μ<sub>k</sub> = ${vmu(mu)})` : "a frictionless ramp";
+    const desc = `A worker pulls a ${v(m, "kg")} block up ${surf} with a rope parallel to the ramp. The ramp rises to the ${side} at ${v(th, "°")}. ` +
+      (mode === "const" ? "It moves at a constant speed. Find the tension in the rope." : mode === "accT" ? `It speeds up at ${v(a, "m/s²")}. Find the tension in the rope.` : `The tension in the rope is ${v(T, "N")}. Find the block's acceleration.`);
+    return { desc, objects: [o], known: mode === "accA" ? { t: T } : mode === "accT" ? { a } : {}, unknowns: [mode === "accA" ? U("a", "<i>a</i>", "m/s²", a) : U("t", SYM.t, "N", T)] };
+  }, 2);
+  fam("easy", "elevator", (r) => {
+    const m = nice(r, 50, 95);
+    const v0 = pick(r, [["moving up and speeding up", 90], ["moving up and slowing down", 270], ["moving down and speeding up", 270], ["moving down and slowing down", 90], ["moving up at a constant speed", null], ["moving down at a constant speed", null]]);
+    const findN = v0[1] == null || r() < 0.6;
+    let a = v0[1] == null ? 0 : nice(r, 3.3, 4.5), N = m * (G + (v0[1] === 90 ? a : v0[1] === 270 ? -a : 0));
+    if (!findN) { N = sf(N); a = Math.abs(N - m * G) / m; }
+    const o = { name: "man", who: "man", m, nDef: null, nVal: N, acc: v0[1], forces: [W(m), F("n", "scale", 90, N, "n")] };
+    const desc = `A ${v(m, "kg")} man stands on a bathroom scale in an elevator. The elevator is ${v0[0]}. ` +
+      (findN ? (v0[1] == null ? "What does the scale read?" : `Its acceleration is ${v(a, "m/s²")}. What does the scale read?`) : `The scale reads ${v(N, "N")}. Find the size of the elevator's acceleration.`);
+    return { desc, objects: [o], known: findN ? (v0[1] == null ? {} : { a }) : { n: N }, unknowns: [findN ? U("n@0", "F<sub>⊥</sub>", "N", N) : U("a", "<i>a</i>", "m/s²", a)] };
+  }, 2);
+  fam("easy", "crane", (r) => {
+    const m = nice(r, 50, 900), v0 = pick(r, [["rising and speeding up", 90], ["rising and slowing down", 270], ["being lowered and speeding up", 270], ["being lowered and slowing down", 90], ["rising at a constant speed", null]]);
+    const findT = v0[1] == null || r() < 0.6;
+    let a = v0[1] == null ? 0 : nice(r, 3.3, 4.5), T = m * (G + (v0[1] === 90 ? a : v0[1] === 270 ? -a : 0));
+    if (!findT) { T = sf(T); a = Math.abs(T - m * G) / m; }
+    const o = { name: "crate", who: "crate", m, acc: v0[1], forces: [W(m), F("t", "crane", 90, T, "t")] };
+    const desc = `A ${v(m, "kg")} crate hangs from a crane cable. It is ${v0[0]}. ` +
+      (findT ? (v0[1] == null ? "Find the tension in the cable." : `Its acceleration is ${v(a, "m/s²")}. Find the tension in the cable.`) : `The tension in the cable is ${v(T, "N")}. Find the size of the crate's acceleration.`);
+    return { desc, objects: [o], known: findT ? (v0[1] == null ? {} : { a }) : { t: T }, unknowns: [findT ? U("t", SYM.t, "N", T) : U("a", "<i>a</i>", "m/s²", a)] };
+  });
+
+  // ---------- Hard: two unknowns, two columns
+  fam("hard", "sign2", (r) => {
+    const m = nice(r, 5, 40); let a1, b1; do { a1 = pick(r, [30, 35, 40, 50, 55, 60]); b1 = pick(r, [30, 35, 40, 50, 55, 60]); } while (a1 === b1);
+    const s = sin(a1 + b1), T1 = (m * G * cos(b1)) / s, T2 = (m * G * cos(a1)) / s;
+    const o = { name: "sign", who: "sign", m, acc: null, forces: [W(m), F("t", "ceiling", 180 - a1, T1, "t1", { phi: a1 }), F("t", "ceiling", b1, T2, "t2", { phi: b1 })] };
+    return { desc: `A ${v(m, "kg")} sign hangs at rest from two strings tied to the ceiling. The left string (string 1) makes ${v(a1, "°")} with the horizontal and the right string (string 2) makes ${v(b1, "°")}. Find the tension in each string.`,
+      objects: [o], known: {}, unknowns: [U("t1", SYM.t1, "N", T1), U("t2", SYM.t2, "N", T2)], simultaneous: true };
+  });
+  fam("hard", "signH", (r) => {
+    const m = nice(r, 5, 40), b1 = pick(r, [30, 35, 40, 50, 55, 60]), flip = r() < 0.5;
+    const Ta = (m * G) / sin(b1), Th = (m * G) / Math.tan(rad(b1));
+    const forces = flip ? [W(m), F("t", "ceiling", 180 - b1, Ta, "t1", { phi: b1 }), F("t", "wall", 0, Th, "t2")] : [W(m), F("t", "wall", 180, Th, "t1"), F("t", "ceiling", b1, Ta, "t2", { phi: b1 })];
+    const o = { name: "sign", who: "sign", m, acc: null, forces };
+    const desc = flip
+      ? `A ${v(m, "kg")} sign hangs at rest from two strings. The right string (string 2) runs straight sideways to a wall. The left string (string 1) runs up to the ceiling at ${v(b1, "°")} above the horizontal. Find the tension in each string.`
+      : `A ${v(m, "kg")} sign hangs at rest from two strings. The left string (string 1) runs straight sideways to a wall. The right string (string 2) runs up to the ceiling at ${v(b1, "°")} above the horizontal. Find the tension in each string.`;
+    return { desc, objects: [o], known: {}, unknowns: flip ? [U("t1", SYM.t1, "N", Ta), U("t2", SYM.t2, "N", Th)] : [U("t1", SYM.t1, "N", Th), U("t2", SYM.t2, "N", Ta)], simultaneous: false };
+  });
+  fam("hard", "atwood", (r) => {
+    let m1, m2; do { m1 = nice(r, 1, 8); m2 = nice(r, 1, 8); } while (Math.max(m1, m2) / Math.min(m1, m2) < 2.1);
+    const a = (Math.abs(m2 - m1) * G) / (m1 + m2), T = (2 * m1 * m2 * G) / (m1 + m2);
+    const o1 = { name: "block", who: "block 1", objLabel: "block 1", m: m1, acc: m1 > m2 ? 270 : 90, forces: [W(m1), F("t", "blockR", 90, T, "t")] };
+    const o2 = { name: "block", who: "block 2", objLabel: "block 2", m: m2, acc: m2 > m1 ? 270 : 90, forces: [W(m2), F("t", "blockL", 90, T, "t")] };
+    return { desc: `An Atwood machine: block 1 (${v(m1, "kg")}, on the left) and block 2 (${v(m2, "kg")}, on the right) hang from the ends of a string over a frictionless pulley. They are released from rest. Find the size of the blocks' acceleration and the tension in the string.`,
+      objects: [o1, o2], known: {}, unknowns: [U("a", "<i>a</i>", "m/s²", a), U("t", SYM.t, "N", T)], simultaneous: true };
+  });
+  fam("hard", "atwoodSeq", (r) => {
+    const m1 = nice(r, 1, 8), a = nice(r, 3.3, 4.5), down = pick(r, ["left", "right"]);
+    // the left block is m1. If the right side goes down, m2 > m1: T = m1(g + a), m2 = T/(g − a). Otherwise m2 < m1: T = m1(g − a), m2 = T/(g + a).
+    const T = down === "right" ? m1 * (G + a) : m1 * (G - a), m2 = down === "right" ? T / (G - a) : T / (G + a);
+    const o1 = { name: "block", who: "block 1", objLabel: "block 1", m: m1, acc: down === "left" ? 270 : 90, forces: [W(m1), F("t", "blockR", 90, T, "t")] };
+    const o2 = { name: "block", who: "block 2", objLabel: "block 2", m: m2, mUnknown: true, acc: down === "right" ? 270 : 90, forces: [W(m2), F("t", "blockL", 90, T, "t")] };
+    return { desc: `An Atwood machine: block 1 (${v(m1, "kg")}, on the left) and block 2 (on the right) hang from the ends of a string over a frictionless pulley. When released, block ${down === "left" ? 1 : 2} falls with an acceleration of ${v(a, "m/s²")}. Find the tension in the string and the mass of block 2.`,
+      objects: [o1, o2], known: { a }, unknowns: [U("t", SYM.t, "N", T), U("m@1", "<i>m</i><sub>2</sub>", "kg", m2)], simultaneous: false };
+  });
+  fam("hard", "halfAtwood", (r) => {
+    const side = pick(r, ["right", "left"]), rough = r() < 0.5;
+    let mt, mh, mu, a; do { mt = nice(r, 1, 8); mh = nice(r, 1, 8); mu = rough ? mu2(r, 0.25, 0.4) : 0; a = ((mh - mu * mt) * G) / (mt + mh); } while (a < 2.6 || a > G - 2.6);
+    const T = mh * (G - a);
+    const fs = [W(mt), F("n", "table", 90, mt * G, "n"), F("t", "blockHang", H[side], T, "t")];
+    if (rough) fs.push(F("f", "table", H[side] + 180, mu * mt * G, "f"));
+    const o1 = { name: "block", who: "block on the table", m: mt, mu: rough ? mu : undefined, nDef: "gm", nVal: mt * G, acc: H[side], forces: fs };
+    const o2 = { name: "block", who: "hanging block", m: mh, acc: 270, forces: [W(mh), F("t", "blockTable", 90, T, "t")] };
+    return { desc: `A ${v(mt, "kg")} block sits on a ${rough ? `rough table (μ<sub>k</sub> = ${vmu(mu)})` : "frictionless table"}. A string runs from it over a pulley at the ${side} edge of the table to a ${v(mh, "kg")} block hanging below. They are released from rest. Find the size of the blocks' acceleration and the tension in the string.`,
+      objects: [o1, o2], known: {}, unknowns: [U("a", "<i>a</i>", "m/s²", a), U("t", SYM.t, "N", T)], simultaneous: true };
+  });
+  fam("hard", "halfAtwoodSeq", (r) => {
+    const side = pick(r, ["right", "left"]), rough = r() < 0.5, mt = nice(r, 1, 8), mu = rough ? mu2(r, 0.25, 0.4) : 0, a = nice(r, 2.6, 4.5);
+    const T = mt * a + mu * mt * G, mh = T / (G - a);
+    const fs = [W(mt), F("n", "table", 90, mt * G, "n"), F("t", "blockHang", H[side], T, "t")];
+    if (rough) fs.push(F("f", "table", H[side] + 180, mu * mt * G, "f"));
+    const o1 = { name: "block", who: "block on the table", m: mt, mu: rough ? mu : undefined, nDef: "gm", nVal: mt * G, acc: H[side], forces: fs };
+    const o2 = { name: "block", who: "hanging block", m: mh, mUnknown: true, acc: 270, forces: [W(mh), F("t", "blockTable", 90, T, "t")] };
+    return { desc: `A ${v(mt, "kg")} block sits on a ${rough ? `rough table (μ<sub>k</sub> = ${vmu(mu)})` : "frictionless table"}. A string runs from it over a pulley at the ${side} edge of the table to a hanging block. When released, the blocks accelerate at ${v(a, "m/s²")}. Find the tension in the string and the mass of the hanging block.`,
+      objects: [o1, o2], known: { a }, unknowns: [U("t", SYM.t, "N", T), U("m@1", "<i>m</i><sub>hanging</sub>", "kg", mh)], simultaneous: false };
+  });
+  fam("hard", "rampHang", (r) => {
+    const th = pick(r, THETAS), side = pick(r, ["right", "left"]), rough = r() < 0.5, d = rampDirs(th, side);
+    let mr, mh, mu, a; do { mr = nice(r, 1, 8); mh = nice(r, 1, 8); mu = rough ? mu2(r, 0.3, 0.5) : 0; a = ((mh - mr * sin(th) - mu * mr * cos(th)) * G) / (mr + mh); } while (a < 2.6 || a > G - 2.6);
+    const T = mh * (G - a);
+    const fs = [W(mr), F("n", "ramp", d.normal, mr * G * cos(th), "n"), F("t", "blockHang", d.up, T, "t")];
+    if (rough) fs.push(F("f", "ramp", d.down, mu * mr * G * cos(th), "f"));
+    const o1 = { name: "block", who: "block on the ramp", m: mr, mu: rough ? mu : undefined, theta: th, side, nDef: "gmcos", nVal: mr * G * cos(th), acc: d.up, forces: fs };
+    const o2 = { name: "block", who: "hanging block", m: mh, acc: 270, forces: [W(mh), F("t", "blockRamp", 90, T, "t")] };
+    return { desc: `A ${v(mr, "kg")} block sits on a ${rough ? `rough ramp (μ<sub>k</sub> = ${vmu(mu)})` : "frictionless ramp"} that rises to the ${side} at ${v(th, "°")}. A string parallel to the ramp runs from the block over a pulley at the top of the ramp to a ${v(mh, "kg")} block hanging below. When released, the hanging block falls. Find the size of the blocks' acceleration and the tension in the string.`,
+      objects: [o1, o2], known: {}, unknowns: [U("a", "<i>a</i>", "m/s²", a), U("t", SYM.t, "N", T)], simultaneous: true };
+  });
+
+  // ------------------------------------------------------------------ generator
+  function wpick(r, arr) { const tot = arr.reduce((s, f) => s + f.weight, 0); let x = r() * tot; for (const f of arr) { x -= f.weight; if (x < 0) return f; } return arr[arr.length - 1]; }
+  // every arrow readable at scale (smallest ≥ 1/4 of the biggest) and every accelerating object's net
+  // force at least 1/4 of its biggest force and pointing along its acceleration (as in Free Body Diagrams)
+  function drawable(p) {
+    if (!p.unknowns.every((u) => isFinite(u.value) && u.value > 0)) return false;
+    return p.objects.every((o) => {
+      const mags = o.forces.map((f) => f.mag), max = Math.max(...mags);
+      if (Math.min(...mags) < 0.25 * max || mags.some((x) => !(x > 0))) return false;
+      let x = 0, y = 0; for (const f of o.forces) { x += f.mag * Math.cos(rad(f.ang)); y += f.mag * Math.sin(rad(f.ang)); }
+      const net = Math.hypot(x, y);
+      if (o.acc == null) return net < 1e-6 * max;
+      return net >= 0.25 * max && angDiff((Math.atan2(y, x) * 180) / Math.PI, o.acc) < 0.01;
+    });
+  }
+  function generate(opts) {
+    const r = opts.rng || Math.random;
+    const pool = Fams.filter((f) => f.diff === opts.diff);
+    let fm, k = 0; do { fm = wpick(r, pool); k++; } while (fm.id === opts.avoid && k < 30);
+    let p, tries = 0;
+    do { p = fm.make(r); tries++; } while (tries < 200 && !drawable(p));
+    p.family = fm.id; p.diff = opts.diff;
+    p.objects.forEach((o) => finishObj(o, p.desc));
+    p.unknownIds = p.unknowns.map((u) => u.id);
+    return p;
+  }
+
+  // ------------------------------------------------------------------ FBD: both notations on every arrow
+  // arrows: [{ang, len, agent, sym}] for object o. Returns {correct, rows:[{state,msg}], msg, stage}
+  function gradeFBD(o, arrows) {
+    const rows = arrows.map(() => ({ state: "", msg: "" }));
+    const out = (msg, stage) => ({ correct: false, rows, msg, stage });
+    if (!arrows.length) return out(`Draw each force on ${theWho(o)}: drag outward from the dot.`, "empty");
+    let anyBad = false;
+    const cands = arrows.map((a, i) => {
+      const A = FBm.agentCandidates(o, a.agent), S = FBm.formalCandidates(o, a.sym);
+      if (A.err !== undefined) { rows[i] = { state: "bad", msg: "Agent/object: " + A.err, part: "agent" }; anyBad = true; return null; }
+      if (S.err !== undefined) { rows[i] = { state: "bad", msg: "Symbol: " + (S.err || "There is no friction on this object."), part: "sym" }; anyBad = true; return null; }
+      const both = A.cands.filter((id) => S.cands.includes(id));
+      if (!both.length) { rows[i] = { state: "bad", msg: "Your two labels describe different forces. Make the symbol match the agent/object sentence." }; anyBad = true; return null; }
+      return both;
+    });
+    if (anyBad) return out(arrows.some((a) => !String(a.agent || "").trim() || !a.sym) ? "Give every arrow both labels." : "Fix the labels marked in red.", "labels");
+    const used = new Map(), assign = [];
+    arrows.forEach((a, i) => {
+      const c = cands[i], good = c.find((id) => angDiff(o.forces[id].ang, a.ang) <= FBm.DIR_TOL && !used.has(id));
+      const id = good !== undefined ? good : c.find((x) => !used.has(x));
+      if (id === undefined) { rows[i] = { state: "bad", msg: "Another arrow already shows this force." }; anyBad = true; return; }
+      used.set(id, i); assign[i] = id;
+    });
+    if (anyBad) return out("Two arrows show the same force.", "dupes");
+    arrows.forEach((a, i) => {
+      const f = o.forces[assign[i]];
+      if (angDiff(f.ang, a.ang) > FBm.DIR_TOL) { rows[i] = { state: "bad", msg: "Check the direction. " + dirHint(o, f) }; anyBad = true; } else rows[i] = { state: "ok", msg: "" };
+    });
+    const missing = o.forces.filter((f) => !used.has(f.id));
+    if (missing.length) return out(`This diagram has ${arrows.length} force${arrows.length === 1 ? "" : "s"}. ${capWho(o)} has ${o.forces.length}. What else touches it or pulls on it?` + (anyBad ? " Also fix the directions marked in red." : ""), "missing");
+    if (anyBad) return out("Fix the directions marked in red.", "dirs");
+    const L = FBm.gradeLengths(Object.assign({}, o, { body: o.who }), arrows.map((a) => ({ ang: a.ang, len: a.len })));
+    if (!L.ok) return out(L.msg, "lengths");
+    return { correct: true, rows, msg: "", stage: "done" };
+  }
+  function dirHint(o, f) {
+    if (f.type === "w") return "Weight always points straight down.";
+    if (f.type === "n") return `A normal force is perpendicular to the surface, pushing ${theWho(o)} away from it.`;
+    if (f.type === "t") return `Tension pulls along the string, away from ${theWho(o)}.`;
+    return `Friction runs along the surface, opposite the way ${theWho(o)} slides.`;
+  }
+  function answerArrows(o) { return o.forces.map((f) => ({ ang: f.ang, len: f.len, agent: FBm.answerLabel(Object.assign({}, o, { notation: "agent" }), f), sym: FBm.answerLabel(Object.assign({}, o, { notation: "formal" }), f), force: f.id })); }
+
+  // ------------------------------------------------------------------ choosing the law and the direction
+  const DIRS = { x: "horizontal (x)", y: "vertical (y)", r: "along the ramp (r)" };
+  function dirAngle(o, dir) { if (dir === "x") return 0; if (dir === "y") return 90; return rampDirs(o.theta, o.side).up; }
+  function validDirs(o) { return o.theta ? ["r"] : ["x", "y"]; }
+  const sgn = (x) => (Math.abs(x) < 1e-6 ? 0 : x > 0 ? 1 : -1);
+  function accSign(o, dir) { return o.acc == null ? 0 : sgn(Math.cos(rad(o.acc - dirAngle(o, dir)))); }
+  // expected terms in direction dir: [{key, sign}]
+  function terms(o, dir) {
+    const d = dirAngle(o, dir), out = [];
+    for (const f of o.forces) {
+      const c = Math.cos(rad(f.ang - d));
+      if (Math.abs(c) < 1e-6) continue;
+      if (dir === "r" && f.type === "w") { out.push({ key: "p", sign: sgn(c) }); continue; }
+      if (Math.abs(Math.abs(c) - 1) < 1e-6) { out.push({ key: f.sym, sign: sgn(c) }); continue; }
+      out.push({ key: f.sym + (dir === "x" ? "c" : "s"), sign: sgn(c) }); // an angled rope's component
+    }
+    return out;
+  }
+  // the expressions accepted for each symbol in object o
+  function exprsFor(o, key, p) {
+    if (key === "w") return ["gm"];
+    if (key === "p") return ["gmsin"];
+    if (key === "n") return o.nDef ? [o.nDef] : ["N"];
+    if (key === "f") return o.theta ? ["mugmcos", "muN"] : ["mugm", "muN"];
+    if (key === "t") return ["T"];
+    if (key === "t1" || key === "t2") return [key.toUpperCase()];
+    return [key]; // components keep their own form
+  }
+  const tokId = (tok, oi) => (tok === "m" ? "m@" + oi : tok === "n" ? "n@" + oi : tok);
+  function columnUnknowns(p, oi, dir, law) {
+    const o = p.objects[oi], ids = new Set();
+    for (const t of terms(o, dir)) for (const tok of EXPR[exprsFor(o, t.key, p)[0]].tokens) ids.add(tokId(tok, oi));
+    if (law === "2nd") { ids.add("m@" + oi); ids.add("a"); }
+    return p.unknownIds.filter((u) => ids.has(u));
+  }
+  // setup: {obj, law: "1st"|"2nd", dir}. others: the other columns' setups (Hard)
+  function gradeSetup(p, setup, others) {
+    const { obj, law, dir } = setup;
+    if (obj == null || !law || !dir) return { ok: false, msg: "" };
+    const o = p.objects[obj];
+    if (!validDirs(o).includes(dir)) return { ok: false, msg: o.theta ? `${capWho(o)} moves along the ramp. Work along the ramp (r).` : dir === "r" ? `There's no ramp under ${theWho(o)}.` : "" };
+    const as = accSign(o, dir);
+    if (as === 0 && law === "2nd") return { ok: false, msg: `${capWho(o)} isn't accelerating ${dir === "x" ? "sideways" : dir === "y" ? "up or down" : "along the ramp"}, so ΣF = 0. Use the 1st law.` };
+    if (as !== 0 && law === "1st") return { ok: false, msg: `${capWho(o)} is accelerating ${dir === "x" ? "sideways" : dir === "y" ? "up or down" : "along the ramp"}, so ΣF = ma. Use the 2nd law.` };
+    if ((others || []).some((s) => s && s.obj === obj && s.dir === dir)) return { ok: false, msg: "Your other column already works in that direction for that object." };
+    const mine = columnUnknowns(p, obj, dir, law);
+    if (!mine.length) return { ok: false, msg: "That equation is true, but nothing you are asked to find is in it. Pick a direction that includes an unknown." };
+    const done = (others || []).filter((x) => x && x.ok);
+    if (done.length) {
+      const all = new Set(mine); for (const x of done) columnUnknowns(p, x.obj, x.dir, x.law).forEach((u) => all.add(u));
+      if (p.unknownIds.some((u) => !all.has(u))) return { ok: false, msg: "Between your two columns, one of the things you're asked to find never appears. Pick a column that includes it." };
+    }
+    return { ok: true, msg: "" };
+  }
+  function lawHtml(o, setup) { return `Σ<i>F</i><sub>${setup.dir}</sub> = ${setup.law === "1st" ? "0" : "<i>m a</i>"}`; }
+  function symbolOptions(o, dir) {
+    const keys = [];
+    for (const f of o.forces) {
+      if (f.phi) { keys.push(f.sym + "c", f.sym + "s"); } else if (!keys.includes(f.sym)) keys.push(f.sym);
+    }
+    if (dir === "r") keys.splice(1, 0, "p");
+    for (const k of ["w", "n", "f"]) if (!keys.includes(k)) keys.push(k); // the other force symbols, as choices
+    return keys;
+  }
+
+  // ------------------------------------------------------------------ line 1: symbols
+  // st: [{sign: "+"|"-", key}]. Returns {ok, msg, orient (+1 / −1)}
+  function gradeSymbols(p, setup, st) {
+    const o = p.objects[setup.obj], E = terms(o, setup.dir);
+    if (!st.length || st.some((t) => !t.key || !t.sign)) return { ok: false, msg: "Fill in every term: a sign and a symbol.", incomplete: true };
+    const as = (arr) => arr.map((t) => (t.sign === "-" || t.sign === -1 ? "-" : "+") + t.key).sort().join(" ");
+    const S = st.map((t) => ({ key: t.key, sign: t.sign === "-" ? -1 : 1 }));
+    const E1 = as(E.map((t) => ({ key: t.key, sign: t.sign === 1 ? "+" : "-" }))), E2 = as(E.map((t) => ({ key: t.key, sign: t.sign === 1 ? "-" : "+" })));
+    const Ss = as(st);
+    if (Ss === E1 || Ss === E2) {
+      const orient = Ss === E1 ? 1 : -1;
+      // a shared, unknown a (pulley problems): every equation must take positive along its object's acceleration,
+      // or the one a means different signs in the two equations
+      if (sharedA(p, setup) && orient * accSign(o, setup.dir) < 0)
+        return { ok: false, msg: `The forces are right, but with these signs positive points ${posWords(o, setup.dir, orient)} while ${theWho(o)} accelerates ${posWords(o, setup.dir, -orient)}. Both equations share one <i>a</i>, so in each one take positive in the direction that object accelerates. Flip every sign.`, orientIssue: true };
+      return { ok: true, orient };
+    }
+    const ek = E.map((t) => t.key), sk = S.map((t) => t.key);
+    if (new Set(sk).size < sk.length) return { ok: false, msg: "Each force appears only once." };
+    if (setup.dir === "r" && sk.includes("w")) return { ok: false, msg: "Along the ramp, use F<sub>//</sub>, the part of the weight that points along the ramp, instead of F<sub>w</sub>." };
+    for (const k of sk) if (!ek.includes(k)) {
+      const swap = /^(t[12])([cs])$/.exec(k);
+      if (swap && ek.includes(swap[1] + (swap[2] === "c" ? "s" : "c"))) return { ok: false, msg: `Check sin and cos. The ${setup.dir === "x" ? "horizontal" : "vertical"} part of an angled string uses ${setup.dir === "x" ? "cos" : "sin"} of its angle from the horizontal.` };
+      if (k === "p") return { ok: false, msg: "F<sub>//</sub> is the part of the weight along a ramp. There's no ramp in this direction." };
+      return { ok: false, msg: `${symHtml(k, o)} has no part along this direction. Leave it out.` };
+    }
+    if (ek.some((k) => !sk.includes(k))) return { ok: false, msg: "A force with a part along this direction is missing." };
+    return { ok: false, msg: "The forces are right; check the signs. Forces that point opposite ways get opposite signs." };
+  }
+
+  function sharedA(p, setup) { return setup.law === "2nd" && p.objects.length > 1 && p.unknownIds.includes("a"); }
+
+  // ------------------------------------------------------------------ line 2: expressions
+  // choices: expression key under each term, same order as the symbol line
+  function gradeExprs(p, setup, symTerms, choices) {
+    const o = p.objects[setup.obj], rows = [];
+    let ok = true, first = "";
+    symTerms.forEach((t, i) => {
+      const c = choices[i], allowed = exprsFor(o, t.key, p);
+      if (!c) { rows.push({ state: "", msg: "" }); ok = false; return; }
+      if (allowed.includes(c)) { rows.push({ state: "ok", msg: "" }); return; }
+      ok = false; let msg = `That isn't the expression for ${symHtml(t.key, o)}.`;
+      if (t.key === "n" && !o.nDef && (c === "gm" || c === "gmcos")) msg = `In an accelerating elevator, F<sub>⊥</sub> isn't gm. Keep it as F<sub>⊥</sub>.`;
+      else if (t.key === "n" && o.nDef === "gmcos" && c === "gm") msg = "On a ramp, F<sub>⊥</sub> = gm cos θ.";
+      else if (t.key === "f" && o.theta && c === "mugm") msg = "On a ramp, F<sub>⊥</sub> = gm cos θ, so F<sub>F</sub> = μgm cos θ.";
+      else if (t.key === "f" && !o.theta && c === "mugmcos") msg = "On a level surface, F<sub>⊥</sub> = gm, so there is no cos θ.";
+      else if (t.key === "p" && c === "gmcos") msg = "F<sub>//</sub> goes with sin θ, not cos θ.";
+      else if (t.key === "p" && c === "gm") msg = "Only part of the weight acts along the ramp: F<sub>//</sub> = gm sin θ.";
+      else if (t.key === "n" && c === "N" && o.nDef) msg = "Replace F<sub>⊥</sub> with its expression.";
+      else if (t.key === "f" && c === "FF") msg = "Replace F<sub>F</sub> with its expression: μ times the normal force.";
+      else if ((t.key === "t" || /^t[12]/.test(t.key)) && !/^T/.test(c) && !/^t[12][cs]$/.test(c)) msg = "Tension has no formula. Keep it as F<sub>T</sub>.";
+      rows.push({ state: "bad", msg }); if (!first) first = msg;
+    });
+    return { ok, rows, msg: first };
+  }
+  function exprOptions(o, setup) {
+    const keys = ["gm", "gmsin", "gmcos", "mugm", "mugmcos", "muN", "N", "FF"];
+    const ts = new Set(); for (const f of o.forces) if (f.type === "t") { if (f.phi) { ts.add(f.sym + (setup.dir === "x" ? "c" : "s")); } else ts.add(f.sym === "t" ? "T" : f.sym.toUpperCase()); }
+    if (!ts.size) ts.add("T");
+    return [...keys, ...ts];
+  }
+
+  // ------------------------------------------------------------------ line 3: numbers
+  // The slots: each term's expression tokens in order, then (2nd law) m and a on the right. Unknowns show as symbols.
+  function numberSlots(p, setup, symTerms, choices) {
+    const oi = setup.obj, slots = [];
+    symTerms.forEach((t, i) => { for (const tok of EXPR[choices[i]].tokens) slots.push({ term: i, tok, unknown: p.unknownIds.includes(tokId(tok, oi)) }); });
+    if (setup.law === "2nd") for (const tok of ["m", "a"]) slots.push({ term: "rhs", tok, unknown: p.unknownIds.includes(tokId(tok, oi)) });
+    return slots;
+  }
+  function knownValue(p, setup, tok, orient) {
+    const o = p.objects[setup.obj];
+    switch (tok) {
+      case "g": return G;
+      case "m": return o.m;
+      case "th": return o.theta;
+      case "mu": return o.mu;
+      case "n": return p.known.n != null ? p.known.n : o.nVal;
+      case "t": case "t1": case "t2": return p.known[tok];
+      case "a": return orient * accSign(o, setup.dir) * p.known.a;
+    }
+    return NaN;
+  }
+  function parseNum(s) {
+    const t = String(s || "").trim().replace(/,/g, "").replace(/\s+/g, "").replace(/−/g, "-");
+    if (!t) return { empty: true };
+    if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(t)) return { bad: true };
+    return { x: parseFloat(t) };
+  }
+  // entries: [{num, unit}] for each slot (unknown slots ignored). orient: from line 1.
+  function gradeNumbers(p, setup, slots, entries, orient) {
+    const o = p.objects[setup.obj], rows = []; let ok = true, first = "";
+    slots.forEach((s, i) => {
+      if (s.unknown) { rows.push({ state: "na" }); return; }
+      const e = entries[i] || {}, n = parseNum(e.num), want = knownValue(p, setup, s.tok, orient);
+      if (n.empty || !e.unit) { rows.push({ state: "", msg: "" }); ok = false; return; }
+      let msg = "";
+      // a value the student computed (F⊥ from its definition) gets the rounding allowance; given values must match
+      const computed = s.tok === "n" && p.known.n == null;
+      const numOK = !n.bad && (Math.abs(n.x - want) <= Math.max(1e-9, (computed ? 0.03 : 0.005) * Math.abs(want)) ||
+        (computed && Math.abs(n.x - +want.toPrecision(2)) < 1e-9 * Math.max(1, Math.abs(want))));
+      const unitOK = TOKEN_UNIT[s.tok].includes(e.unit);
+      if (n.bad) msg = "Type a number.";
+      else if (!numOK && s.tok === "a" && Math.abs(Math.abs(n.x) - Math.abs(want)) <= 0.005 * Math.abs(want))
+        msg = `With your signs, positive points ${posWords(o, setup.dir, orient)}, but ${theWho(o)} accelerates ${posWords(o, setup.dir, -orient)}. So <i>a</i> is ${want < 0 ? "negative" : "positive"} here.`;
+      else if (!numOK && s.tok === "th" && Math.abs(n.x - rad(want)) < 0.01) msg = "Give the angle in degrees.";
+      else if (!numOK && s.tok === "g" && Math.abs(n.x - 10) < 1e-9) msg = "Use g = 9.8.";
+      else if (!numOK) msg = `That isn't the value of ${TOKEN_HTML[s.tok]} here.`;
+      else if (!unitOK) msg = s.tok === "mu" ? "μ has no units. Choose “none”." : `The number is right; the unit for ${TOKEN_HTML[s.tok]} is ${TOKEN_UNIT[s.tok][0]}.`;
+      if (msg) { ok = false; rows.push({ state: "bad", msg, numBad: !numOK, unitBad: numOK && !unitOK }); if (!first) first = msg; } else rows.push({ state: "ok", msg: "" });
+    });
+    return { ok, rows, msg: first };
+  }
+  function posWords(o, dir, orient) {
+    if (dir === "x") return orient > 0 ? "to the right" : "to the left";
+    if (dir === "y") return orient > 0 ? "up" : "down";
+    return orient > 0 ? "up the ramp" : "down the ramp";
+  }
+
+  // ------------------------------------------------------------------ final answers
+  function gradeAnswer(p, idx, input) {
+    const u = p.unknowns[idx], n = parseNum(input.num);
+    if (n.empty) return { state: "", msg: "" };
+    if (n.bad) return { state: "bad", msg: "Type a number.", numBad: true };
+    const x = u.id === "a" ? Math.abs(n.x) : n.x, val = u.value;
+    const close = u.kind === "mu" ? Math.abs(x - val) <= Math.max(0.01, 0.03 * val) : Math.abs(x - val) <= 0.03 * val || Math.abs(x - +val.toPrecision(2)) < 1e-9 * Math.max(1, val);
+    const unitOK = input.unit === u.unit;
+    if (close && unitOK) return { state: "ok", msg: "" };
+    if (close) return { state: input.unit ? "bad" : "", msg: input.unit ? (u.unit === "none" ? "A coefficient of friction has no units. Choose “none”." : `The number is right; the unit is ${u.unit}.`) : "Choose a unit.", unitBad: !!input.unit, numOK: true };
+    if (n.x < 0 && u.id !== "a") return { state: "bad", msg: "Give the size as a positive number.", numBad: true };
+    return { state: "bad", msg: "Not quite. Check your algebra and arithmetic." + (p.simultaneous ? " Both equations share the unknowns: solve one for one unknown and substitute into the other." : ""), numBad: true };
+  }
+  function answerText(u) { return { num: u.kind === "mu" ? String(Math.round(u.value * 1000) / 1000) : String(+u.value.toPrecision(3)), unit: u.unit }; }
+
+  // ------------------------------------------------------------------ a full worked solution (Show answer, tests)
+  // Returns per column: {setup, symTerms, choices, entries}
+  function solution(p, orientFlip) {
+    const options = [];
+    p.objects.forEach((o, oi) => validDirs(o).forEach((dir) => { const law = accSign(o, dir) ? "2nd" : "1st"; const u = columnUnknowns(p, oi, dir, law); if (u.length) options.push({ obj: oi, dir, law, u }); }));
+    let chosen = null;
+    if (p.diff === "easy") chosen = [options.find((x) => p.unknownIds.every((id) => x.u.includes(id)))];
+    else for (let i = 0; i < options.length && !chosen; i++) for (let j = i + 1; j < options.length && !chosen; j++)
+      if (p.unknownIds.every((id) => options[i].u.includes(id) || options[j].u.includes(id))) chosen = [options[i], options[j]];
+    if (!chosen || !chosen[0]) return null;
+    return chosen.map((x, ci) => {
+      const setup = { obj: x.obj, dir: x.dir, law: x.law }, o = p.objects[setup.obj];
+      let flip = orientFlip && orientFlip[ci] ? -1 : 1;
+      if (sharedA(p, setup)) flip = accSign(o, setup.dir); // pulley problems: positive along each object's acceleration
+      const symTerms = terms(o, setup.dir).map((t) => ({ key: t.key, sign: t.sign * flip === 1 ? "+" : "-" }));
+      const choices = symTerms.map((t) => exprsFor(o, t.key, p)[0]);
+      const slots = numberSlots(p, setup, symTerms, choices);
+      const entries = slots.map((sl) => (sl.unknown ? null : { num: String(+knownValue(p, setup, sl.tok, flip).toPrecision(4)), unit: TOKEN_UNIT[sl.tok][0] }));
+      return { setup, symTerms, choices, slots, entries, orient: flip };
+    });
+  }
+
+  return { theWho, capWho, G, Fams, UNITS, SYM, EXPR, TOKEN_HTML, TOKEN_UNIT, DIRS, generate, gradeFBD, answerArrows, gradeSetup, lawHtml, symbolOptions, symHtml, exprOptions, exprHtml,
+    gradeSymbols, gradeExprs, numberSlots, gradeNumbers, gradeAnswer, answerText, solution, terms, validDirs, accSign, columnUnknowns, exprsFor, knownValue, parseNum, FB: FBm, mulberry32: FBm.mulberry32 };
+})();
+if (typeof module !== "undefined") module.exports = NP;
+
+</script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const SVGNS = "http://www.w3.org/2000/svg";
+const C = 224, U = 32, MAX_ARROWS = 6, MAX_LEN = 6.5;
+const CHECK_SVG = `<svg class="check" viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="25"/><path d="M16 29 l8 8 l16 -18"/></svg>`;
+const UNIT_LABEL = { "N": "N", "kg": "kg", "m/s²": "m/s²", "N/kg": "N/kg", "°": "°", "none": "no unit" };
+const SYMOPT = { w: "F<sub>w</sub>", n: "F<sub>⊥</sub>", f: "F<sub>F</sub>", t: "F<sub>T</sub>", t1: "F<sub>T1</sub>", t2: "F<sub>T2</sub>" };
+const st = { diff: "easy", prob: null, fbd: [], fbdOk: false, cols: [], ans: [], missed: false, solved: false, revealed: false, correct: 0, first: 0, drag: null };
+
+// ============================================================= problem lifecycle
+function newProblem() {
+  st.prob = NP.generate({ diff: st.diff, avoid: st.prob && st.prob.family });
+  const p = st.prob;
+  st.fbd = p.objects.map(() => ({ arrows: [], ok: false, msg: "" }));
+  st.fbdOk = false; st.missed = false; st.solved = false; st.revealed = false; st.drag = null;
+  st.cols = Array.from({ length: st.diff === "easy" ? 1 : 2 }, () => blankCol(p));
+  st.ans = p.unknowns.map(() => ({ num: "", unit: "", ok: false, msg: "" }));
+  renderAll();
+}
+function blankCol(p) { return { setup: { obj: p.objects.length === 1 ? 0 : null, law: "", dir: "" }, setupOk: false, setupMsg: "", sym: [{ sign: "", key: "" }], symOk: false, symMsg: "", orient: 1, choices: [], exprOk: false, exprRows: [], exprMsg: "", slots: [], entries: [], numOk: false, numRows: [], numMsg: "" }; }
+function renderAll() {
+  const p = st.prob;
+  $("story").innerHTML = p.desc;
+  $("diffHint").textContent = st.diff === "easy" ? "Easy: one unknown, one direction" : "Hard: two unknowns, two columns";
+  const multi = p.objects.length > 1;
+  $("fbdTitle").textContent = multi ? "1 · Free body diagrams" : "1 · Free body diagram"; $("fbdCheckPl").textContent = multi ? "s" : "";
+  $("ansTitle").textContent = p.unknowns.length > 1 ? "3 · Answers" : "3 · Answer";
+  $("done").hidden = true; $("done").classList.remove("revealed");
+  $("newBtn").disabled = true; $("showBtn").disabled = false; $("fbdCheck").disabled = false;
+  renderFBDs(); renderCols(); renderAnswers(); updateLocks();
+}
+function updateLocks() {
+  $("p2").classList.toggle("locked", !st.fbdOk);
+  const numsDone = st.cols.every((c) => c.numOk);
+  $("p3").classList.toggle("locked", !numsDone);
+}
+function miss() { st.missed = true; }
+
+// ============================================================= Stage 1: FBDs
+function renderFBDs() {
+  const p = st.prob;
+  $("fbds").innerHTML = p.objects.map((o, oi) => `
+    <div class="fbd ${st.fbd[oi].ok ? "ok" : ""}" data-o="${oi}">
+      <h3><span>${NP.capWho(o)}</span><span class="okmark">${st.fbd[oi].ok ? "✓" : ""}</span></h3>
+      <svg class="board" data-o="${oi}" viewBox="0 0 448 448" role="img" aria-label="Free body diagram for ${NP.theWho(o)}"></svg>
+      <div class="arows" data-o="${oi}"></div>
+      <p class="fmsg" data-o="${oi}">${st.fbd[oi].msg || ""}</p>
+    </div>`).join("");
+  p.objects.forEach((_, oi) => { drawBoard(oi); renderArrowRows(oi); });
+}
+function el(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+const toXY = (ang, len) => [C + len * U * Math.cos((ang * Math.PI) / 180), C - len * U * Math.sin((ang * Math.PI) / 180)];
+const colorOf = (i) => `var(--c${(i % 6) + 1})`;
+const fbdLocked = (oi) => st.fbd[oi].ok || st.revealed || st.solved;
+function drawBoard(oi) {
+  const svg = document.querySelector(`.board[data-o="${oi}"]`), o = st.prob.objects[oi]; svg.innerHTML = "";
+  for (let x = 0; x <= 448; x += U) { el("line", { x1: x, y1: 0, x2: x, y2: 448, class: "grid" }, svg); el("line", { x1: 0, y1: x, x2: 448, y2: x, class: "grid" }, svg); }
+  if (o.theta) {
+    const up = o.side === "right" ? o.theta : 180 - o.theta, [x1, y1] = toXY(up, 6.6), [x2, y2] = toXY(up + 180, 6.6);
+    el("line", { x1, y1, x2, y2, class: "surface" }, svg);
+    const t = el("text", { x: 14, y: 434, class: "surftxt" }, svg); t.textContent = `- - -  ramp surface, ${o.theta}°`;
+  }
+  st.fbd[oi].arrows.forEach((a, i) => drawArrow(svg, a, i));
+  el("circle", { cx: C, cy: C, r: 9, class: "dot" }, svg);
+  if (!st.fbd[oi].arrows.length && !fbdLocked(oi)) { const t = el("text", { x: C, y: C + 46, class: "hint" }, svg); t.textContent = "drag out from the dot"; }
+}
+function drawArrow(svg, a, i) {
+  const col = colorOf(i), [x, y] = toXY(a.ang, a.len), rr = (a.ang * Math.PI) / 180, ux = Math.cos(rr), uy = -Math.sin(rr), head = 16, wing = 8;
+  const bx = x - ux * head, by = y - uy * head, g = el("g", {}, svg);
+  el("line", { x1: C, y1: C, x2: bx, y2: by, class: "shaft", stroke: col }, g);
+  el("polygon", { points: `${x},${y} ${bx - uy * wing},${by + ux * wing} ${bx + uy * wing},${by - ux * wing}`, fill: col }, g);
+  const [nx, ny] = [x + ux * 20, y + uy * 20], b = el("g", { class: "badge" }, g);
+  el("circle", { cx: nx, cy: ny, r: 12, fill: col }, b);
+  const t = el("text", { x: nx, y: ny }, b); t.textContent = i + 1;
+  if (a.sym) {
+    const left = ux < -0.3, s = el("text", { x: nx + (left ? -18 : 18), y: ny + 7, class: "sym", fill: col, "text-anchor": left ? "end" : "start" }, g);
+    s.appendChild(document.createTextNode("F"));
+    const ts = el("tspan", { class: "sb", dy: 5 }, s); ts.textContent = { w: "w", n: "⊥", f: "F", t: "T", t1: "T1", t2: "T2" }[a.sym];
+  }
+}
+function picker(cls, data, curHtml, options, disabled, extraCls = "") {
+  return `<div class="pick"><button class="pbtn ${cls} ${extraCls}" ${data} ${disabled ? "disabled" : ""} aria-haspopup="true">${curHtml || `<span class="ph">choose…</span>`}</button>
+    <div class="pmenu" hidden>${options.map((op) => `<button data-v="${op.v}">${op.h}</button>`).join("")}</div></div>`;
+}
+function renderArrowRows(oi) {
+  const box = document.querySelector(`.arows[data-o="${oi}"]`), o = st.prob.objects[oi], F = st.fbd[oi], lock = fbdLocked(oi);
+  if (!F.arrows.length) { box.innerHTML = `<p class="emptyrows">Each arrow you draw gets two labels here: agent/object and its symbol.</p>`; return; }
+  box.innerHTML = F.arrows.map((a, i) => `
+    <div class="arow ${a.state || ""}" data-o="${oi}" data-i="${i}">
+      <span class="num" style="background:${colorOf(i)}">${i + 1}</span>
+      <input class="agent" data-k="ag${oi}-${i}" type="text" autocomplete="off" spellcheck="false" placeholder="agent pushes/pulls the ${o.name}" value="${esc(a.agent)}" ${lock ? "disabled" : ""} aria-label="Agent/object label for arrow ${i + 1}">
+      ${picker("fsym", `data-o="${oi}" data-i="${i}"`, a.sym ? SYMOPT[a.sym] : "", o.formalOptions.map((k) => ({ v: k, h: SYMOPT[k] })), lock)}
+      ${lock ? `<span></span>` : `<button class="del" data-o="${oi}" data-i="${i}" title="Delete this arrow" aria-label="Delete arrow ${i + 1}">×</button>`}
+      <div class="rmsg">${a.msg || ""}</div>
+    </div>`).join("");
+}
+function esc(s) { return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+
+// drawing (one board per object)
+function svgPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const q = pt.matrixTransform(svg.getScreenCTM().inverse()); return [q.x, q.y]; }
+function fromPoint(o, x, y) { const dx = (x - C) / U, dy = (C - y) / U; let len = Math.round(Math.hypot(dx, dy) * 4) / 4; len = Math.min(MAX_LEN, len); return { ang: NP.FB.snapAngle(o, (Math.atan2(dy, dx) * 180) / Math.PI), len }; }
+$("fbds").addEventListener("pointerdown", (e) => {
+  const svg = e.target.closest(".board"); if (!svg) return;
+  const oi = +svg.dataset.o; if (fbdLocked(oi)) return;
+  const o = st.prob.objects[oi], F = st.fbd[oi], [x, y] = svgPoint(svg, e);
+  let hit = -1, best = 22;
+  if (Math.hypot(x - C, y - C) >= 13) F.arrows.forEach((a, i) => { const [tx, ty] = toXY(a.ang, a.len); const d = Math.hypot(tx - x, ty - y); if (d < best) { best = d; hit = i; } });
+  if (hit < 0) {
+    if (F.arrows.length >= MAX_ARROWS) { F.msg = "That's more arrows than this object has forces. Delete one first."; document.querySelector(`.fmsg[data-o="${oi}"]`).textContent = F.msg; return; }
+    F.arrows.push(Object.assign({ agent: "", sym: "", state: "", msg: "", fresh: true }, fromPoint(o, x, y))); hit = F.arrows.length - 1;
+  }
+  st.drag = { oi, i: hit, id: e.pointerId, svg }; svg.setPointerCapture(e.pointerId); drawBoard(oi); e.preventDefault();
+});
+$("fbds").addEventListener("pointermove", (e) => {
+  if (!st.drag || e.pointerId !== st.drag.id) return;
+  const { oi, i, svg } = st.drag, a = st.fbd[oi].arrows[i]; Object.assign(a, fromPoint(st.prob.objects[oi], ...svgPoint(svg, e)));
+  if (a.state) { a.state = ""; a.msg = ""; } drawBoard(oi);
+});
+function endDrag(e) {
+  if (!st.drag || e.pointerId !== st.drag.id) return;
+  const { oi, i } = st.drag, F = st.fbd[oi], a = F.arrows[i]; st.drag = null;
+  if (a.len < 0.5) { F.arrows.splice(i, 1); drawBoard(oi); renderArrowRows(oi); return; }
+  const fresh = a.fresh; delete a.fresh; F.msg = ""; document.querySelector(`.fmsg[data-o="${oi}"]`).textContent = "";
+  drawBoard(oi); renderArrowRows(oi);
+  if (fresh) { const inp = document.querySelector(`.arow[data-o="${oi}"][data-i="${i}"] input.agent`); if (inp) inp.focus({ preventScroll: true }); }
+}
+$("fbds").addEventListener("pointerup", endDrag); $("fbds").addEventListener("pointercancel", endDrag);
+$("fbds").addEventListener("input", (e) => {
+  if (!e.target.classList.contains("agent")) return;
+  const rw = e.target.closest(".arow"), a = st.fbd[+rw.dataset.o].arrows[+rw.dataset.i]; a.agent = e.target.value;
+  if (a.state === "bad") { a.state = ""; a.msg = ""; rw.classList.remove("bad"); rw.querySelector(".rmsg").textContent = ""; }
+});
+$("fbds").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.classList.contains("agent")) { e.preventDefault(); const pb = e.target.closest(".arow").querySelector(".pbtn"); pb.focus(); pb.click(); } });
+function checkFBDs() {
+  if (st.fbdOk || st.revealed) return;
+  let all = true, anyFail = false;
+  st.prob.objects.forEach((o, oi) => {
+    const F = st.fbd[oi]; if (F.ok) return;
+    const g = NP.gradeFBD(o, F.arrows.map((a) => ({ ang: a.ang, len: a.len, agent: a.agent, sym: a.sym })));
+    F.arrows.forEach((a, i) => { a.state = g.correct ? "ok" : g.rows[i].state === "bad" ? "bad" : ""; a.msg = g.rows[i].msg; });
+    F.ok = g.correct; F.msg = g.correct ? "" : g.msg;
+    if (!g.correct) { all = false; if (g.stage !== "empty") anyFail = true; }
+  });
+  if (anyFail) miss();
+  st.fbdOk = all; renderFBDs();
+  if (all) { $("fbdCheck").disabled = true; renderCols(); updateLocks(); }
+}
+$("fbdCheck").addEventListener("click", checkFBDs);
+
+// ============================================================= Stage 2: columns
+function colLocked(c) { return st.revealed || st.solved; }
+function renderCols() {
+  const p = st.prob;
+  $("cols").style.setProperty("--ncol", st.cols.length);
+  $("cols").innerHTML = st.cols.map((c, ci) => colHtml(p, c, ci)).join("");
+}
+function colHtml(p, c, ci) {
+  const s = c.setup, lock = colLocked(c), o = s.obj != null ? p.objects[s.obj] : null;
+  const objSel = p.objects.length > 1 ? `<select class="s-obj" data-c="${ci}" ${c.setupOk || lock ? "disabled" : ""} aria-label="Object"><option value="">object…</option>${p.objects.map((x, oi) => `<option value="${oi}" ${s.obj === oi ? "selected" : ""}>${NP.theWho(x)}</option>`).join("")}</select>` : "";
+  const lawSel = `<select class="s-law" data-c="${ci}" ${c.setupOk || lock ? "disabled" : ""} aria-label="Law"><option value="">law…</option><option value="1st" ${s.law === "1st" ? "selected" : ""}>1st law: ΣF = 0</option><option value="2nd" ${s.law === "2nd" ? "selected" : ""}>2nd law: ΣF = ma</option></select>`;
+  const dirSel = `<select class="s-dir" data-c="${ci}" ${c.setupOk || lock ? "disabled" : ""} aria-label="Direction"><option value="">direction…</option>${Object.entries(NP.DIRS).map(([k, t]) => `<option value="${k}" ${s.dir === k ? "selected" : ""}>${t}</option>`).join("")}</select>`;
+  const setupCls = c.setupOk ? "ok" : c.setupMsg ? "bad" : "";
+  let h = `<div class="col" data-c="${ci}"><h3>${st.cols.length > 1 ? `Column ${ci + 1}` : "Your equation"}</h3>
+    <div class="setup ${setupCls}">${objSel}${lawSel}${dirSel}</div>
+    <p class="lmsg">${c.setupMsg || ""}</p>
+    <div class="law" ${c.setupOk ? "" : "hidden"}><span>${c.setupOk ? NP.lawHtml(o, s) : ""}</span><span class="lmark ${c.setupOk ? (c.shown ? "shown" : "on") : ""}">${c.setupOk ? "✓" : ""}</span></div>`;
+  if (!c.setupOk) return h + "</div>";
+  const rhs = s.law === "1st" ? "0" : "<i>m a</i>";
+  // line 1: symbols
+  const symOpts = NP.symbolOptions(o, s.dir).map((k) => ({ v: k, h: NP.symHtml(k, o) }));
+  const l1lock = c.symOk || lock;
+  h += `<div class="line" data-l="1"><div class="lhead"><span class="lname">Line 1 · symbols from your diagram</span><span class="lmark ${c.symOk ? (c.shown ? "shown" : "on") : ""}">${c.symOk ? "✓" : ""}</span></div>
+    <div class="eq">${c.sym.map((t, ti) => `<span class="term" data-t="${ti}"><select class="sg" data-c="${ci}" data-t="${ti}" ${l1lock ? "disabled" : ""} aria-label="sign"><option value="">±</option><option value="+" ${t.sign === "+" ? "selected" : ""}>+</option><option value="-" ${t.sign === "-" ? "selected" : ""}>−</option></select>${picker("ssym", `data-c="${ci}" data-t="${ti}"`, t.key ? NP.symHtml(t.key, o) : "", symOpts, l1lock)}${l1lock ? "" : `<button class="rm" data-c="${ci}" data-t="${ti}" title="Remove this term" aria-label="Remove term">×</button>`}</span>`).join("")}
+      ${l1lock ? "" : `<button class="addt" data-c="${ci}">+ term</button>`}<span class="rhs">= ${rhs}</span></div>
+    <p class="lmsg">${c.symMsg || ""}</p>${l1lock ? "" : `<div class="lfoot"><button class="btn small l1check" data-c="${ci}">Check line 1</button></div>`}</div>`;
+  if (!c.symOk) return h + "</div>";
+  // line 2: expressions
+  const exOpts = NP.exprOptions(o, s).map((k) => ({ v: k, h: NP.exprHtml(k, o) }));
+  const l2lock = c.exprOk || lock;
+  h += `<div class="line" data-l="2"><div class="lhead"><span class="lname">Line 2 · expressions</span><span class="lmark ${c.exprOk ? (c.shown ? "shown" : "on") : ""}">${c.exprOk ? "✓" : ""}</span></div>
+    <div class="eq">${c.sym.map((t, ti) => `<span class="sgtext">${t.sign === "-" ? "−" : ti ? "+" : ""}</span>${picker("sexpr", `data-c="${ci}" data-t="${ti}"`, c.choices[ti] ? NP.exprHtml(c.choices[ti], o) : "", exOpts, l2lock, c.exprRows[ti] ? c.exprRows[ti].state : "")}`).join(" ")}<span class="rhs">= ${rhs}</span></div>
+    <p class="lmsg">${c.exprMsg || ""}</p>${l2lock ? "" : `<div class="lfoot"><button class="btn small l2check" data-c="${ci}">Check line 2</button></div>`}</div>`;
+  if (!c.exprOk) return h + "</div>";
+  // line 3: numbers
+  const l3lock = c.numOk || lock;
+  const slotHtml = (sl, k) => {
+    if (sl.unknown) return `<span class="slot unk">${NP.TOKEN_HTML[sl.tok]}</span>`;
+    const e = c.entries[k] || {}, rs = c.numRows[k] || {};
+    return `<span class="slot"><span class="par">(</span><input class="nv ${rs.numBad ? "bad" : rs.state === "ok" ? "ok" : ""}" data-c="${ci}" data-k="${k}" inputmode="decimal" autocomplete="off" value="${esc(e.num)}" ${l3lock ? "disabled" : ""} aria-label="value of ${sl.tok}"><select class="nu ${rs.unitBad ? "bad" : rs.state === "ok" ? "ok" : ""}" data-c="${ci}" data-k="${k}" ${l3lock ? "disabled" : ""} aria-label="unit"><option value="">unit</option>${NP.UNITS.map((u) => `<option value="${u}" ${e.unit === u ? "selected" : ""}>${UNIT_LABEL[u]}</option>`).join("")}</select><span class="par">)</span></span>`;
+  };
+  let parts = [], k = 0;
+  c.sym.forEach((t, ti) => {
+    const ex = NP.EXPR[c.choices[ti]], sl = c.slots.filter((x) => x.term === ti);
+    let inner = sl.map((x) => { const hh = (x.tok === "th" && ex.trig) ? `<span class="trigslot"><span class="trig">${ex.trig}</span>${slotHtml(x, k)}</span>` : slotHtml(x, k); k++; return hh; }).join("");
+    if (ex.comp) inner = inner + ` <span class="trig">${/c$/.test(ex.comp) ? "cos" : "sin"} ${st.prob.objects[s.obj].forces.find((f) => f.sym === ex.comp.slice(0, 2)).phi}°</span>`;
+    parts.push(`<span class="sgtext">${t.sign === "-" ? "−" : ti ? "+" : ""}</span>${inner}`);
+  });
+  const rhsSl = c.slots.filter((x) => x.term === "rhs");
+  const rhs3 = s.law === "1st" ? "0" : rhsSl.map((x) => { const hh = slotHtml(x, k); k++; return hh; }).join("");
+  h += `<div class="line" data-l="3"><div class="lhead"><span class="lname">Line 3 · numbers and units</span><span class="lmark ${c.numOk ? (c.shown ? "shown" : "on") : ""}">${c.numOk ? "✓" : ""}</span></div>
+    <div class="eq">${parts.join(" ")} <span class="rhs">=</span> ${rhs3}</div>
+    <p class="lmsg">${c.numMsg || ""}</p>${l3lock ? "" : `<div class="lfoot"><button class="btn small l3check" data-c="${ci}">Check line 3</button></div>`}</div>`;
+  return h + "</div>";
+}
+function others(ci) { return st.cols.map((c, j) => (j !== ci && c.setupOk ? Object.assign({ ok: true }, c.setup) : null)).filter(Boolean); }
+function trySetup(ci) {
+  const c = st.cols[ci], s = c.setup;
+  if (s.obj == null || !s.law || !s.dir) { c.setupMsg = ""; renderCols(); return; }
+  const g = NP.gradeSetup(st.prob, s, others(ci));
+  c.setupOk = g.ok; c.setupMsg = g.msg;
+  if (!g.ok && g.msg) miss();
+  renderCols();
+}
+function checkLine(ci, line) {
+  const p = st.prob, c = st.cols[ci], s = c.setup;
+  if (line === 1) {
+    const g = NP.gradeSymbols(p, s, c.sym);
+    c.symMsg = g.msg || ""; if (g.ok) { c.symOk = true; c.orient = g.orient; c.choices = c.sym.map(() => ""); c.exprRows = []; } else if (!g.incomplete) miss();
+  } else if (line === 2) {
+    const g = NP.gradeExprs(p, s, c.sym, c.choices);
+    c.exprRows = g.rows; c.exprMsg = g.ok ? "" : g.msg || (c.choices.some((x) => !x) ? "Choose an expression for every term." : "");
+    if (g.ok) { c.exprOk = true; c.slots = NP.numberSlots(p, s, c.sym, c.choices); c.entries = c.slots.map(() => ({ num: "", unit: "" })); c.numRows = []; }
+    else if (g.msg) miss();
+  } else {
+    const g = NP.gradeNumbers(p, s, c.slots, c.entries, c.orient);
+    c.numRows = g.rows; c.numMsg = g.ok ? "" : g.msg || "Fill in every box and unit.";
+    if (g.ok) c.numOk = true; else if (g.msg) miss();
+  }
+  renderCols(); updateLocks();
+  if (st.cols.every((x) => x.numOk)) { renderAnswers(); const f = document.querySelector("#answers input"); if (f) f.focus({ preventScroll: true }); }
+}
+$("cols").addEventListener("change", (e) => {
+  const ci = +e.target.dataset.c, c = st.cols[ci]; if (!c) return;
+  if (e.target.classList.contains("s-obj")) { c.setup.obj = e.target.value === "" ? null : +e.target.value; trySetup(ci); }
+  else if (e.target.classList.contains("s-law")) { c.setup.law = e.target.value; trySetup(ci); }
+  else if (e.target.classList.contains("s-dir")) { c.setup.dir = e.target.value; trySetup(ci); }
+  else if (e.target.classList.contains("sg")) { c.sym[+e.target.dataset.t].sign = e.target.value; c.symMsg = ""; }
+  else if (e.target.classList.contains("nu")) { c.entries[+e.target.dataset.k].unit = e.target.value; }
+});
+$("cols").addEventListener("input", (e) => { if (e.target.classList.contains("nv")) { const c = st.cols[+e.target.dataset.c]; c.entries[+e.target.dataset.k].num = e.target.value; e.target.classList.remove("bad"); } });
+$("cols").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.classList.contains("nv")) { e.preventDefault(); checkLine(+e.target.dataset.c, 3); } });
+$("cols").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const ci = +b.dataset.c, c = st.cols[ci];
+  if (b.classList.contains("addt")) { if (c.sym.length < 6) c.sym.push({ sign: "", key: "" }); c.symMsg = ""; renderCols(); return; }
+  if (b.classList.contains("rm")) { c.sym.splice(+b.dataset.t, 1); if (!c.sym.length) c.sym.push({ sign: "", key: "" }); c.symMsg = ""; renderCols(); return; }
+  if (b.classList.contains("l1check")) return checkLine(ci, 1);
+  if (b.classList.contains("l2check")) return checkLine(ci, 2);
+  if (b.classList.contains("l3check")) return checkLine(ci, 3);
+});
+
+// pickers (FBD symbols, line-1 symbols, line-2 expressions)
+function closeMenus() { document.querySelectorAll(".pmenu").forEach((m) => (m.hidden = true)); }
+document.addEventListener("click", (e) => {
+  const pb = e.target.closest(".pbtn");
+  if (pb && !pb.disabled) { const m = pb.nextElementSibling, was = m.hidden; closeMenus(); m.hidden = !was; if (!m.hidden) m.querySelector("button").focus(); return; }
+  const opt = e.target.closest(".pmenu button");
+  if (opt) {
+    const pbn = opt.closest(".pick").querySelector(".pbtn"), v = opt.dataset.v; closeMenus();
+    if (pbn.classList.contains("fsym")) {
+      const oi = +pbn.dataset.o, i = +pbn.dataset.i, a = st.fbd[oi].arrows[i]; a.sym = v; if (a.state) { a.state = ""; a.msg = ""; }
+      drawBoard(oi); renderArrowRows(oi);
+    } else if (pbn.classList.contains("ssym")) { const c = st.cols[+pbn.dataset.c]; c.sym[+pbn.dataset.t].key = v; c.symMsg = ""; renderCols(); }
+    else if (pbn.classList.contains("sexpr")) { const c = st.cols[+pbn.dataset.c]; c.choices[+pbn.dataset.t] = v; if (c.exprRows[+pbn.dataset.t]) c.exprRows[+pbn.dataset.t] = { state: "" }; c.exprMsg = ""; renderCols(); }
+    return;
+  }
+  if (!e.target.closest(".pick")) closeMenus();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenus(); });
+$("fbds").addEventListener("click", (e) => {
+  const d = e.target.closest(".del"); if (!d) return;
+  const oi = +d.dataset.o; if (fbdLocked(oi)) return;
+  st.fbd[oi].arrows.splice(+d.dataset.i, 1); st.fbd[oi].msg = ""; drawBoard(oi); renderArrowRows(oi);
+  document.querySelector(`.fmsg[data-o="${oi}"]`).textContent = "";
+});
+
+// ============================================================= Stage 3: answers
+function renderAnswers() {
+  const p = st.prob, ready = st.cols.every((c) => c.numOk);
+  $("answers").innerHTML = p.unknowns.map((u, i) => {
+    const A = st.ans[i], lock = A.ok || st.revealed || !ready;
+    return `<div class="arowA" data-i="${i}"><div><div class="ctrl"><span class="q">${u.label} =</span>
+      <input class="av ${A.numOK || A.ok ? "ok" : A.numBad ? "bad" : ""}" data-i="${i}" inputmode="decimal" autocomplete="off" value="${esc(A.num)}" ${lock ? "disabled" : ""} aria-label="answer ${i + 1}">
+      <select class="au ${A.ok ? "ok" : A.unitBad ? "bad" : ""}" data-i="${i}" ${lock ? "disabled" : ""} aria-label="unit"><option value="">unit</option>${NP.UNITS.map((x) => `<option value="${x}" ${A.unit === x ? "selected" : ""}>${UNIT_LABEL[x]}</option>`).join("")}</select></div></div>
+      ${CHECK_SVG.replace('class="check"', `class="check ${A.ok ? (A.shown ? "shown" : "on") : ""}"`)}<div class="amsg">${A.msg || ""}</div></div>`;
+  }).join("");
+}
+function gradeAns(i) {
+  const A = st.ans[i]; if (A.ok || st.revealed) return;
+  const g = NP.gradeAnswer(st.prob, i, { num: A.num, unit: A.unit });
+  A.msg = g.msg; A.numBad = !!g.numBad; A.unitBad = !!g.unitBad; A.numOK = !!g.numOK;
+  if (g.state === "bad") miss();
+  if (g.state === "ok") A.ok = true;
+  renderAnswers();
+  if (st.ans.every((x) => x.ok)) finish();
+  else { const nx = st.ans.findIndex((x) => !x.ok); const inp = document.querySelector(`.av[data-i="${nx}"]`); if (inp && g.state === "ok") inp.focus(); }
+}
+$("answers").addEventListener("input", (e) => { if (e.target.classList.contains("av")) { st.ans[+e.target.dataset.i].num = e.target.value; e.target.classList.remove("bad"); } });
+$("answers").addEventListener("change", (e) => { if (e.target.classList.contains("au")) { const i = +e.target.dataset.i; st.ans[i].unit = e.target.value; gradeAns(i); } });
+$("answers").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.classList.contains("av")) { e.preventDefault(); gradeAns(+e.target.dataset.i); } });
+
+function finish() {
+  st.solved = true; st.correct++; if (!st.missed) st.first++;
+  $("doneTxt").textContent = st.missed ? "✓ Correct." : "✓ Correct, first try.";
+  $("done").hidden = false; $("newBtn").disabled = false; $("showBtn").disabled = true;
+  updateTally(); $("newBtn2").focus({ preventScroll: true });
+}
+function reveal() {
+  if (st.solved || st.revealed) return;
+  st.revealed = true;
+  const p = st.prob;
+  p.objects.forEach((o, oi) => { st.fbd[oi].arrows = NP.answerArrows(o).map((a) => Object.assign(a, { state: "ok", msg: "" })); st.fbd[oi].ok = true; st.fbd[oi].msg = ""; });
+  st.fbdOk = true;
+  st.cols = NP.solution(p).map((s) => ({ setup: s.setup, setupOk: true, setupMsg: "", sym: s.symTerms, symOk: true, symMsg: "", orient: s.orient, choices: s.choices, exprOk: true, exprRows: [], exprMsg: "", slots: s.slots, entries: s.entries.map((e) => e || { num: "", unit: "" }), numOk: true, numRows: [], numMsg: "", shown: true }));
+  st.ans = p.unknowns.map((u) => Object.assign({ ok: true, shown: true, msg: "" }, NP.answerText(u)));
+  renderFBDs(); renderCols(); renderAnswers(); updateLocks();
+  $("fbdCheck").disabled = true;
+  $("doneTxt").textContent = "The worked answer, shown. This one isn't counted.";
+  $("done").hidden = false; $("done").classList.add("revealed"); $("newBtn").disabled = false; $("showBtn").disabled = true;
+}
+function updateTally() { $("tCorrect").textContent = st.correct; $("tFirst").textContent = st.first; }
+
+$("showBtn").addEventListener("click", reveal);
+$("newBtn").addEventListener("click", () => { if (st.solved || st.revealed) { newProblem(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+$("newBtn2").addEventListener("click", () => $("newBtn").click());
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => {
+  st.diff = b.dataset.diff; document.querySelectorAll("#diffSeg button").forEach((x) => x.classList.toggle("active", x === b)); newProblem();
+}));
+
+// Test hook for the Playwright scripts. Harmless in class.
+window.__np = { st, NP, newProblem, checkFBDs, checkLine, reveal, toXY };
+newProblem();
+updateTally();
+</script>
+</body>
+</html>
